@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
 import { Button } from "@/components/ui/Button";
@@ -16,7 +15,6 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from "@/components/ui/Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { Separator } from "@/components/ui/Separator";
@@ -31,7 +29,14 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../firebase.config";
 
 // Sample data for now - in a real app, this would come from your database
@@ -95,6 +100,7 @@ export default function Profile() {
   const [userData, setUserData] = useState(null);
   const [userDataLoading, setUserDataLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
+  const [userListings, setUserListings] = useState([]);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -128,6 +134,27 @@ export default function Profile() {
       fetchUserData();
     }
   }, [authUser]);
+
+  useEffect(() => {
+    if (authUser) {
+      fetchUserListings();
+    }
+  }, [authUser]);
+
+  // Function to fetch users listings
+  const fetchUserListings = async () => {
+    const listingsRef = collection(db, "listings");
+    const q = query(listingsRef, where("ownerUid", "==", authUser.uid));
+    const querySnapshot = await getDocs(q);
+    const listings = [];
+    querySnapshot.forEach((doc) => {
+      listings.push({
+        id: doc.id,
+        ...doc.data(),
+      });
+    });
+    setUserListings(listings);
+  };
 
   // Loading state
   if (authLoading || (authUser && userDataLoading)) {
@@ -335,7 +362,10 @@ export default function Profile() {
                     </TabsTrigger>
                   </TabsList>
 
-                  <Button onClick={() => router.push("/new-listing")}>
+                  <Button
+                    className="hover:cursor-pointer hover:bg-primary/80"
+                    onClick={() => router.push("/new-listing")}
+                  >
                     Add New Listing
                   </Button>
                 </div>
@@ -343,14 +373,14 @@ export default function Profile() {
                 <TabsContent value="profile" className="space-y-6">
                   <h2 className="text-2xl font-bold">My Listings</h2>
 
-                  {SAMPLE_LISTINGS.length === 0 ? (
+                  {userListings.length === 0 ? (
                     <div className="rounded-lg border border-dashed p-8 text-center">
                       <h3 className="mb-2 text-lg font-semibold">
                         No listings yet
                       </h3>
                       <p className="mb-4 text-sm text-muted-foreground">
-                        You haven't created any listings yet. Start selling or
-                        swapping your fragrances today!
+                        You haven&apos;t created any listings yet. Start selling
+                        or swapping your fragrances today!
                       </p>
                       <Button onClick={() => router.push("/new-listing")}>
                         Create Your First Listing
@@ -358,47 +388,68 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {SAMPLE_LISTINGS.map((listing) => (
-                        <Card key={listing.id} className="overflow-hidden">
-                          <div className="aspect-[4/3] relative">
-                            <Image
-                              src={listing.image}
-                              alt={listing.title}
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute top-2 right-2">
-                              <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                  listing.type === "Sale"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-blue-100 text-blue-800"
-                                }`}
-                              >
-                                {listing.type}
-                              </span>
+                      {userListings &&
+                        userListings.map((listing) => (
+                          <Card
+                            key={listing.id}
+                            className="overflow-hidden hover:shadow-md transition-all duration-300"
+                          >
+                            <div className="h-72 relative">
+                              <Image
+                                src={listing.imageURLs[0]}
+                                alt={listing.title}
+                                fill
+                                className="object-fit"
+                              />
+                              <div className="absolute top-2 right-2">
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                    listing.type === "sell"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-blue-100 text-blue-800"
+                                  }`}
+                                >
+                                  {listing.type}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <CardContent className="p-4">
-                            <h3 className="font-semibold line-clamp-1">
-                              {listing.title}
-                            </h3>
-                            <div className="mt-1 mb-3 text-sm text-muted-foreground">
-                              <p>{listing.condition}</p>
-                              <p>Posted: {listing.createdAt}</p>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium">
-                                ${listing.price.toFixed(2)}
-                              </span>
-                              <Button variant="outline" size="sm">
-                                <Eye size={14} className="mr-1" />
-                                View
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            <CardContent className="p-4">
+                              <h3 className="font-semibold line-clamp-1">
+                                {listing.title}
+                              </h3>
+                              <div className="mt-1 mb-3 text-sm text-muted-foreground">
+                                <p>{listing.condition}</p>
+                                <p>
+                                  Posted:{" "}
+                                  {listing.createdAt &&
+                                  typeof listing.createdAt === "object" &&
+                                  "seconds" in listing.createdAt
+                                    ? new Date(
+                                        listing.createdAt.seconds * 1000
+                                      ).toLocaleDateString()
+                                    : listing.createdAt}
+                                </p>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">
+                                  {listing.price
+                                    ? "€" + listing.price.toFixed(2)
+                                    : "Swap"}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    router.push(`/listings/${listing.id}`)
+                                  }
+                                >
+                                  <Eye size={14} className="mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
                     </div>
                   )}
                 </TabsContent>

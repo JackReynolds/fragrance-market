@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

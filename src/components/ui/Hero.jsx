@@ -1,10 +1,24 @@
-import Link from "next/link";
+"use client";
+
+import React, { useState } from "react";
 import Image from "next/image";
 import { Search } from "lucide-react";
-import { shimmer, toBase64 } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { useRouter } from "next/navigation";
 
 export function Hero() {
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // When the user submits the form, route to search-results page with the query param.
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim().length > 0) {
+      // Navigate to "/search-results?q=searchTerm"
+      router.push(`/search-results?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
+
   return (
     <section className="relative w-full h-[600px] sm:h-[700px] flex items-center overflow-hidden">
       {/* Hero background image */}
@@ -42,15 +56,23 @@ export function Hero() {
             </Button>
           </div>
 
-          {/* Integrated search box */}
-          <div className="relative mt-10 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          {/* Integrated search box wrapped in a form */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative mt-10 max-w-md"
+          >
             <input
               type="search"
               placeholder="Search by brand, name, or notes..."
               className="h-12 w-full rounded-md border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 pl-10 text-white placeholder:text-white/60 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
+            <Search
+              className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 hover:cursor-pointer"
+              onClick={handleSearchSubmit}
+            />
+          </form>
         </div>
       </div>
     </section>

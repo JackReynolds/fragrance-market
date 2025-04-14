@@ -1,8 +1,21 @@
+"use client";
+
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search } from "lucide-react";
-
+import { useAuth } from "@/hooks/useAuth";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase.config";
+import { toast } from "sonner";
 export function Navigation() {
+  const { authUser } = useAuth();
+
+  const handleSignOut = () => {
+    signOut(auth);
+    toast.success("Signed out successfully");
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -62,20 +75,37 @@ export function Navigation() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Link
-              href="/sign-in"
-              className="text-sm font-medium hover:text-primary/90 transition-colors"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              Sign Up
-            </Link>
-          </div>
+          {authUser ? (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/profile"
+                className="text-sm font-medium hover:text-primary/70 transition-colors"
+              >
+                Profile
+              </Link>
+              <p
+                className="text-sm font-medium hover:text-primary/70  transition-colors hover:cursor-pointer"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/sign-in"
+                className="text-sm font-medium hover:text-primary/90 transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>
