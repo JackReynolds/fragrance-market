@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Essence | Fragrance Marketplace",
+  title: "The Fragrance Market",
   description:
     "Discover, swap, and sell exquisite fragrances on our premium marketplace for fragrance enthusiasts and collectors.",
 };

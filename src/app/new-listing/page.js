@@ -215,6 +215,8 @@ const NewListing = () => {
 
     setIsLoading(true);
 
+    console.log(userDoc);
+
     try {
       // Create the listing object
       const listingData = {
@@ -230,8 +232,8 @@ const NewListing = () => {
         imageURLs: imageURLs,
         createdAt: serverTimestamp(),
         ownerUid: authUser.uid,
-        ownerIsPremium: userDoc?.ownerIsPremium,
-        ownerIsIdVerified: userDoc?.ownerIsIdVerified,
+        ownerIsPremium: userDoc?.isPremium,
+        ownerIsIdVerified: userDoc?.isIdVerified,
         ownerUsername: authUser.displayName || "Anonymous User",
         status: "active",
       };

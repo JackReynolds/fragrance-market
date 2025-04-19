@@ -8,6 +8,7 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
+import { useRouter } from "next/navigation";
 import { app, db } from "../../firebase.config";
 import { setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { Navigation } from "@/components/ui/Navigation";
@@ -35,6 +36,7 @@ export default function SignUp() {
     confirmPassword: "",
     agreeTerms: false,
   });
+  const router = useRouter();
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -121,11 +123,14 @@ export default function SignUp() {
         username: formData.username,
         usernameLowercase: formData.username.toLowerCase(),
         email: trimmedData.email,
+        isPremium: false,
+        isIdVerified: false,
         createdAt: serverTimestamp(),
       });
 
       console.log("User registered successfully", formData);
       toast.success("You have successfully created an account");
+      router.push("/");
       // Redirect to dashboard or login page
     } catch (error) {
       console.error("Error during registration:", error);

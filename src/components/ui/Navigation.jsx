@@ -1,19 +1,30 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase.config";
 import { toast } from "sonner";
+
 export function Navigation() {
   const { authUser } = useAuth();
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleSignOut = () => {
     signOut(auth);
     toast.success("Signed out successfully");
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim().length > 0) {
+      router.push(`/search-results?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
   };
 
   return (
@@ -21,59 +32,66 @@ export function Navigation() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center space-x-2">
-            <Image
+            {/* <Image
               src="/logo.svg"
               alt="Fragrance Market Logo"
               width={40}
               height={40}
               className="h-10 w-auto"
-            />
-            <span className="text-xl font-semibold">Essence</span>
+            /> */}
+            <span className="ml-5 text-lg font-semibold">
+              The Fragrance Market
+            </span>
           </Link>
         </div>
 
         <nav className="hidden md:flex items-center space-x-6">
           <Link
             href="/"
-            className="text-sm font-medium hover:text-primary/90 transition-colors"
+            className="text-sm font-medium hover:text-primary/70 transition-colors"
           >
             Home
           </Link>
           <Link
             href="/marketplace"
-            className="text-sm font-medium hover:text-primary/90 transition-colors"
+            className="text-sm font-medium hover:text-primary/70 transition-colors"
           >
             Marketplace
           </Link>
           <Link
             href="/sell"
-            className="text-sm font-medium hover:text-primary/90 transition-colors"
+            className="text-sm font-medium hover:text-primary/70 transition-colors"
           >
             Sell/Swap
           </Link>
           <Link
             href="/how-it-works"
-            className="text-sm font-medium hover:text-primary/90 transition-colors"
+            className="text-sm font-medium hover:text-primary/70 transition-colors"
           >
             How It Works
           </Link>
           <Link
             href="/community"
-            className="text-sm font-medium hover:text-primary/90 transition-colors"
+            className="text-sm font-medium hover:text-primary/70 transition-colors"
           >
             Community
           </Link>
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="relative hidden lg:flex items-center">
+          <form
+            className="relative hidden lg:flex items-center"
+            onSubmit={handleSearchSubmit}
+          >
             <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
             <input
               type="search"
               placeholder="Search fragrances..."
               className="h-9 w-[200px] rounded-md border border-input bg-background px-3 py-1 pl-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
-          </div>
+          </form>
 
           {authUser ? (
             <div className="flex items-center gap-2">

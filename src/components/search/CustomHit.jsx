@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Highlight } from "react-instantsearch";
+import { PropTypes } from "prop-types";
 import { ShieldCheck, Star, UserCircle } from "lucide-react"; // Example icons from lucide-react
 
 const formatCurrency = (amount) => {
@@ -12,7 +13,7 @@ const formatCurrency = (amount) => {
 const CustomHit = ({ hit }) => {
   return (
     <Link href={`/listings/${hit.objectID}`} className="block">
-      <div className="border rounded-md overflow-hidden hover:shadow-md">
+      <div className="border rounded-md overflow-hidden hover:shadow-md max-w-84">
         <img
           src={hit.imageURLs[0]}
           alt={hit.title}
@@ -40,6 +41,7 @@ const CustomHit = ({ hit }) => {
                   {formatCurrency(hit.price)}
                 </p>
               )}
+              <p className="text-sm text-gray-600">{hit.amountLeft}% full</p>
             </div>
           </div>
           {/* Owner details */}
@@ -71,6 +73,10 @@ const CustomHit = ({ hit }) => {
       </div>
     </Link>
   );
+};
+
+CustomHit.propTypes = {
+  hit: PropTypes.object.isRequired,
 };
 
 export default CustomHit;

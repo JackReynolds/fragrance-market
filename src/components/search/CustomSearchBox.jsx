@@ -2,8 +2,9 @@
 
 import React, { useEffect, useRef, useCallback } from "react";
 import { useSearchBox } from "react-instantsearch";
+import { PropTypes } from "prop-types";
 import { debounce } from "@/utils/debounce";
-import { Input } from "@/components/ui/input";
+import { Input } from "../ui/Input";
 
 const CustomSearchBox = ({ inputValue, setInputValue }) => {
   const { refine } = useSearchBox();
@@ -42,6 +43,11 @@ const CustomSearchBox = ({ inputValue, setInputValue }) => {
       className="w-full border border-gray-300 rounded-md py-2 px-4"
     />
   );
+};
+
+CustomSearchBox.propTypes = {
+  inputValue: PropTypes.string.isRequired,
+  setInputValue: PropTypes.func.isRequired,
 };
 
 export default CustomSearchBox;

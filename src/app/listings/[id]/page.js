@@ -8,11 +8,11 @@ import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Navigation } from "@/components/ui/Navigation";
 import { Footer } from "@/components/ui/Footer";
+import { PropTypes } from "prop-types";
 import { Button } from "@/components/ui/Button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -31,15 +31,15 @@ import {
   MessageCircle,
   Heart,
   ShoppingBag,
-  Shield,
-  CheckCircle2,
-  Medal,
   Mail,
-  BadgeCheck,
   StarIcon,
   ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import SwapOfferModal from "@/components/listing/SwapOfferModal";
+import { userDoc } from "@/hooks/useUserDoc";
 
 const ListingDetailPage = () => {
   const router = useRouter();
@@ -49,6 +49,9 @@ const ListingDetailPage = () => {
   const [owner, setOwner] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
+  const [userHasListings, setUserHasListings] = useState(false);
+  const [isCheckingListings, setIsCheckingListings] = useState(false);
 
   // Fetch listing data
   useEffect(() => {
@@ -78,7 +81,7 @@ const ListingDetailPage = () => {
                 id: ownerDoc.id,
                 ...ownerData,
                 emailVerified: ownerData.emailVerified || false,
-                idVerified: ownerData.idVerified || false,
+                isIdVerified: ownerData.isIdVerified || false,
                 isPremium: ownerData.isPremium || false,
                 rating: ownerData.rating || "N/A",
               });
@@ -100,7 +103,7 @@ const ListingDetailPage = () => {
   }, [params.id, router]);
 
   // Check if current user is the owner
-  const isOwner = authUser && listing && authUser.uid === listing.userId;
+  const isOwner = authUser && listing && authUser.uid === listing.ownerUid;
 
   // Handle sharing listing
   const handleShare = () => {
@@ -197,6 +200,51 @@ const ListingDetailPage = () => {
         {badge.text}
       </div>
     );
+  };
+
+  // Check if user has listings for swap
+  const checkUserListings = async () => {
+    if (!authUser) {
+      toast.error("Please sign in to offer swaps");
+      return false;
+    }
+
+    setIsCheckingListings(true);
+    try {
+      const listingsRef = collection(db, "listings");
+      const q = query(
+        listingsRef,
+        where("ownerUid", "==", authUser.uid),
+        where("type", "==", "swap"),
+        where("status", "==", "active")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const hasListings = !querySnapshot.empty;
+      setUserHasListings(hasListings);
+      return hasListings;
+    } catch (error) {
+      console.error("Error checking listings:", error);
+      return false;
+    } finally {
+      setIsCheckingListings(false);
+    }
+  };
+
+  // Handle offer swap button click
+  const handleOfferSwap = async () => {
+    if (!authUser) {
+      toast.error("Please sign in to offer swaps");
+      return;
+    }
+
+    const hasListings = await checkUserListings();
+    if (!hasListings) {
+      toast.error("You need to add a fragrance to swap first");
+      return;
+    }
+
+    setIsSwapModalOpen(true);
   };
 
   // Loading state
@@ -462,8 +510,22 @@ const ListingDetailPage = () => {
                       <ShoppingBag className="mr-2 h-4 w-4" /> Buy Now
                     </Button>
                   ) : (
-                    <Button className="flex-1 py-2" size="lg">
-                      <Share2 className="mr-2 h-4 w-4" /> Offer Swap
+                    <Button
+                      className="flex-1 py-2"
+                      size="lg"
+                      onClick={handleOfferSwap}
+                      disabled={isCheckingListings}
+                    >
+                      {isCheckingListings ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Checking...
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="mr-2 h-4 w-4" /> Offer Swap
+                        </>
+                      )}
                     </Button>
                   )}
                   <Button variant="outline" className="flex-1 py-2" size="lg">
@@ -523,7 +585,7 @@ const ListingDetailPage = () => {
                       />
                       <VerificationBadge
                         type="id"
-                        isVerified={owner?.idVerified}
+                        isVerified={owner?.isIdVerified}
                       />
                     </div>
                   </div>
@@ -596,8 +658,25 @@ const ListingDetailPage = () => {
       </main>
 
       <Footer />
+
+      {/* Swap Offer Modal */}
+      <SwapOfferModal
+        isOpen={isSwapModalOpen}
+        onClose={() => setIsSwapModalOpen(false)}
+        currentUser={authUser}
+        userDoc={userDoc}
+        targetListing={listing}
+        targetOwner={owner}
+      />
     </div>
   );
 };
 
+ListingDetailPage.propTypes = {
+  params: PropTypes.object.isRequired,
+  router: PropTypes.object.isRequired,
+  authUser: PropTypes.object,
+  listing: PropTypes.object,
+  owner: PropTypes.object,
+};
 export default ListingDetailPage;
