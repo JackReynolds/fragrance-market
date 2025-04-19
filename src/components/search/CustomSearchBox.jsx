@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { useSearchBox } from "react-instantsearch";
 import { PropTypes } from "prop-types";
-import { debounce } from "@/utils/debounce";
+import { debounce } from "../../utils/debounce";
 import { Input } from "../ui/Input";
 
 const CustomSearchBox = ({ inputValue, setInputValue }) => {

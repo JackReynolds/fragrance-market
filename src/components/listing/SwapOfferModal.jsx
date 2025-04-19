@@ -18,9 +18,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Dialog";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
+} from "../ui/Dialog";
+import { Button } from "../ui/Button";
+import { Card, CardContent } from "../ui/Card";
 import Image from "next/image";
 import { Loader2, AlertCircle } from "lucide-react";
 
@@ -28,7 +28,6 @@ const SwapOfferModal = ({
   isOpen,
   onClose,
   currentUser,
-  userDoc,
   targetListing,
   targetOwner,
 }) => {
@@ -311,7 +310,6 @@ SwapOfferModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
-  userDoc: PropTypes.object,
   targetListing: PropTypes.object.isRequired,
   targetOwner: PropTypes.object.isRequired,
 };

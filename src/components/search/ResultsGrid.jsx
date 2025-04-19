@@ -3,7 +3,7 @@
 import React from "react";
 import { useHits } from "react-instantsearch";
 import CustomHit from "./CustomHit";
-
+import { PropTypes } from "prop-types";
 const ResultsGrid = ({ inputValue }) => {
   const { hits } = useHits();
 
@@ -18,6 +18,10 @@ const ResultsGrid = ({ inputValue }) => {
       ))}
     </div>
   );
+};
+
+ResultsGrid.propTypes = {
+  inputValue: PropTypes.string.isRequired,
 };
 
 export default ResultsGrid;

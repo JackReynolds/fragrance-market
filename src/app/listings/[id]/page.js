@@ -39,7 +39,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import SwapOfferModal from "@/components/listing/SwapOfferModal";
-import { userDoc } from "@/hooks/useUserDoc";
+import { userDoc } from "../../../hooks/useUserDoc";
 
 const ListingDetailPage = () => {
   const router = useRouter();
