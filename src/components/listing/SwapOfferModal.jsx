@@ -18,9 +18,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "../ui/Dialog";
-import { Button } from "../ui/Button";
-import { Card, CardContent } from "../ui/Card";
+} from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
 import Image from "next/image";
 import { Loader2, AlertCircle } from "lucide-react";
 
