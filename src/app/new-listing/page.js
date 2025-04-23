@@ -64,9 +64,10 @@ const NewListing = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !authUser) {
+      toast.error("Please sign in to create a listing");
       router.push("/sign-in");
     }
-  }, [authUser, authLoading, router]);
+  }, [authUser, authLoading]);
 
   // Load Cloudinary widget script
   useEffect(() => {
@@ -266,7 +267,7 @@ const NewListing = () => {
 
   // Not authenticated
   if (!authUser) {
-    return null; // The useEffect will redirect
+    return null;
   }
 
   return (

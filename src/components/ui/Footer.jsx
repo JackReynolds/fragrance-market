@@ -16,7 +16,9 @@ export function Footer() {
                 height={32}
                 className="h-8 w-auto"
               />
-              <span className="text-lg font-semibold">Essence</span>
+              <span className="text-lg font-semibold">
+                The Fragrance Market
+              </span>
             </Link>
             <p className="text-sm text-muted-foreground">
               The exclusive marketplace for fragrance enthusiasts, collectors,

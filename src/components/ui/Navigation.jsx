@@ -59,7 +59,7 @@ export function Navigation() {
             Marketplace
           </Link>
           <Link
-            href="/sell"
+            href="/new-listing"
             className="text-sm font-medium hover:text-primary/70 transition-colors"
           >
             Sell/Swap
