@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { algoliasearch } from "algoliasearch";
 import { InstantSearch } from "react-instantsearch";
@@ -28,19 +28,21 @@ const SearchResults = () => {
 
   return (
     <div>
-      <Navigation />
-      <div className="container mx-auto p-4">
-        <InstantSearch searchClient={client} indexName="fragrances">
-          <div className="relative">
-            <CustomSearchBox
-              inputValue={inputValue}
-              setInputValue={setInputValue}
-            />
-          </div>
-          <ResultsGrid inputValue={inputValue} />
-        </InstantSearch>
-      </div>
-      <Footer />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Navigation />
+        <div className="container mx-auto p-4">
+          <InstantSearch searchClient={client} indexName="fragrances">
+            <div className="relative">
+              <CustomSearchBox
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+              />
+            </div>
+            <ResultsGrid inputValue={inputValue} />
+          </InstantSearch>
+        </div>
+        <Footer />
+      </Suspense>
     </div>
   );
 };

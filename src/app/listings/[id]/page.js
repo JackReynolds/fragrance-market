@@ -44,7 +44,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import SwapOfferModal from "@/components/listing/SwapOfferModal.jsx";
-import { userDoc } from "@/hooks/useUserDoc";
+import { useUserDoc } from "@/hooks/useUserDoc.js";
 
 const ListingDetailPage = () => {
   const router = useRouter();
@@ -57,7 +57,7 @@ const ListingDetailPage = () => {
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [userHasListings, setUserHasListings] = useState(false);
   const [isCheckingListings, setIsCheckingListings] = useState(false);
-
+  const { userDoc } = useUserDoc();
   // Fetch listing data
   useEffect(() => {
     const fetchListingData = async () => {
