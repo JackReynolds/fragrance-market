@@ -296,7 +296,7 @@ const ListingDetailPage = () => {
           {/* Back button */}
           <button
             onClick={() => router.back()}
-            className="flex items-center text-sm font-medium mb-6 hover:underline"
+            className="flex items-center text-sm font-medium mb-6 hover:cursor-pointer hover:font-semibold"
           >
             <ChevronLeft className="mr-1 h-4 w-4" /> Back
           </button>
@@ -398,6 +398,7 @@ const ListingDetailPage = () => {
                         <Button
                           variant="outline"
                           size="icon"
+                          className="hover:cursor-pointer"
                           onClick={handleShare}
                           title="Share listing"
                         >
@@ -406,6 +407,7 @@ const ListingDetailPage = () => {
                         <Button
                           variant="outline"
                           size="icon"
+                          className="hover:cursor-pointer"
                           title="Add to favorites"
                         >
                           <Heart className="h-4 w-4" />
@@ -479,9 +481,17 @@ const ListingDetailPage = () => {
                 {/* Tabs for description and swap preferences */}
                 <Tabs defaultValue="description" className="mt-6">
                   <TabsList>
-                    <TabsTrigger value="description">Description</TabsTrigger>
+                    <TabsTrigger
+                      className="hover:cursor-pointer"
+                      value="description"
+                    >
+                      Description
+                    </TabsTrigger>
                     {listing.type === "swap" && (
-                      <TabsTrigger value="swap-preferences">
+                      <TabsTrigger
+                        value="swap-preferences"
+                        className="hover:cursor-pointer"
+                      >
                         Swap Preferences
                       </TabsTrigger>
                     )}

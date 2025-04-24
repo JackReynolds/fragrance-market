@@ -133,13 +133,13 @@ export function Navigation() {
               </Link>
               <Link
                 href="/profile"
-                className="text-sm font-medium hover:text-primary/70 transition-colors"
+                className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
               >
                 Profile
               </Link>
               <button
                 onClick={handleSignOut}
-                className="text-sm font-medium hover:text-primary/70 transition-colors"
+                className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
               >
                 Sign Out
               </button>
