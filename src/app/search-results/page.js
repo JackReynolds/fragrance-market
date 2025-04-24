@@ -27,8 +27,8 @@ const SearchResults = () => {
   }, [queryFromURL]);
 
   return (
-    <div>
-      <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Loading...</div>}>
+      <div>
         <Navigation />
         <div className="container mx-auto p-4">
           <InstantSearch searchClient={client} indexName="fragrances">
@@ -42,8 +42,8 @@ const SearchResults = () => {
           </InstantSearch>
         </div>
         <Footer />
-      </Suspense>
-    </div>
+      </div>
+    </Suspense>
   );
 };
 
