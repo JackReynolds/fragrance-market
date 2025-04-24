@@ -1,6 +1,5 @@
 // src/components/listing/SwapOfferModal.jsx
 import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import {
   collection,
   query,
@@ -8,6 +7,7 @@ import {
   getDocs,
   addDoc,
   and,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { toast } from "sonner";
@@ -18,8 +18,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Dialog";
-import { Button } from "@/components/ui/Button";
+} from "@/components/ui/Dialog.jsx";
+import { Button } from "@/components/ui/Button.jsx";
 import { Card, CardContent } from "@/components/ui/Card";
 import Image from "next/image";
 import { Loader2, AlertCircle } from "lucide-react";
@@ -71,7 +71,7 @@ const SwapOfferModal = ({
           and(
             where("offeredBy.uid", "==", currentUser.uid),
             where("requestedListing.id", "==", targetListing.id),
-            where("requestedFrom.uid", "==", targetOwner.id),
+            where("requestedFrom.uid", "==", targetOwner.uid),
             where("status", "==", "pending")
           )
         );
@@ -107,7 +107,80 @@ const SwapOfferModal = ({
     return !!existingRequests[listingId];
   };
 
-  // Handle submitting swap offer
+  // Helpder function to create a new swap-request
+  const createSwapRequest = async () => {
+    try {
+      // Create a new swap request
+      const swapRequest = {
+        // The user making the offer
+        offeredBy: {
+          uid: currentUser.uid,
+          username: currentUser.displayName || "Unknown",
+        },
+        // The listing being offered for swap
+        offeredListing: {
+          id: selectedListing.id,
+          title: selectedListing.title,
+          brand: selectedListing.brand,
+          imageURL: selectedListing.imageURLs?.[0] || "",
+        },
+        // The owner of the target listing
+        requestedFrom: {
+          uid: targetOwner.uid,
+        },
+        // The listing being requested
+        requestedListing: {
+          id: targetListing.id,
+          title: targetListing.title,
+          brand: targetListing.brand,
+          imageURL: targetListing.imageURLs?.[0] || "",
+        },
+        // Status info
+        status: "pending",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(collection(db, "swap-requests"), swapRequest);
+      return docRef.id;
+    } catch (error) {
+      console.error("Error creating swap request:", error);
+      toast.error("Failed to send swap offer");
+    }
+  };
+
+  // Helper function to create initial swap chat message
+  const createInitialChatMessage = async (swapRequestDocumentId) => {
+    try {
+      const swapRequestMessageData = {
+        listingId: selectedListing.id,
+        listingTitle: selectedListing.title,
+        listingBrand: selectedListing.brand,
+        listingImageURL: selectedListing.imageURLs?.[0] || "",
+        type: "swap-request",
+        senderUid: currentUser.uid,
+        receiverUid: targetOwner.uid,
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(
+        collection(db, "swap-requests", swapRequestDocumentId, "messages"),
+        swapRequestMessageData
+      );
+
+      console.log("Initial chat message created successfully");
+    } catch (error) {
+      console.error("Error creating initial chat message:", error);
+      toast.error("Failed to create initial chat message");
+    }
+  };
+
+  // Helper function to send email to target owner
+  const createSwapRequestEmail = async () => {
+    console.log("Sending email to target owner");
+  };
+
+  // Handle "Send offer" button click
   const handleSubmitOffer = async () => {
     if (!selectedListing) {
       toast.error("Please select a fragrance to offer");
@@ -122,52 +195,25 @@ const SwapOfferModal = ({
 
     setIsSubmitting(true);
     try {
-      // Create a new swap request
-      const swapRequest = {
-        // The user making the offer
-        offeredBy: {
-          uid: currentUser.uid,
-          username: currentUser.displayName || "Unknown",
-        },
-        // The listing being offered
-        offeredListing: {
-          id: selectedListing.id,
-          title: selectedListing.title,
-          brand: selectedListing.brand,
-          imageURL: selectedListing.imageURLs?.[0] || "",
-        },
-        // The owner of the target listing
-        requestedFrom: {
-          uid: targetOwner.id,
-          username: targetOwner.displayName || "Unknown",
-        },
-        // The listing being requested
-        requestedListing: {
-          id: targetListing.id,
-          title: targetListing.title,
-          brand: targetListing.brand,
-          imageURL: targetListing.imageURLs?.[0] || "",
-        },
-        // Status info
-        status: "pending", // pending, accepted, rejected, completed
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        messages: [
-          {
-            text: `Hi, I'd like to offer my ${selectedListing.title} for your ${targetListing.title}.`,
-            sentBy: currentUser.uid,
-            timestamp: new Date(),
-          },
-        ],
-      };
+      // Create initial swap request document
+      const swapDocumentId = await createSwapRequest();
 
-      await addDoc(collection(db, "swap-requests"), swapRequest);
+      if (!swapDocumentId) {
+        throw new Error("Failed to create swap request");
+      }
+
+      // Create initial chat message
+      await createInitialChatMessage(swapDocumentId);
+
+      // Send email (to be implemented)
+      await createSwapRequestEmail();
 
       toast.success("Swap offer sent successfully!");
       onClose();
     } catch (error) {
-      console.error("Error creating swap request:", error);
-      toast.error("Failed to send swap offer");
+      console.error("Error in swap offer process:", error);
+      setIsSubmitting(false);
+      toast.error("Failed to complete swap request");
     } finally {
       setIsSubmitting(false);
     }
@@ -284,11 +330,16 @@ const SwapOfferModal = ({
         )}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            className="hover:cursor-pointer hover:bg-primary/5"
+            variant="outline"
+            onClick={onClose}
+          >
             Cancel
           </Button>
           <Button
             onClick={handleSubmitOffer}
+            className="hover:cursor-pointer hover:bg-primary/80"
             disabled={isSubmitting || !selectedListing || isLoading}
           >
             {isSubmitting ? (
@@ -297,21 +348,13 @@ const SwapOfferModal = ({
                 Sending...
               </>
             ) : (
-              "Send Offer"
+              "Send offer"
             )}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-};
-
-SwapOfferModal.propTypes = {
-  isOpen: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  currentUser: PropTypes.object,
-  targetListing: PropTypes.object.isRequired,
-  targetOwner: PropTypes.object.isRequired,
 };
 
 export default SwapOfferModal;

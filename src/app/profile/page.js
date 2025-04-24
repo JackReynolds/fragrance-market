@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Navigation } from "@/components/ui/Navigation";
-import { Footer } from "@/components/ui/Footer";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
+import { Navigation } from "@/components/ui/Navigation.jsx";
+import { Footer } from "@/components/ui/Footer.jsx";
+import { Button } from "@/components/ui/Button.jsx";
+import { Input } from "@/components/ui/Input.jsx";
+import { Label } from "@/components/ui/Label.jsx";
 import { toast } from "sonner";
 import {
   Card,
@@ -15,9 +15,14 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/Card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { Separator } from "@/components/ui/Separator";
+} from "@/components/ui/Card.jsx";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/Tabs.jsx";
+import { Separator } from "@/components/ui/Separator.jsx";
 import {
   Star,
   Shield,
@@ -301,7 +306,7 @@ export default function Profile() {
 
                     <Button
                       variant="outline"
-                      className="w-full"
+                      className="w-full hover:cursor-pointer"
                       onClick={() => {
                         setActiveTab("account");
                         window.scrollTo(0, 0);
@@ -328,7 +333,7 @@ export default function Profile() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full text-xs"
+                    className="w-full text-xs hover:cursor-pointer"
                     onClick={() =>
                       toast.info("Password reset feature coming soon!")
                     }
@@ -346,24 +351,33 @@ export default function Profile() {
                 value={activeTab}
                 onValueChange={setActiveTab}
               >
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-center md:justify-between items-center mb-6 gap-3">
                   <TabsList>
-                    <TabsTrigger value="profile" className="px-4">
-                      <Package size={16} className="mr-2" />
+                    <TabsTrigger
+                      value="profile"
+                      className="px-4 hover:cursor-pointer"
+                    >
+                      <Package size={16} className="mr-2 " />
                       My Listings
                     </TabsTrigger>
-                    <TabsTrigger value="reviews" className="px-4">
-                      <MessageSquare size={16} className="mr-2" />
+                    <TabsTrigger
+                      value="reviews"
+                      className="px-4 hover:cursor-pointer"
+                    >
+                      <MessageSquare size={16} className="mr-2 " />
                       Reviews
                     </TabsTrigger>
-                    <TabsTrigger value="account" className="px-4">
-                      <Edit size={16} className="mr-2" />
+                    <TabsTrigger
+                      value="account"
+                      className="px-4 hover:cursor-pointer"
+                    >
+                      <Edit size={16} className="mr-2 " />
                       Account
                     </TabsTrigger>
                   </TabsList>
 
                   <Button
-                    className="hover:cursor-pointer hover:bg-primary/80"
+                    className="hidden md:block hover:cursor-pointer hover:bg-primary/80"
                     onClick={() => router.push("/new-listing")}
                   >
                     Add New Listing
@@ -387,69 +401,71 @@ export default function Profile() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                      {userListings &&
-                        userListings.map((listing) => (
-                          <Card
-                            key={listing.id}
-                            className="overflow-hidden hover:shadow-md transition-all duration-300"
-                          >
-                            <div className="h-72 relative">
-                              <Image
-                                src={listing.imageURLs[0]}
-                                alt={listing.title}
-                                fill
-                                className="object-fit"
-                              />
-                              <div className="absolute top-2 right-2">
-                                <span
-                                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                    listing.type === "sell"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-blue-100 text-blue-800"
-                                  }`}
-                                >
-                                  {listing.type}
-                                </span>
+                    <div className="flex justify-center">
+                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                        {userListings &&
+                          userListings.map((listing) => (
+                            <Card
+                              key={listing.id}
+                              className="overflow-hidden max-w-72 md:max-w-96 hover:shadow-md transition-all duration-300"
+                            >
+                              <div className="h-72 relative">
+                                <Image
+                                  src={listing.imageURLs[0]}
+                                  alt={listing.title}
+                                  fill
+                                  className="object-fit"
+                                />
+                                <div className="absolute top-2 right-2">
+                                  <span
+                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                      listing.type === "sell"
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-blue-100 text-blue-800"
+                                    }`}
+                                  >
+                                    {listing.type}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                            <CardContent className="p-4">
-                              <h3 className="font-semibold line-clamp-1">
-                                {listing.title}
-                              </h3>
-                              <div className="mt-1 mb-3 text-sm text-muted-foreground">
-                                <p>{listing.condition}</p>
-                                <p>
-                                  Posted:{" "}
-                                  {listing.createdAt &&
-                                  typeof listing.createdAt === "object" &&
-                                  "seconds" in listing.createdAt
-                                    ? new Date(
-                                        listing.createdAt.seconds * 1000
-                                      ).toLocaleDateString()
-                                    : listing.createdAt}
-                                </p>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">
-                                  {listing.price
-                                    ? "€" + listing.price.toFixed(2)
-                                    : "Swap"}
-                                </span>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    router.push(`/listings/${listing.id}`)
-                                  }
-                                >
-                                  <Eye size={14} className="mr-1" />
-                                  View
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                              <CardContent className="p-4">
+                                <h3 className="font-semibold line-clamp-1">
+                                  {listing.title}
+                                </h3>
+                                <div className="mt-1 mb-3 text-sm text-muted-foreground">
+                                  <p>{listing.condition}</p>
+                                  <p>
+                                    Posted:{" "}
+                                    {listing.createdAt &&
+                                    typeof listing.createdAt === "object" &&
+                                    "seconds" in listing.createdAt
+                                      ? new Date(
+                                          listing.createdAt.seconds * 1000
+                                        ).toLocaleDateString()
+                                      : listing.createdAt}
+                                  </p>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">
+                                    {listing.price
+                                      ? "€" + listing.price.toFixed(2)
+                                      : "Swap"}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      router.push(`/listings/${listing.id}`)
+                                    }
+                                  >
+                                    <Eye size={14} className="mr-1" />
+                                    View
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                      </div>
                     </div>
                   )}
                 </TabsContent>
@@ -577,7 +593,7 @@ export default function Profile() {
                       </div>
 
                       <Button
-                        className="mt-2"
+                        className="mt-2 hover:cursor-pointer hover:bg-primary/80"
                         onClick={() =>
                           toast.success("Profile updated successfully!")
                         }
@@ -625,7 +641,7 @@ export default function Profile() {
                       </div>
 
                       <Button
-                        className="mt-2"
+                        className="mt-2 hover:cursor-pointer hover:bg-primary/80"
                         onClick={() =>
                           toast.success("Password updated successfully!")
                         }
@@ -691,7 +707,7 @@ export default function Profile() {
                         </p>
                         <Button
                           variant="destructive"
-                          className="mt-4"
+                          className="mt-4 hover:cursor-pointer hover:bg-destructive/80"
                           onClick={() =>
                             toast.error(
                               "Account deletion is disabled in this demo"

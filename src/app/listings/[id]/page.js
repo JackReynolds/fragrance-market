@@ -6,19 +6,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { Navigation } from "@/components/ui/Navigation";
-import { Footer } from "@/components/ui/Footer";
+import { Navigation } from "@/components/ui/Navigation.jsx";
+import { Footer } from "@/components/ui/Footer.jsx";
 import { PropTypes } from "prop-types";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button.jsx";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
-import { Separator } from "@/components/ui/Separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+} from "@/components/ui/Card.jsx";
+import { Separator } from "@/components/ui/Separator.jsx";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/Tabs.jsx";
 import { toast } from "sonner";
 import {
   ChevronLeft,
@@ -38,8 +43,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import SwapOfferModal from "@/components/listing/SwapOfferModal";
-import { userDoc } from "../../../hooks/useUserDoc";
+import SwapOfferModal from "@/components/listing/SwapOfferModal.jsx";
+import { userDoc } from "@/hooks/useUserDoc";
 
 const ListingDetailPage = () => {
   const router = useRouter();
@@ -78,7 +83,7 @@ const ListingDetailPage = () => {
               const ownerData = ownerDoc.data();
               // Set default values for verification fields if they don't exist
               setOwner({
-                id: ownerDoc.id,
+                uid: ownerDoc.id,
                 ...ownerData,
                 emailVerified: ownerData.emailVerified || false,
                 isIdVerified: ownerData.isIdVerified || false,
@@ -234,7 +239,7 @@ const ListingDetailPage = () => {
   // Handle offer swap button click
   const handleOfferSwap = async () => {
     if (!authUser) {
-      toast.error("Please sign in to offer swaps");
+      toast.warning("Please sign in to offer swaps");
       return;
     }
 
@@ -512,7 +517,7 @@ const ListingDetailPage = () => {
                     </Button>
                   ) : (
                     <Button
-                      className="flex-1 py-2"
+                      className="flex-1 py-2 hover:cursor-pointer hover:bg-primary/80"
                       size="lg"
                       onClick={handleOfferSwap}
                       disabled={isCheckingListings}
@@ -529,7 +534,11 @@ const ListingDetailPage = () => {
                       )}
                     </Button>
                   )}
-                  <Button variant="outline" className="flex-1 py-2" size="lg">
+                  <Button
+                    variant="outline"
+                    className="flex-1 py-2 hover:cursor-pointer"
+                    size="lg"
+                  >
                     <MessageCircle className="mr-2 h-4 w-4" /> Contact Seller
                   </Button>
                 </div>
@@ -594,7 +603,7 @@ const ListingDetailPage = () => {
                   <div className="mt-4">
                     <Link
                       href={`/users/${listing.ownerUid}`}
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-primary hover:cursor-pointer hover:font-semibold"
                     >
                       View Profile
                     </Link>

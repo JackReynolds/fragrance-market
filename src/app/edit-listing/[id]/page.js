@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { db } from "../../firebase.config";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { useRouter, useParams } from "next/navigation";
+import { db } from "@/firebase.config";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { Navigation } from "@/components/ui/Navigation.jsx";
 import { Footer } from "@/components/ui/Footer.jsx";
@@ -30,21 +30,27 @@ import {
   Upload,
   PlusCircle,
   Trash2,
-  DollarSign,
-  Sparkles,
   EuroIcon,
+  Sparkles,
+  Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
-import { useUserDoc } from "@/hooks/useUserDoc";
-const NewListing = () => {
+
+const EditListing = () => {
   const { authUser, authLoading } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const listingId = params.id;
+
   const [imageFiles, setImageFiles] = useState([]);
   const [imageURLs, setImageURLs] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { userDoc } = useUserDoc();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [listingData, setListingData] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [notAuthorized, setNotAuthorized] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -64,10 +70,63 @@ const NewListing = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !authUser) {
-      toast.error("Please sign in to create a listing");
+      toast.error("Please sign in to edit a listing");
       router.push("/sign-in");
     }
-  }, [authUser, authLoading]);
+  }, [authUser, authLoading, router]);
+
+  // Fetch listing data
+  useEffect(() => {
+    const fetchListing = async () => {
+      if (!authUser || !listingId) return;
+
+      try {
+        const listingRef = doc(db, "listings", listingId);
+        const listingSnap = await getDoc(listingRef);
+
+        if (!listingSnap.exists()) {
+          setNotFound(true);
+          toast.error("Listing not found");
+          return;
+        }
+
+        const data = listingSnap.data();
+
+        // Check if the current user is the owner of the listing
+        if (data.ownerUid !== authUser.uid) {
+          setNotAuthorized(true);
+          toast.error("You don't have permission to edit this listing");
+          return;
+        }
+
+        setListingData(data);
+
+        // Populate form data
+        setFormData({
+          title: data.title || "",
+          type: data.type || "sell",
+          description: data.description || "",
+          price: data.price?.toString() || "",
+          amount: data.amountLeft?.toString() || "100",
+          brand: data.brand || "",
+          fragrance: data.fragrance || "",
+          swapPreferences: data.swapPreferences || "",
+        });
+
+        // Set images
+        setImageURLs(data.imageURLs || []);
+      } catch (error) {
+        console.error("Error fetching listing:", error);
+        toast.error("Failed to load listing details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (authUser) {
+      fetchListing();
+    }
+  }, [authUser, listingId, router]);
 
   // Load Cloudinary widget script
   useEffect(() => {
@@ -99,7 +158,7 @@ const NewListing = () => {
           cloudName: cloudName,
           uploadPreset: uploadPreset,
           multiple: true,
-          maxFiles: 5 - imageFiles.length,
+          maxFiles: 5 - imageURLs.length,
           sources: ["local", "camera"],
           folder: "fragrance-market/listings",
           context: {
@@ -214,13 +273,11 @@ const NewListing = () => {
       return;
     }
 
-    setIsLoading(true);
-
-    console.log(userDoc);
+    setIsSaving(true);
 
     try {
-      // Create the listing object
-      const listingData = {
+      // Update the listing object
+      const updatedListingData = {
         title: formData.title.trim(),
         type: formData.type,
         description: formData.description.trim(),
@@ -231,43 +288,81 @@ const NewListing = () => {
         swapPreferences:
           formData.type === "swap" ? formData.swapPreferences.trim() : null,
         imageURLs: imageURLs,
-        createdAt: serverTimestamp(),
-        ownerUid: authUser.uid,
-        ownerIsPremium: userDoc?.isPremium,
-        ownerIsIdVerified: userDoc?.isIdVerified,
-        ownerUsername: authUser.displayName || "Anonymous User",
-        status: "active",
+        updatedAt: serverTimestamp(),
       };
 
-      // Add to Firestore
-      const docRef = await addDoc(collection(db, "listings"), listingData);
+      // Update in Firestore
+      const listingRef = doc(db, "listings", listingId);
+      await updateDoc(listingRef, updatedListingData);
 
-      toast.success("Listing created successfully!");
-      router.push(`/listings/${docRef.id}`);
+      toast.success("Listing updated successfully!");
+      router.push(`/listings/${listingId}`);
     } catch (error) {
-      console.error("Error creating listing:", error);
-      toast.error("Failed to create listing. Please try again.");
+      console.error("Error updating listing:", error);
+      toast.error("Failed to update listing. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
-  // Loading state
-  if (authLoading) {
+  // Handle redirect cases
+  if (notFound) {
     return (
       <div className="flex min-h-screen flex-col">
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
-          <div className="animate-pulse text-xl">Loading...</div>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Listing Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              The listing you&apos;re looking for doesn&apos;t exist or has been
+              removed.
+            </p>
+            <Button onClick={() => router.push("/")}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
         </main>
         <Footer />
       </div>
     );
   }
 
-  // Not authenticated
-  if (!authUser) {
-    return null;
+  if (notAuthorized) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Not Authorized</h1>
+            <p className="text-muted-foreground mb-6">
+              You don&apos;t have permission to edit this listing.
+            </p>
+            <Button onClick={() => router.back()}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading || authLoading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <div className="text-xl">Loading listing details...</div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
@@ -278,10 +373,9 @@ const NewListing = () => {
         <div className="container px-4 md:px-6">
           <div className="max-w-3xl mx-auto">
             <div className="mb-8 text-center">
-              <h1 className="text-3xl font-bold mb-2">Create New Listing</h1>
+              <h1 className="text-3xl font-bold mb-2">Edit Listing</h1>
               <p className="text-muted-foreground">
-                Share your fragrance with the community. Provide clear details
-                to attract interested buyers or swappers.
+                Update your fragrance listing details and images.
               </p>
             </div>
 
@@ -292,7 +386,7 @@ const NewListing = () => {
                   <CardHeader>
                     <CardTitle>Basic Information</CardTitle>
                     <CardDescription>
-                      Enter the details about your fragrance listing
+                      Update the details about your fragrance listing
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -515,8 +609,8 @@ const NewListing = () => {
                   <CardHeader>
                     <CardTitle>Images</CardTitle>
                     <CardDescription>
-                      Upload clear photos of your fragrance. Show the bottle,
-                      box, fill level, and batch code if possible.
+                      Update photos of your fragrance. Show the bottle, box,
+                      fill level, and batch code if possible.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -586,16 +680,23 @@ const NewListing = () => {
                     type="button"
                     variant="outline"
                     onClick={() => router.back()}
-                    disabled={isLoading}
+                    disabled={isSaving}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isLoading}
-                    className={isLoading ? "px-8" : "cursor-pointer px-8"}
+                    disabled={isSaving}
+                    className={isSaving ? "px-8" : "cursor-pointer px-8"}
                   >
-                    {isLoading ? "Creating Listing..." : "Create Listing"}
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving Changes...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -609,4 +710,4 @@ const NewListing = () => {
   );
 };
 
-export default NewListing;
+export default EditListing;

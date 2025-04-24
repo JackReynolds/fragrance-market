@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useHits } from "react-instantsearch";
-import CustomHit from "./CustomHit";
+import CustomHit from "./CustomHit.jsx";
 import { PropTypes } from "prop-types";
 const ResultsGrid = ({ inputValue }) => {
   const { hits } = useHits();

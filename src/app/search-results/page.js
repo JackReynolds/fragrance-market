@@ -4,10 +4,15 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { algoliasearch } from "algoliasearch";
 import { InstantSearch } from "react-instantsearch";
-import { Navigation } from "@/components/ui/Navigation";
-import { Footer } from "@/components/ui/Footer";
-import ResultsGrid from "@/components/search/ResultsGrid";
-import CustomSearchBox from "@/components/search/CustomSearchBox";
+import { Navigation } from "@/components/ui/Navigation.jsx";
+import { Footer } from "@/components/ui/Footer.jsx";
+import ResultsGrid from "@/components/search/ResultsGrid.jsx";
+import CustomSearchBox from "@/components/search/CustomSearchBox.jsx";
+
+// const client = algoliasearch(
+//   process.env.ALGOLIA_SEARCH_APP_ID,
+//   process.env.ALGOLIA_SEARCH_API_KEY
+// );
 
 const client = algoliasearch("75NLWY8V1I", "f67465d105e699ee778e9cf026c8ad22");
 
