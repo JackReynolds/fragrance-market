@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Dialog.jsx";
+} from "@/components/ui/dialog.jsx";
 import { Button } from "@/components/ui/Button.jsx";
 import { Card, CardContent } from "@/components/ui/Card";
 import Image from "next/image";
