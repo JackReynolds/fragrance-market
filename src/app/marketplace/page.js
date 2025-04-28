@@ -14,40 +14,15 @@ import {
   Pagination,
   Stats,
   Configure,
-  useSearchBox,
 } from "react-instantsearch";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs.jsx";
-import { Card, CardContent } from "@/components/ui/card.jsx";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select.jsx";
-import { Slider } from "@/components/ui/slider.jsx";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs.jsx";
+
 import { Button } from "@/components/ui/button.jsx";
-import { Input } from "@/components/ui/input.jsx";
-import { Label } from "@/components/ui/label.jsx";
+
 import { Separator } from "@/components/ui/separator.jsx";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  Filter,
-  Search,
-  ShoppingBag,
-  Repeat,
-  SlidersHorizontal,
-  X,
-  Heart,
-} from "lucide-react";
+
+import { SlidersHorizontal, X } from "lucide-react";
 import ListingHit from "@/components/marketplace/listingHit";
-import ListingCard from "@/components/listingCard";
 import DebouncedSearchBox from "@/components/marketplace/debouncedSearchBox";
 import { useAuth } from "@/hooks/useAuth";
 
