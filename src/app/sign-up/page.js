@@ -34,12 +34,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/Command";
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/Popover";
+} from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
