@@ -10,7 +10,7 @@ import ErrorBoundary from "@/components/errorBoundary";
 
 // Dynamically import the InstantSearch components with ssr: false
 const InstantSearchWrapper = dynamic(
-  () => import("@/components/marketplace/InstantSearchWrapper"),
+  () => import("@/components/marketplace/instantSearchWrapper"),
   { ssr: false }
 );
 
