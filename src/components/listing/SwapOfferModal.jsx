@@ -28,6 +28,7 @@ const SwapOfferModal = ({
   isOpen,
   onClose,
   currentUser,
+  userDoc,
   targetListing,
   targetOwner,
 }) => {
@@ -102,6 +103,44 @@ const SwapOfferModal = ({
     }
   }, [isOpen, currentUser?.uid, targetListing.id, targetOwner.id]);
 
+  // Core info for the swap request and swap-request initial message
+  const swapRequestCoreInfo = {
+    // The user making the offer
+    offeredBy: {
+      uid: currentUser.uid,
+      username: userDoc.username || "Unknown",
+      email: userDoc.email,
+      isIdVerified: userDoc.isIdVerified,
+      isPremium: userDoc.isPremium,
+      profilePictureURL: userDoc.profilePictureURL || "",
+      rating: userDoc.rating || 0,
+    },
+    // The listing being offered for swap
+    offeredListing: {
+      id: selectedListing?.id,
+      title: selectedListing?.title,
+      brand: selectedListing?.brand,
+      imageURL: selectedListing?.imageURLs?.[0] || "",
+    },
+    // The owner of the target listing
+    requestedFrom: {
+      uid: targetOwner.uid,
+      username: targetOwner.username,
+      email: targetOwner.email,
+      isIdVerified: targetOwner.isIdVerified,
+      isPremium: targetOwner.isPremium,
+      profilePictureURL: targetOwner.profilePictureURL || "",
+      rating: targetOwner.rating || 0,
+    },
+    // The listing being requested
+    requestedListing: {
+      id: targetListing?.id,
+      title: targetListing?.title,
+      brand: targetListing?.brand,
+      imageURL: targetListing?.imageURLs?.[0] || "",
+    },
+  };
+
   // Check if a listing already has a pending request
   const hasExistingRequest = (listingId) => {
     return !!existingRequests[listingId];
@@ -112,30 +151,7 @@ const SwapOfferModal = ({
     try {
       // Create a new swap request
       const swapRequest = {
-        // The user making the offer
-        offeredBy: {
-          uid: currentUser.uid,
-          username: currentUser.displayName || "Unknown",
-        },
-        // The listing being offered for swap
-        offeredListing: {
-          id: selectedListing.id,
-          title: selectedListing.title,
-          brand: selectedListing.brand,
-          imageURL: selectedListing.imageURLs?.[0] || "",
-        },
-        // The owner of the target listing
-        requestedFrom: {
-          uid: targetOwner.uid,
-        },
-        // The listing being requested
-        requestedListing: {
-          id: targetListing.id,
-          title: targetListing.title,
-          brand: targetListing.brand,
-          imageURL: targetListing.imageURLs?.[0] || "",
-        },
-        // Status info
+        ...swapRequestCoreInfo,
         status: "pending",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -153,11 +169,9 @@ const SwapOfferModal = ({
   const createInitialChatMessage = async (swapRequestDocumentId) => {
     try {
       const swapRequestMessageData = {
-        listingId: selectedListing.id,
-        listingTitle: selectedListing.title,
-        listingBrand: selectedListing.brand,
-        listingImageURL: selectedListing.imageURLs?.[0] || "",
+        ...swapRequestCoreInfo,
         type: "swap-request",
+        unreadBy: [targetOwner.uid],
         senderUid: currentUser.uid,
         receiverUid: targetOwner.uid,
         createdAt: serverTimestamp(),

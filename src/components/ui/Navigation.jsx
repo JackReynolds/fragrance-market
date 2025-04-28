@@ -68,7 +68,7 @@ export function Navigation() {
 
   // Navigation links configuration
   const navigationLinks = [
-    { href: "/", label: "Home", icon: <Home className="h-4 w-4 mr-2" /> },
+    // { href: "/", label: "Home", icon: <Home className="h-4 w-4 mr-2" /> },
     {
       href: "/marketplace",
       label: "Marketplace",
@@ -88,13 +88,11 @@ export function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container h-16 flex items-center justify-between">
+      <div className="w-full px-6 h-16 flex items-center justify-between max-w-[2000px] mx-auto">
         {/* Left section - Logo */}
         <div className="flex-none">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="text-lg ml-5 font-semibold">
-              The Fragrance Market
-            </span>
+            <span className="text-lg font-semibold">The Fragrance Market</span>
           </Link>
         </div>
 
@@ -132,7 +130,7 @@ export function Navigation() {
                 )}
               </Link>
               <Link
-                href="/profile"
+                href="/my-profile"
                 className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
               >
                 Profile
@@ -208,7 +206,7 @@ export function Navigation() {
                       </SheetClose>
                       <SheetClose asChild>
                         <Link
-                          href="/profile"
+                          href="/my-profile"
                           className="flex items-center py-2 px-3 rounded-md hover:bg-muted transition-colors"
                         >
                           <User className="h-4 w-4 mr-2" />

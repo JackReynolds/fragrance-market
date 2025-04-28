@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase CLI state
+.firebase/
+
+# Functions dependencies
+functions/node_modules/
+
+# Local env / config
+functions/.env
+functions/.runtimeconfig.json
+
+# Optional build artifacts (if you compile TS)
+functions/lib/
+

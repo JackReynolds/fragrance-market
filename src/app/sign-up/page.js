@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -27,6 +27,56 @@ import {
   CardFooter,
 } from "@/components/ui/Card";
 import { Separator } from "@/components/ui/Separator";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/Command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/Popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
+
+// List of countries with names and ISO codes
+const countries = [
+  { name: "Austria", code: "AT" },
+  { name: "Belgium", code: "BE" },
+  { name: "Bulgaria", code: "BG" },
+  { name: "Croatia", code: "HR" },
+  { name: "Cyprus", code: "CY" },
+  { name: "Czech Republic", code: "CZ" },
+  { name: "Denmark", code: "DK" },
+  { name: "Estonia", code: "EE" },
+  { name: "Finland", code: "FI" },
+  { name: "France", code: "FR" },
+  { name: "Germany", code: "DE" },
+  { name: "Greece", code: "GR" },
+  { name: "Hungary", code: "HU" },
+  { name: "Ireland", code: "IE" },
+  { name: "Italy", code: "IT" },
+  { name: "Latvia", code: "LV" },
+  { name: "Lithuania", code: "LT" },
+  { name: "Luxembourg", code: "LU" },
+  { name: "Malta", code: "MT" },
+  { name: "Netherlands", code: "NL" },
+  { name: "Poland", code: "PL" },
+  { name: "Portugal", code: "PT" },
+  { name: "Romania", code: "RO" },
+  { name: "Slovakia", code: "SK" },
+  { name: "Slovenia", code: "SI" },
+  { name: "Spain", code: "ES" },
+  { name: "Sweden", code: "SE" },
+  { name: "United Kingdom", code: "GB" },
+  { name: "United States", code: "US" },
+  // Add more countries as needed
+];
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -35,16 +85,26 @@ export default function SignUp() {
     password: "",
     confirmPassword: "",
     agreeTerms: false,
+    country: "",
+    countryCode: "",
   });
   const router = useRouter();
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const auth = getAuth(app);
 
+  // Redirect to dashboard if user is already logged in
+  useEffect(() => {
+    if (auth.currentUser) {
+      router.push("/");
+      toast.info("You are already logged in");
+    }
+  }, [auth.currentUser, router]);
+
   const handleChange = (e) => {
-    console.log("handleChange", e.target);
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -60,6 +120,24 @@ export default function SignUp() {
     }
   };
 
+  const handleCountrySelect = (country) => {
+    setFormData((prev) => ({
+      ...prev,
+      country: country.name,
+      countryCode: country.code,
+    }));
+
+    // Clear country error if it exists
+    if (errors.country) {
+      setErrors((prev) => ({
+        ...prev,
+        country: undefined,
+      }));
+    }
+
+    setOpen(false);
+  };
+
   const validate = () => {
     const newErrors = {};
 
@@ -71,6 +149,10 @@ export default function SignUp() {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email is invalid";
+    }
+
+    if (!formData.country) {
+      newErrors.country = "Country is required";
     }
 
     if (!formData.password) {
@@ -93,7 +175,7 @@ export default function SignUp() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // **1) Trim fields before validation**
+    // Trim fields before validation
     const trimmedData = {
       email: formData.email.trim(),
       password: formData.password.trim(),
@@ -110,7 +192,6 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      // Firebase auth implementation would go here
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
@@ -123,6 +204,8 @@ export default function SignUp() {
         username: formData.username,
         usernameLowercase: formData.username.toLowerCase(),
         email: trimmedData.email,
+        country: formData.country,
+        countryCode: formData.countryCode,
         isPremium: false,
         isIdVerified: false,
         createdAt: serverTimestamp(),
@@ -131,7 +214,6 @@ export default function SignUp() {
       console.log("User registered successfully", formData);
       toast.success("You have successfully created an account");
       router.push("/");
-      // Redirect to dashboard or login page
     } catch (error) {
       console.error("Error during registration:", error);
       setErrors({
@@ -266,6 +348,66 @@ export default function SignUp() {
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className={cn(
+                              "w-full justify-between",
+                              !formData.country && "text-muted-foreground",
+                              errors.country && "border-destructive"
+                            )}
+                          >
+                            {formData.country
+                              ? formData.country
+                              : "Select country..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                          <Command>
+                            <CommandInput placeholder="Search country..." />
+                            <CommandList>
+                              <CommandEmpty>No country found.</CommandEmpty>
+                              <CommandGroup>
+                                {countries.map((country) => (
+                                  <CommandItem
+                                    key={country.code}
+                                    value={country.name}
+                                    onSelect={() =>
+                                      handleCountrySelect(country)
+                                    }
+                                  >
+                                    <span className="mr-2">
+                                      {getCountryFlagEmoji(country.code)}
+                                    </span>
+                                    {country.name}
+                                    <Check
+                                      className={cn(
+                                        "ml-auto h-4 w-4",
+                                        formData.countryCode === country.code
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {errors.country && (
+                        <p className="text-sm text-destructive">
+                          {errors.country}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
                       <Input
                         id="password"
@@ -309,13 +451,9 @@ export default function SignUp() {
                           id="agreeTerms"
                           name="agreeTerms"
                           checked={formData.agreeTerms}
-                          onChange={(e) => {
-                            console.log("Checkbox clicked!", e.target);
-                            handleChange(e);
-                          }}
+                          onChange={handleChange}
                           className="hover:cursor-pointer"
                           onCheckedChange={(checked) => {
-                            console.log("onCheckedChange", checked);
                             setFormData((prev) => ({
                               ...prev,
                               agreeTerms: checked,
@@ -346,7 +484,7 @@ export default function SignUp() {
                         <p className="text-sm text-destructive">
                           {errors.agreeTerms}
                         </p>
-                      )}{" "}
+                      )}
                     </div>
 
                     {errors.submit && (

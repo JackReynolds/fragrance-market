@@ -13,17 +13,21 @@ export default function SwapRequestsList({
   const getOtherParty = (request) => {
     if (request.offeredBy.uid === currentUserId) {
       return {
-        name: request.requestedFrom.username,
+        username: request.requestedFrom.username,
         uid: request.requestedFrom.uid,
         // Use placeholder for now
-        profilePic: "/placeholder-user.jpg",
+        profilePictureURL:
+          request.requestedFrom.profilePictureURL ||
+          "/profilePicturePlaceholder.png",
       };
     } else {
       return {
-        name: request.offeredBy.username,
+        username: request.offeredBy.username,
         uid: request.offeredBy.uid,
         // Use placeholder for now
-        profilePic: "/placeholder-user.jpg",
+        profilePictureURL:
+          request.offeredBy.profilePictureURL ||
+          "/profilePicturePlaceholder.png",
       };
     }
   };
@@ -66,8 +70,11 @@ export default function SwapRequestsList({
                   <div className="flex items-start gap-3">
                     <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
                       <Image
-                        src={otherParty.profilePic}
-                        alt={otherParty.name}
+                        src={
+                          otherParty?.profilePictureURL ||
+                          "/profilePictureURL.png"
+                        }
+                        alt={otherParty.username}
                         fill
                         className="object-cover"
                       />
@@ -75,7 +82,7 @@ export default function SwapRequestsList({
 
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">
-                        {otherParty.name}
+                        {otherParty.username}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {requestTitle}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -33,11 +33,11 @@ export default function SignIn() {
   const router = useRouter();
   const { authUser } = useAuth();
 
-  // Redirect if user is already logged in
-  if (authUser) {
-    router.push("/profile");
-    return null;
-  }
+  useEffect(() => {
+    if (authUser) {
+      router.push("/my-profile");
+    }
+  }, [authUser, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -89,7 +89,7 @@ export default function SignIn() {
         formData.password
       );
       toast.success("Signed in successfully");
-      router.push("/profile");
+      router.push("/my-profile");
     } catch (error) {
       console.error("Error signing in:", error);
 

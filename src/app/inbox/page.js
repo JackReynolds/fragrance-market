@@ -15,6 +15,7 @@ import { db } from "@/firebase.config";
 import SwapRequestsList from "@/components/inbox/SwapRequestsList";
 import ChatWindow from "@/components/inbox/ChatWindow";
 import { Loader2 } from "lucide-react";
+import { Navigation } from "@/components/ui/Navigation";
 
 export default function InboxPage() {
   const { authUser } = useAuth();
@@ -57,6 +58,7 @@ export default function InboxPage() {
         });
 
         setSwapRequests(requests);
+        console.log(requests);
         // Select first request by default if any exist
         if (requests.length > 0 && !selectedRequest) {
           setSelectedRequest(requests[0]);
@@ -106,45 +108,48 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="container px-4 py-6 mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Messages</h1>
+    <div>
+      <Navigation />
+      <div className="container px-4 py-6 mx-auto">
+        <h1 className="text-2xl font-bold mb-6">Messages</h1>
 
-      <div className="flex flex-col md:flex-row gap-4 h-[70vh]">
-        {/* Swap Requests List - Left Side */}
-        <div
-          id="requests-list"
-          className={`w-full md:w-1/3 md:max-w-[350px] border rounded-lg md:h-full overflow-hidden ${
-            isMobile && selectedRequest ? "hidden md:block" : "block"
-          }`}
-        >
-          <SwapRequestsList
-            requests={swapRequests}
-            selectedId={selectedRequest?.id}
-            onSelectRequest={handleSelectRequest}
-            currentUserId={authUser.uid}
-          />
-        </div>
-
-        {/* Chat Window - Right Side */}
-        <div
-          id="chat-window"
-          className={`flex-1 border rounded-lg md:h-full ${
-            isMobile && !selectedRequest ? "hidden md:block" : "block"
-          }`}
-        >
-          {selectedRequest ? (
-            <ChatWindow
-              swapRequest={selectedRequest}
+        <div className="flex flex-col md:flex-row gap-4 h-[70vh]">
+          {/* Swap Requests List - Left Side */}
+          <div
+            id="requests-list"
+            className={`w-full md:w-1/3 md:max-w-[350px] border rounded-lg md:h-full overflow-hidden ${
+              isMobile && selectedRequest ? "hidden md:block" : "block"
+            }`}
+          >
+            <SwapRequestsList
+              requests={swapRequests}
+              selectedId={selectedRequest?.id}
+              onSelectRequest={handleSelectRequest}
               currentUserId={authUser.uid}
-              onBackClick={isMobile ? handleBackToList : null}
             />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">
-                Select a conversation to start chatting
-              </p>
-            </div>
-          )}
+          </div>
+
+          {/* Chat Window - Right Side */}
+          <div
+            id="chat-window"
+            className={`flex-1 border rounded-lg md:h-full ${
+              isMobile && !selectedRequest ? "hidden md:block" : "block"
+            }`}
+          >
+            {selectedRequest ? (
+              <ChatWindow
+                swapRequest={selectedRequest}
+                authUser={authUser}
+                onBackClick={isMobile ? handleBackToList : null}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">
+                  Select a conversation to start chatting
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

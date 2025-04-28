@@ -11,35 +11,39 @@ import {
 import { db } from "@/firebase.config";
 import Image from "next/image";
 import { format } from "date-fns";
-import { ChevronLeft, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowUp, ChevronLeft } from "lucide-react";
+import StandardMessage from "./StandardMessage";
+import SwapRequestMessageCard from "./SwapRequestMessageCard";
 
-export default function ChatWindow({
-  swapRequest,
-  currentUserId,
-  onBackClick,
-}) {
+export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  const router = useRouter();
 
   // Get the other person in the conversation
   const otherParty =
-    swapRequest.offeredBy.uid === currentUserId
+    swapRequest.offeredBy.uid === authUser.uid
       ? {
-          name: swapRequest.requestedFrom.username,
+          username: swapRequest.requestedFrom.username,
           uid: swapRequest.requestedFrom.uid,
-          profilePic: "/placeholder-user.jpg",
+          profilePic:
+            swapRequest.requestedFrom.profilePictureURL ||
+            "/profilePicturePlaceholder.png",
         }
       : {
-          name: swapRequest.offeredBy.username,
+          username: swapRequest.offeredBy.username,
           uid: swapRequest.offeredBy.uid,
-          profilePic: "/placeholder-user.jpg",
+          profilePic:
+            swapRequest.offeredBy.profilePictureURL ||
+            "/profilePicturePlaceholder.png",
         };
 
   // Get what to display as the chat title
   const chatTitle =
-    swapRequest.offeredBy.uid === currentUserId
+    swapRequest.offeredBy.uid === authUser.uid
       ? `Your ${swapRequest.offeredListing.title} for ${swapRequest.requestedListing.title}`
       : `${swapRequest.offeredListing.title} for your ${swapRequest.requestedListing.title}`;
 
@@ -60,6 +64,8 @@ export default function ChatWindow({
         querySnapshot.forEach((doc) => {
           messagesList.push({ id: doc.id, ...doc.data() });
         });
+
+        console.log(messagesList);
 
         setMessages(messagesList);
       } catch (error) {
@@ -85,7 +91,7 @@ export default function ChatWindow({
     // Placeholder for sending message
     const message = {
       text: newMessage.trim(),
-      sentBy: currentUserId,
+      senderUid: authUser.uid,
       senderName: "You", // This would come from auth context
       createdAt: serverTimestamp(),
     };
@@ -104,6 +110,16 @@ export default function ChatWindow({
     console.log("Message would be sent:", message);
   };
 
+  // Function to render message based upon message type
+  const renderMessage = (message) => {
+    switch (message.type) {
+      case "swap-request":
+        return <SwapRequestMessageCard message={message} authUser={authUser} />;
+      default:
+        return <StandardMessage message={message} authUser={authUser} />;
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Chat Header */}
@@ -120,9 +136,12 @@ export default function ChatWindow({
         <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
           <Image
             src={otherParty.profilePic}
-            alt={otherParty.name}
+            alt={otherParty.username}
             fill
-            className="object-cover"
+            className="object-cover hover:cursor-pointer"
+            onClick={() => {
+              router.push(`/users/${otherParty.uid}`);
+            }}
           />
         </div>
 
@@ -152,36 +171,12 @@ export default function ChatWindow({
               <div
                 key={message.id}
                 className={`flex ${
-                  message.sentBy === currentUserId
+                  message.senderUid === authUser.uid
                     ? "justify-end"
                     : "justify-start"
                 }`}
               >
-                <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.sentBy === currentUserId
-                      ? "bg-primary text-white rounded-tr-none"
-                      : "bg-muted rounded-tl-none"
-                  }`}
-                >
-                  <p>{message.text}</p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      message.sentBy === currentUserId
-                        ? "text-primary-foreground/70"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {message.createdAt
-                      ? format(
-                          message.createdAt instanceof Date
-                            ? message.createdAt
-                            : message.createdAt.toDate(),
-                          "h:mm a"
-                        )
-                      : ""}
-                  </p>
-                </div>
+                {renderMessage(message)}
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -202,9 +197,9 @@ export default function ChatWindow({
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="bg-primary text-white p-2 rounded-full disabled:opacity-50"
+            className="bg-primary flex justify-center items-center text-white p-2 rounded-full disabled:opacity-50"
           >
-            <Send className="h-5 w-5" />
+            <ArrowUp className="h-5 w-6" />
           </button>
         </form>
       </div>
