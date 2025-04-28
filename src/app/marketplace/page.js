@@ -46,9 +46,9 @@ import {
   X,
   Heart,
 } from "lucide-react";
-import ListingHit from "@/components/marketplace/ListingHit";
-import ListingCard from "@/components/ListingCard";
-import DebouncedSearchBox from "@/components/marketplace/DebouncedSearchBox";
+import ListingHit from "@/components/marketplace/listingHit";
+import ListingCard from "@/components/listingCard";
+import DebouncedSearchBox from "@/components/marketplace/debouncedSearchBox";
 import { useAuth } from "@/hooks/useAuth";
 
 const client = algoliasearch(
