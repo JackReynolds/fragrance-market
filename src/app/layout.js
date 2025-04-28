@@ -2,8 +2,8 @@ import React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
-import { UserDocProvider } from "@/context/UserDocContext";
+import { AuthProvider } from "@/context/authContext";
+import { UserDocProvider } from "@/context/userDocContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

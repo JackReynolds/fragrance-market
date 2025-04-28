@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { Navigation } from "@/components/ui/Navigation.jsx";
-import { Footer } from "@/components/ui/Footer.jsx";
+import { Navigation } from "@/components/ui/navigation.jsx";
+import { Footer } from "@/components/ui/footer.jsx";
 import { algoliasearch } from "algoliasearch";
 import { InstantSearch } from "react-instantsearch";
 import dynamic from "next/dynamic";
 
 // Dynamically import the components that use search params
 const SearchContentWithParams = dynamic(
-  () => import("@/components/search/SearchContent"),
+  () => import("@/components/search/searchContent"),
   {
     loading: () => (
       <div className="container mx-auto p-4 min-h-[400px] flex items-center justify-center">

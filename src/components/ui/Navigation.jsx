@@ -35,8 +35,8 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetClose,
-} from "@/components/ui/Sheet.jsx";
-import { Button } from "@/components/ui/Button.jsx";
+} from "@/components/ui/sheet.jsx";
+import { Button } from "@/components/ui/button.jsx";
 
 export function Navigation() {
   const { authUser } = useAuth();

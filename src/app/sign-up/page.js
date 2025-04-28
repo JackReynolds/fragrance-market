@@ -11,12 +11,12 @@ import {
 import { useRouter } from "next/navigation";
 import { app, db } from "../../firebase.config";
 import { setDoc, doc, serverTimestamp } from "firebase/firestore";
-import { Navigation } from "@/components/ui/Navigation";
-import { Footer } from "@/components/ui/Footer";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Navigation } from "@/components/ui/navigation";
+import { Footer } from "@/components/ui/footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   Card,
@@ -25,8 +25,8 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/Card";
-import { Separator } from "@/components/ui/Separator";
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Command,
   CommandEmpty,

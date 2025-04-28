@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Navigation } from "@/components/ui/Navigation.jsx";
-import { Footer } from "@/components/ui/Footer.jsx";
+import { Navigation } from "@/components/ui/navigation.jsx";
+import { Footer } from "@/components/ui/footer.jsx";
 import { algoliasearch } from "algoliasearch";
+import { useSearchParams } from "next/navigation";
 import {
   InstantSearch,
   SearchBox,
@@ -20,20 +21,20 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/Tabs.jsx";
-import { Card, CardContent } from "@/components/ui/Card.jsx";
+} from "@/components/ui/tabs.jsx";
+import { Card, CardContent } from "@/components/ui/card.jsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/Select.jsx";
-import { Slider } from "@/components/ui/Slider.jsx";
-import { Button } from "@/components/ui/Button.jsx";
-import { Input } from "@/components/ui/Input.jsx";
-import { Label } from "@/components/ui/Label.jsx";
-import { Separator } from "@/components/ui/Separator.jsx";
+} from "@/components/ui/select.jsx";
+import { Slider } from "@/components/ui/slider.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
+import { Separator } from "@/components/ui/separator.jsx";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -66,13 +67,50 @@ const HitWrapper = ({ hit }) => {
 const Marketplace = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [listingTypeFilter, setListingTypeFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchParams = useSearchParams();
+  const queryFromURL = searchParams.get("q") || "";
+
+  useEffect(() => {
+    if (queryFromURL) {
+      setSearchTerm(queryFromURL);
+    }
+  }, [queryFromURL]);
+
+  // Create a simple routing state manager
+  const simpleStateMapping = {
+    stateToRoute(uiState) {
+      const indexUiState = uiState.fragrances || {};
+      return {
+        q: indexUiState.query || "",
+      };
+    },
+    routeToState(routeState) {
+      return {
+        fragrances: {
+          query: routeState.q || "",
+        },
+      };
+    },
+  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center">
       <Navigation />
 
       <div className="flex-1 w-full">
-        <InstantSearch searchClient={client} indexName="fragrances">
+        <InstantSearch
+          searchClient={client}
+          indexName="fragrances"
+          initialUiState={{
+            fragrances: {
+              query: queryFromURL,
+            },
+          }}
+          routing={{
+            stateMapping: simpleStateMapping,
+          }}
+        >
           <Configure
             hitsPerPage={12}
             filters={
@@ -93,6 +131,7 @@ const Marketplace = () => {
                 <DebouncedSearchBox
                   placeholder="Search by name or brand..."
                   debounceTime={500}
+                  defaultValue={queryFromURL}
                 />
               </div>
             </div>

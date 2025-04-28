@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase.config";
-import { AuthContext } from "./AuthContext";
+import { AuthContext } from "./authContext";
 
 /**
  * UserDocContext will provide the "extended user data" from Firestore,

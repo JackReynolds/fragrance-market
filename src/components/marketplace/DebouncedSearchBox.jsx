@@ -3,15 +3,22 @@ import { useSearchBox } from "react-instantsearch";
 import { Search, X } from "lucide-react";
 
 // Custom debounced search box component
-const DebouncedSearchBox = ({ placeholder, debounceTime = 500 }) => {
+const DebouncedSearchBox = ({
+  placeholder,
+  debounceTime = 500,
+  defaultValue = "",
+}) => {
   const { query, refine } = useSearchBox();
   const [inputValue, setInputValue] = useState(query);
   const timerRef = useRef(null);
 
   // Update the input value when the query changes
   useEffect(() => {
-    setInputValue(query);
-  }, [query]);
+    if (defaultValue) {
+      setInputValue(defaultValue);
+      refine(defaultValue);
+    }
+  }, [defaultValue, refine]);
 
   // Handle input changes with debounce
   const onChange = (e) => {

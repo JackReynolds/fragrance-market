@@ -1,6 +1,6 @@
 import React from "react";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/Button.jsx";
+import { Button } from "@/components/ui/button.jsx";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 

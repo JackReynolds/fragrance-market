@@ -12,10 +12,10 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
-import SwapRequestsList from "@/components/inbox/SwapRequestsList";
-import ChatWindow from "@/components/inbox/ChatWindow";
+import SwapRequestsList from "@/components/inbox/swapRequestsList";
+import ChatWindow from "@/components/inbox/chatWindow";
 import { Loader2 } from "lucide-react";
-import { Navigation } from "@/components/ui/Navigation";
+import { Navigation } from "@/components/ui/navigation";
 
 export default function InboxPage() {
   const { authUser } = useAuth();

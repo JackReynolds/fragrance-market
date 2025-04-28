@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Navigation } from "@/components/ui/Navigation.jsx";
-import { Footer } from "@/components/ui/Footer.jsx";
-import { Button } from "@/components/ui/Button.jsx";
-import { Card, CardContent } from "@/components/ui/Card.jsx";
+import { Navigation } from "@/components/ui/navigation.jsx";
+import { Footer } from "@/components/ui/footer.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Card, CardContent } from "@/components/ui/card.jsx";
 import {
   Upload,
   Search,

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
 export function Hero() {
@@ -15,7 +15,8 @@ export function Hero() {
     e.preventDefault();
     if (searchTerm.trim().length > 0) {
       // Navigate to "/search-results?q=searchTerm"
-      router.push(`/search-results?q=${encodeURIComponent(searchTerm.trim())}`);
+      //router.push(`/search-results?q=${encodeURIComponent(searchTerm.trim())}`);
+      router.push(`/marketplace?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 

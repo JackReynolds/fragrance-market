@@ -6,24 +6,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { Navigation } from "@/components/ui/Navigation.jsx";
-import { Footer } from "@/components/ui/Footer.jsx";
+import { Navigation } from "@/components/ui/navigation.jsx";
+import { Footer } from "@/components/ui/footer.jsx";
 import { PropTypes } from "prop-types";
-import { Button } from "@/components/ui/Button.jsx";
+import { Button } from "@/components/ui/button.jsx";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card.jsx";
-import { Separator } from "@/components/ui/Separator.jsx";
+} from "@/components/ui/card.jsx";
+import { Separator } from "@/components/ui/separator.jsx";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/Tabs.jsx";
+} from "@/components/ui/tabs.jsx";
 import { toast } from "sonner";
 import {
   ChevronLeft,

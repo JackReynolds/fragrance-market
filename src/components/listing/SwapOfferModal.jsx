@@ -19,8 +19,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog.jsx";
-import { Button } from "@/components/ui/Button.jsx";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button.jsx";
+import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Loader2, AlertCircle } from "lucide-react";
 

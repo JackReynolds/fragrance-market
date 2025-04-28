@@ -1,10 +1,10 @@
 import React from "react";
-import { Navigation } from "@/components/ui/Navigation";
-import { Hero } from "@/components/ui/Hero";
-import { FeaturedItems } from "@/components/ui/FeaturedItems";
-import { HowItWorks } from "@/components/ui/HowItWorks";
+import { Navigation } from "@/components/ui/navigation";
+import { Hero } from "@/components/ui/hero";
+import { FeaturedItems } from "@/components/ui/featuredItems";
+import { HowItWorks } from "@/components/ui/howItWorks";
 import { Testimonials } from "@/components/ui/Testimonials";
-import { Footer } from "@/components/ui/Footer";
+import { Footer } from "@/components/ui/footer";
 
 export default function Home() {
   return (

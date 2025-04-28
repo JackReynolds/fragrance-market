@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import CustomSearchBox from "@/components/search/CustomSearchBox.jsx";
-import ResultsGrid from "@/components/search/ResultsGrid.jsx";
+import CustomSearchBox from "@/components/search/customSearchBox.jsx";
+import ResultsGrid from "@/components/search/resultsGrid.jsx";
 
 export default function SearchContent() {
   const searchParams = useSearchParams();

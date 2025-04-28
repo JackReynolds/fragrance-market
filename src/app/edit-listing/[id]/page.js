@@ -5,26 +5,26 @@ import { useRouter, useParams } from "next/navigation";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
-import { Navigation } from "@/components/ui/Navigation.jsx";
-import { Footer } from "@/components/ui/Footer.jsx";
-import { Button } from "@/components/ui/Button.jsx";
-import { Input } from "@/components/ui/Input.jsx";
-import { Label } from "@/components/ui/Label.jsx";
+import { Navigation } from "@/components/ui/navigation.jsx";
+import { Footer } from "@/components/ui/footer.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/Card.jsx";
+} from "@/components/ui/card.jsx";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/Select.jsx";
-import { Textarea } from "@/components/ui/Textarea.jsx";
+} from "@/components/ui/select.jsx";
+import { Textarea } from "@/components/ui/textarea.jsx";
 import {
   Camera,
   Upload,

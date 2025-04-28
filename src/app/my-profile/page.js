@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Navigation } from "@/components/ui/Navigation.jsx";
-import { Footer } from "@/components/ui/Footer.jsx";
-import { Button } from "@/components/ui/Button.jsx";
-import { Input } from "@/components/ui/Input.jsx";
-import { Label } from "@/components/ui/Label.jsx";
+import { Navigation } from "@/components/ui/navigation.jsx";
+import { Footer } from "@/components/ui/footer.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
 import { toast } from "sonner";
 import {
   Card,
@@ -15,14 +15,14 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/Card.jsx";
+} from "@/components/ui/card.jsx";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@/components/ui/Tabs.jsx";
-import { Separator } from "@/components/ui/Separator.jsx";
+} from "@/components/ui/tabs.jsx";
+import { Separator } from "@/components/ui/separator.jsx";
 import {
   Star,
   Shield,
