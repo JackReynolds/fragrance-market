@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { algoliasearch } from "algoliasearch/lite";
+import { algoliasearch } from "algoliasearch";
 import {
   InstantSearch,
   Configure,
