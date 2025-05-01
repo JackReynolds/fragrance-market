@@ -1,13 +1,16 @@
+"use client";
+
 import React from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
 import Image from "next/image";
-import { ChevronRight } from "lucide-react";
-
+import { useRouter } from "next/navigation";
 const SwapRequestMessageCard = ({ message, authUser }) => {
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
   const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
+
+  const router = useRouter();
 
   return (
     <div className="max-w-[90%] w-[400px] rounded-lg p-4 border bg-card shadow-sm">
@@ -26,14 +29,21 @@ const SwapRequestMessageCard = ({ message, authUser }) => {
       </div>
 
       {/* Swap details with images and info */}
-      <div className="flex items-center justify-between mb-4">
-        {/* Left side - Offered item */}
-        <div className="flex-1">
+      <div className="flex flex-col w-full items-start justify-start gap-3 mb-4">
+        {/* Offered item */}
+        <div className="flex-1 w-full">
           <p className="text-xs text-muted-foreground mb-1">
-            {isOfferedByUser ? "You're offering:" : "They're offering:"}
+            {isOfferedByUser
+              ? "You're offering:"
+              : `${message.offeredBy.username} is offering:`}
           </p>
           <div className="flex items-center gap-2">
-            <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border">
+            <div
+              className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
+              onClick={() => {
+                router.push(`/listings/${message.offeredListing.id}`);
+              }}
+            >
               <Image
                 src={message.offeredListing.imageURL}
                 alt={message.offeredListing.title}
@@ -41,27 +51,38 @@ const SwapRequestMessageCard = ({ message, authUser }) => {
                 className="object-cover"
               />
             </div>
+
             <div className="min-w-0">
-              <p className="font-medium text-sm truncate">
+              <p
+                className="font-medium text-sm truncate hover:cursor-pointer hover:underline hover:font-semibold"
+                onClick={() => {
+                  router.push(`/listings/${message.offeredListing.id}`);
+                }}
+              >
                 {message.offeredListing.title}
               </p>
               <p className="text-xs text-muted-foreground">
                 {message.offeredListing.brand}
               </p>
-              <p className="text-xs">{message.offeredBy.username}</p>
+              <p className="text-xs">{message.offeredListing.fragrance}</p>
+              <p className="text-xs">
+                {message.offeredListing.amountLeft}% full
+              </p>
             </div>
           </div>
         </div>
 
         {/* Arrow */}
-        <div className="px-2">
+        {/* <div className="px-2">
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        </div>
+        </div> */}
 
-        {/* Right side - Requested item */}
-        <div className="flex-1">
+        {/* Requested item */}
+        <div className="flex-1 w-full">
           <p className="text-xs text-muted-foreground mb-1">
-            {isRequestedFromUser ? "Your fragrance:" : "They want:"}
+            {isRequestedFromUser
+              ? "For your fragrance:"
+              : `For ${message.requestedFrom.username}'s:`}
           </p>
           <div className="flex items-center gap-2">
             <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border">
@@ -79,7 +100,10 @@ const SwapRequestMessageCard = ({ message, authUser }) => {
               <p className="text-xs text-muted-foreground">
                 {message.requestedListing.brand}
               </p>
-              <p className="text-xs">{message.requestedFrom.username}</p>
+              <p className="text-xs">{message.requestedListing.fragrance}</p>
+              <p className="text-xs">
+                {message.requestedListing.amountLeft}% full
+              </p>
             </div>
           </div>
         </div>
@@ -89,13 +113,26 @@ const SwapRequestMessageCard = ({ message, authUser }) => {
       <div className="mt-4 flex gap-2 justify-end">
         {isRequestedFromUser ? (
           <>
-            <Button size="sm" variant="destructive">
+            <Button
+              size="sm"
+              variant="destructive"
+              className="hover:cursor-pointer hover:bg-destructive/80"
+            >
               Reject
             </Button>
-            <Button size="sm">Accept</Button>
+            <Button
+              size="sm"
+              className="hover:cursor-pointer hover:bg-primary/80"
+            >
+              Accept
+            </Button>
           </>
         ) : isOfferedByUser ? (
-          <Button size="sm" variant="destructive">
+          <Button
+            size="sm"
+            variant="destructive"
+            className="hover:cursor-pointer hover:bg-destructive/80"
+          >
             Cancel Request
           </Button>
         ) : null}

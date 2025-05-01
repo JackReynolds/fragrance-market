@@ -18,8 +18,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersHorizontal, X } from "lucide-react";
-import ListingHit from "@/components/marketplace/ListingHit";
-import DebouncedSearchBox from "@/components/marketplace/DebouncedSearchBox";
+import ListingHit from "@/components/marketplace/listingHit";
+import DebouncedSearchBox from "@/components/marketplace/debouncedSearchBox";
 
 const client = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_APP_ID,

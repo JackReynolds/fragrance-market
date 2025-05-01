@@ -121,6 +121,8 @@ const SwapOfferModal = ({
       title: selectedListing?.title,
       brand: selectedListing?.brand,
       imageURL: selectedListing?.imageURLs?.[0] || "",
+      fragrance: selectedListing?.fragrance,
+      amountLeft: selectedListing?.amountLeft,
     },
     // The owner of the target listing
     requestedFrom: {
@@ -138,6 +140,8 @@ const SwapOfferModal = ({
       title: targetListing?.title,
       brand: targetListing?.brand,
       imageURL: targetListing?.imageURLs?.[0] || "",
+      fragrance: targetListing?.fragrance,
+      amountLeft: targetListing?.amountLeft,
     },
   };
 
@@ -331,9 +335,17 @@ const SwapOfferModal = ({
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {listing.brand}
-                        </p>
+                        <div className="flex flex-col mt-1">
+                          <p className="text-xs font-semibold text-muted-foreground truncate">
+                            {listing.brand}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {listing.fragrance}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {listing.amountLeft}% full
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

@@ -1,3 +1,5 @@
+"use client";
+
 // src/components/inbox/ChatWindow.jsx
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -13,8 +15,8 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { ArrowUp, ChevronLeft } from "lucide-react";
-import StandardMessage from "./StandardMessage";
-import SwapRequestMessageCard from "./SwapRequestMessageCard";
+import StandardMessage from "./standardMessage";
+import SwapRequestMessageCard from "./swapRequestMessageCard";
 
 export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
   const [messages, setMessages] = useState([]);

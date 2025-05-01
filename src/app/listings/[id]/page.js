@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
-import SwapOfferModal from "@/components/listing/SwapOfferModal.jsx";
+import SwapOfferModal from "@/components/listing/swapOfferModal.jsx";
 import { useUserDoc } from "@/hooks/useUserDoc.js";
 
 const ListingDetailPage = () => {
@@ -437,7 +437,7 @@ const ListingDetailPage = () => {
                   )}
 
                   <div className="text-sm text-muted-foreground">
-                    {listing.amountLeft}% Full
+                    {listing.amountLeft}% full
                   </div>
                 </div>
 
