@@ -36,44 +36,16 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import {
   doc,
-  getDoc,
+  updateDoc,
   collection,
   query,
   where,
   getDocs,
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
-
-// Sample data for now - in a real app, this would come from your database
-const SAMPLE_LISTINGS = [
-  {
-    id: "1",
-    title: "Tom Ford Oud Wood",
-    price: 189.99,
-    image: "/fragrances/tom-ford-oud-wood.jpg",
-    type: "Sale",
-    condition: "New",
-    createdAt: "2023-08-15",
-  },
-  {
-    id: "2",
-    title: "Creed Aventus",
-    price: 249.99,
-    image: "/fragrances/creed-aventus.jpg",
-    type: "Swap",
-    condition: "Used - 90% Full",
-    createdAt: "2023-09-02",
-  },
-  {
-    id: "3",
-    title: "Maison Francis Kurkdjian Baccarat Rouge 540",
-    price: 215.0,
-    image: "/fragrances/baccarat-rouge-540.jpg",
-    type: "Sale",
-    condition: "New - Sealed",
-    createdAt: "2023-10-10",
-  },
-];
+import { useUserDoc } from "@/hooks/useUserDoc";
+import ManualAddressForm from "@/components/profile/ManualAddressForm";
+import GoogleLocationSearch from "@/components/googleLocationSearch";
 
 const SAMPLE_REVIEWS = [
   {
@@ -102,10 +74,15 @@ const SAMPLE_REVIEWS = [
 export default function Profile() {
   const { authUser, authLoading } = useAuth();
   const router = useRouter();
-  const [userData, setUserData] = useState(null);
-  const [userDataLoading, setUserDataLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
   const [userListings, setUserListings] = useState([]);
+  const { userDoc } = useUserDoc(authUser?.uid);
+  const [editingAddress, setEditingAddress] = useState(false);
+  const [formattedAddress, setFormattedAddress] = useState(
+    userDoc?.formattedAddress || ""
+  );
+  const [showEnterAddressManually, setShowEnterAddressManually] =
+    useState(false);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -113,32 +90,6 @@ export default function Profile() {
       router.push("/sign-in");
     }
   }, [authUser, authLoading, router]);
-
-  // Fetch user data from Firestore
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (authUser && authUser.uid) {
-        try {
-          const userDocRef = doc(db, "users", authUser.uid);
-          const userDoc = await getDoc(userDocRef);
-
-          if (userDoc.exists()) {
-            setUserData(userDoc.data());
-          } else {
-            console.error("No user document found");
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-        } finally {
-          setUserDataLoading(false);
-        }
-      }
-    };
-
-    if (authUser) {
-      fetchUserData();
-    }
-  }, [authUser]);
 
   useEffect(() => {
     if (authUser) {
@@ -161,30 +112,12 @@ export default function Profile() {
     setUserListings(listings);
   };
 
-  // Loading state
-  if (authLoading || (authUser && userDataLoading)) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Navigation />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="animate-pulse text-xl">Loading profile...</div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Not authenticated
-  if (!authUser) {
-    return null; // The useEffect will redirect
-  }
-
   // Sample stats - in a real app, these would come from your database
   const userStats = {
     itemsSold: 15,
     rating: 4.8,
     status: "Premium",
-    isEmailVerified: authUser.emailVerified,
+    isEmailVerified: authUser?.emailVerified,
     isIdVerified: true,
   };
 
@@ -227,6 +160,37 @@ export default function Profile() {
     );
   };
 
+  // Save address to firestore
+  const saveAddressToFirestore = async (locationData) => {
+    const userRef = doc(db, "users", authUser.uid);
+    await updateDoc(userRef, {
+      formattedAddress: locationData.formattedAddress,
+      addressComponents: locationData.addressComponents,
+    });
+  };
+
+  const handleSaveAddress = (locationData) => {
+    setFormattedAddress(locationData.formattedAddress);
+    setEditingAddress(false);
+    setShowEnterAddressManually(false);
+    saveAddressToFirestore(locationData);
+    console.log(locationData);
+    toast.success("Address updated!");
+  };
+
+  // Loading state
+  if (authLoading || (!authUser && !userDoc)) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="animate-pulse text-xl">Loading profile...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navigation />
@@ -240,9 +204,9 @@ export default function Profile() {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-primary/10">
-                      {userData?.profileImage ? (
+                      {userDoc?.profileImage ? (
                         <Image
-                          src={userData.profileImage}
+                          src={userDoc.profileImage}
                           alt={authUser.displayName || "User"}
                           fill
                           className="object-cover"
@@ -251,7 +215,7 @@ export default function Profile() {
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-semibold text-primary">
                           {(
                             authUser.displayName ||
-                            userData?.username ||
+                            userDoc?.username ||
                             "U"
                           ).charAt(0)}
                         </div>
@@ -263,7 +227,7 @@ export default function Profile() {
 
                     <div className="text-center">
                       <h2 className="text-xl font-bold">
-                        {authUser.displayName || userData?.username || "User"}
+                        {authUser.displayName || userDoc?.username || "User"}
                       </h2>
                       <p className="text-sm text-muted-foreground">
                         {authUser.email}
@@ -556,7 +520,7 @@ export default function Profile() {
                         <Input
                           id="display-name"
                           defaultValue={
-                            authUser.displayName || userData?.username || ""
+                            authUser.displayName || userDoc?.username || ""
                           }
                           placeholder="Your display name"
                         />
@@ -587,7 +551,7 @@ export default function Profile() {
                         <Label htmlFor="phone">Phone Number</Label>
                         <Input
                           id="phone"
-                          defaultValue={userData?.phoneNumber || ""}
+                          defaultValue={userDoc?.phoneNumber || ""}
                           placeholder="Your phone number"
                         />
                       </div>
@@ -600,6 +564,73 @@ export default function Profile() {
                       >
                         Save Changes
                       </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        Address Information
+                      </CardTitle>
+                      <CardDescription>
+                        Update your address information to be used for shipping
+                        your fragrances
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="formattedAddress">Address</Label>
+                        {!editingAddress ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="formattedAddress"
+                              value={formattedAddress}
+                              disabled
+                              className="flex-1"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingAddress(true)}
+                            >
+                              Change
+                            </Button>
+                          </div>
+                        ) : showEnterAddressManually ? (
+                          <ManualAddressForm
+                            onSave={(data) => {
+                              handleSaveAddress(data);
+                            }}
+                            onCancel={() => setShowEnterAddressManually(false)}
+                          />
+                        ) : (
+                          <div>
+                            <GoogleLocationSearch
+                              defaultValue={formattedAddress}
+                              onSelect={(locationData) => {
+                                handleSaveAddress(locationData);
+                              }}
+                            />
+                            <div className="flex items-center mt-4 gap-2">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setEditingAddress(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  setShowEnterAddressManually(true)
+                                }
+                              >
+                                Enter address manually
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
 

@@ -50,7 +50,7 @@ export function Navigation() {
 
   useEffect(() => {
     if (authUser) {
-      const swapRequestsRef = collection(db, "swap-requests");
+      const swapRequestsRef = collection(db, "swap_requests");
       const q = query(
         swapRequestsRef,
         where("requestedFrom.uid", "==", authUser.uid),

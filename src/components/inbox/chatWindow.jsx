@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable react/prop-types */
+
 // src/components/inbox/ChatWindow.jsx
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -17,6 +19,8 @@ import { useRouter } from "next/navigation";
 import { ArrowUp, ChevronLeft } from "lucide-react";
 import StandardMessage from "./standardMessage";
 import SwapRequestMessageCard from "./swapRequestMessageCard";
+import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
+import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
 
 export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
   const [messages, setMessages] = useState([]);
@@ -55,7 +59,7 @@ export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
       try {
         const messagesRef = collection(
           db,
-          "swap-requests",
+          "swap_requests",
           swapRequest.id,
           "messages"
         );
@@ -66,8 +70,6 @@ export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
         querySnapshot.forEach((doc) => {
           messagesList.push({ id: doc.id, ...doc.data() });
         });
-
-        console.log(messagesList);
 
         setMessages(messagesList);
       } catch (error) {
@@ -115,8 +117,30 @@ export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
   // Function to render message based upon message type
   const renderMessage = (message) => {
     switch (message.type) {
-      case "swap-request":
-        return <SwapRequestMessageCard message={message} authUser={authUser} />;
+      case "swap_request":
+        return (
+          <SwapRequestMessageCard
+            message={message}
+            authUser={authUser}
+            swapRequest={swapRequest}
+          />
+        );
+      case "swap_accepted":
+        return (
+          <SwapAcceptedMessageCard
+            message={message}
+            authUser={authUser}
+            swapRequest={swapRequest}
+          />
+        );
+      case "pending_shipment":
+        return (
+          <PendingShipmentMessageCard
+            message={message}
+            authUser={authUser}
+            swapRequest={swapRequest}
+          />
+        );
       default:
         return <StandardMessage message={message} authUser={authUser} />;
     }

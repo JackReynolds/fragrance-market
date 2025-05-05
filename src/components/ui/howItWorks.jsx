@@ -1,4 +1,7 @@
+"use client";
+
 import { ShieldCheck, PackageOpen, Repeat } from "lucide-react";
+import * as React from "react";
 
 const steps = [
   {

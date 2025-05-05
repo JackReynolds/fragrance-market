@@ -66,7 +66,7 @@ const SwapOfferModal = ({
         setUserListings(listings);
 
         // Check for existing swap requests
-        const swapRequestsRef = collection(db, "swap-requests");
+        const swapRequestsRef = collection(db, "swap_requests");
         const requestsQuery = query(
           swapRequestsRef,
           and(
@@ -103,7 +103,7 @@ const SwapOfferModal = ({
     }
   }, [isOpen, currentUser?.uid, targetListing.id, targetOwner.id]);
 
-  // Core info for the swap request and swap-request initial message
+  // Core info for the swap request and swap_request initial message
   const swapRequestCoreInfo = {
     // The user making the offer
     offeredBy: {
@@ -150,7 +150,7 @@ const SwapOfferModal = ({
     return !!existingRequests[listingId];
   };
 
-  // Helpder function to create a new swap-request
+  // Helpder function to create a new swap_request
   const createSwapRequest = async () => {
     try {
       // Create a new swap request
@@ -161,7 +161,7 @@ const SwapOfferModal = ({
         updatedAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, "swap-requests"), swapRequest);
+      const docRef = await addDoc(collection(db, "swap_requests"), swapRequest);
       return docRef.id;
     } catch (error) {
       console.error("Error creating swap request:", error);
@@ -174,7 +174,7 @@ const SwapOfferModal = ({
     try {
       const swapRequestMessageData = {
         ...swapRequestCoreInfo,
-        type: "swap-request",
+        type: "swap_request",
         unreadBy: [targetOwner.uid],
         senderUid: currentUser.uid,
         receiverUid: targetOwner.uid,
@@ -182,7 +182,7 @@ const SwapOfferModal = ({
       };
 
       await addDoc(
-        collection(db, "swap-requests", swapRequestDocumentId, "messages"),
+        collection(db, "swap_requests", swapRequestDocumentId, "messages"),
         swapRequestMessageData
       );
 

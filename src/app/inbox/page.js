@@ -41,7 +41,7 @@ export default function InboxPage() {
       if (!authUser?.uid) return;
 
       try {
-        const requestsRef = collection(db, "swap-requests");
+        const requestsRef = collection(db, "swap_requests");
         const q = query(
           requestsRef,
           or(
@@ -58,7 +58,6 @@ export default function InboxPage() {
         });
 
         setSwapRequests(requests);
-        console.log(requests);
         // Select first request by default if any exist
         if (requests.length > 0 && !selectedRequest) {
           setSelectedRequest(requests[0]);

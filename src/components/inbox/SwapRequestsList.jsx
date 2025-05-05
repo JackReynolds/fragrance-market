@@ -1,4 +1,8 @@
 // src/components/inbox/SwapRequestsList.jsx
+"use client";
+
+/* eslint-disable react/prop-types */
+
 import React from "react";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -29,6 +33,43 @@ export default function SwapRequestsList({
           request.offeredBy.profilePictureURL ||
           "/profilePicturePlaceholder.png",
       };
+    }
+  };
+
+  // Render the status of the request
+  const renderRequestStatus = (status) => {
+    switch (status) {
+      case "swap_request":
+        return (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+            Pending
+          </span>
+        );
+      case "swap_accepted":
+        return (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-800">
+            Accepted
+          </span>
+        );
+      case "swap_rejected":
+        return (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-800">
+            Rejected
+          </span>
+        );
+      case "pending_shipment":
+        return (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+            Pending Shipment
+          </span>
+        );
+
+      default:
+        return (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-800">
+            Unknown
+          </span>
+        );
     }
   };
 
@@ -88,17 +129,7 @@ export default function SwapRequestsList({
                         {requestTitle}
                       </p>
                       <div className="flex justify-between items-center mt-1">
-                        <span
-                          className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            request.status === "pending"
-                              ? "bg-amber-100 text-amber-800"
-                              : request.status === "accepted"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {request.status}
-                        </span>
+                        {renderRequestStatus(request.status)}
                         <span className="text-xs text-muted-foreground">
                           {request.updatedAt
                             ? format(request.updatedAt.toDate(), "MMM d")

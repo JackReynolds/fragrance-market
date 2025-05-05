@@ -1,16 +1,50 @@
 "use client";
+/* eslint-disable react/prop-types */
 
 import React from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-const SwapRequestMessageCard = ({ message, authUser }) => {
+const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
   const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
 
   const router = useRouter();
+
+  // Helper function to change swap_requests status to pending-shipment
+  const changeSwapRequestStatus = async () => {
+    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+    await updateDoc(swapRequestRef, {
+      status: "swap_accepted",
+    });
+  };
+
+  // Helper function to change swap_request message document status to swap_accepted
+  const changeSwapRequestMessageStatus = async () => {
+    const swapRequestMessageRef = doc(
+      db,
+      "swap_requests",
+      swapRequest.id,
+      "messages",
+      message.id
+    );
+    await updateDoc(swapRequestMessageRef, {
+      status: "swap_accepted",
+    });
+  };
+
+  const handleAcceptSwap = async () => {
+    await changeSwapRequestStatus();
+    await changeSwapRequestMessageStatus();
+  };
+
+  const handleRejectSwap = () => {
+    console.log("Reject swap");
+  };
 
   return (
     <div className="max-w-[90%] w-[400px] rounded-lg p-4 border bg-card shadow-sm">
@@ -123,6 +157,7 @@ const SwapRequestMessageCard = ({ message, authUser }) => {
             <Button
               size="sm"
               className="hover:cursor-pointer hover:bg-primary/80"
+              onClick={() => handleAcceptSwap()}
             >
               Accept
             </Button>
@@ -132,6 +167,7 @@ const SwapRequestMessageCard = ({ message, authUser }) => {
             size="sm"
             variant="destructive"
             className="hover:cursor-pointer hover:bg-destructive/80"
+            onClick={() => handleRejectSwap()}
           >
             Cancel Request
           </Button>
