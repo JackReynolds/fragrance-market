@@ -1,4 +1,5 @@
 // src/components/ui/skeleton.jsx
+/* eslint-disable react/prop-types */
 "use client";
 
 import * as React from "react";

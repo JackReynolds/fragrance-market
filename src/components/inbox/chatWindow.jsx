@@ -9,19 +9,17 @@ import {
   query,
   orderBy,
   getDocs,
-  addDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
-import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { ArrowUp, ChevronLeft } from "lucide-react";
 import StandardMessage from "./standardMessage";
 import SwapRequestMessageCard from "./swapRequestMessageCard";
 import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
 import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
-
+import SwapCompletedMessageCard from "./swapCompletedMessageCard";
 export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -136,6 +134,14 @@ export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
       case "pending_shipment":
         return (
           <PendingShipmentMessageCard
+            message={message}
+            authUser={authUser}
+            swapRequest={swapRequest}
+          />
+        );
+      case "swap_completed":
+        return (
+          <SwapCompletedMessageCard
             message={message}
             authUser={authUser}
             swapRequest={swapRequest}

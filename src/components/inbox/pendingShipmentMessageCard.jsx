@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,6 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
 
   // Get user info from message
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
-  const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
 
   // Determine current user and other party
   const currentUserInfo = isRequestedFromUser
@@ -49,13 +48,15 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
 
       // Check if other user has confirmed shipment
       if (isOtherUserShipped) {
+        // Both users have confirmed shipment, so we can mark the swap as completed
         await updateDoc(swapRequestRef, { status: "swap_completed" });
 
-        // Update message status to swap_completed
+        // Update message type to swap_completed
         await updateDoc(
           doc(db, "swap_requests", swapRequest.id, "messages", message.id),
           {
-            status: "swap_completed",
+            type: "swap_completed",
+            completedAt: serverTimestamp(),
           }
         );
       }

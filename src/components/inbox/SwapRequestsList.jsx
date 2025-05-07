@@ -1,6 +1,5 @@
 // src/components/inbox/SwapRequestsList.jsx
 "use client";
-
 /* eslint-disable react/prop-types */
 
 import React from "react";
@@ -63,7 +62,12 @@ export default function SwapRequestsList({
             Pending Shipment
           </span>
         );
-
+      case "swap_completed":
+        return (
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-800">
+            Completed
+          </span>
+        );
       default:
         return (
           <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-800">

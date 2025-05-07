@@ -1,3 +1,5 @@
+/* eslint-disable react/prop-types */
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -44,7 +46,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
 import { useUserDoc } from "@/hooks/useUserDoc";
-import ManualAddressForm from "@/components/profile/ManualAddressForm";
+import ManualAddressForm from "@/components/profile/manualAddressForm";
 import GoogleLocationSearch from "@/components/googleLocationSearch";
 
 const SAMPLE_REVIEWS = [

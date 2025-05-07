@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react/prop-types */
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -55,7 +56,6 @@ const ListingDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
-  const [userHasListings, setUserHasListings] = useState(false);
   const [isCheckingListings, setIsCheckingListings] = useState(false);
   const { userDoc } = useUserDoc();
   // Fetch listing data
@@ -226,7 +226,6 @@ const ListingDetailPage = () => {
 
       const querySnapshot = await getDocs(q);
       const hasListings = !querySnapshot.empty;
-      setUserHasListings(hasListings);
       return hasListings;
     } catch (error) {
       console.error("Error checking listings:", error);

@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable react/prop-types */
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
 import { Check, CheckCircle, X } from "lucide-react";
@@ -9,13 +9,13 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
-import ManualAddressForm from "@/components/profile/ManualAddressForm";
+import ManualAddressForm from "@/components/profile/manualAddressForm";
 import { useUserDoc } from "@/hooks/useUserDoc";
 import { toast } from "sonner";
 
 const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const [showAddressForm, setShowAddressForm] = useState(false);
-  const [otherUserAddress, setOtherUserAddress] = useState("");
+  // const [otherUserAddress, setOtherUserAddress] = useState("");
 
   const { userDoc } = useUserDoc();
   const router = useRouter();
@@ -51,15 +51,15 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   };
 
   // Use effect to get the other user's address
-  useEffect(() => {
-    getUserAddress(
-      authUser.uid === message.offeredBy.uid
-        ? message.requestedFrom.uid
-        : message.offeredBy.uid
-    ).then((address) => {
-      setOtherUserAddress(address);
-    });
-  }, [message]);
+  // useEffect(() => {
+  //   getUserAddress(
+  //     authUser.uid === message.offeredBy.uid
+  //       ? message.requestedFrom.uid
+  //       : message.offeredBy.uid
+  //   ).then((address) => {
+  //     setOtherUserAddress(address);
+  //   });
+  // }, [message]);
 
   // Function to update address confirmation in Firestore
   const updateAddressConfirmation = async (confirmed) => {
@@ -90,7 +90,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
         await updateDoc(
           doc(db, "swap_requests", swapRequest.id, "messages", message.id),
           {
-            status: "pending_shipment",
+            type: "pending_shipment",
           }
         );
         toast.success("Both addresses confirmed! Waiting for shipment.");

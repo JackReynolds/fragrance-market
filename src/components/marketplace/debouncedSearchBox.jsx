@@ -1,4 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+/* eslint-disable react/prop-types */
+
+"use client";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchBox } from "react-instantsearch";
 import { Search, X } from "lucide-react";
 

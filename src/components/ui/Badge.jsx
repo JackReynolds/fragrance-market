@@ -1,4 +1,5 @@
 // src/components/ui/Badge.jsx
+/* eslint-disable react/prop-types */
 import * as React from "react";
 import { cva } from "class-variance-authority";
 

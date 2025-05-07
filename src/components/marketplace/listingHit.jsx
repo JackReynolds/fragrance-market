@@ -1,20 +1,14 @@
-import { Button } from "@/components/ui/button";
+/* eslint-disable react/prop-types */
+
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Heart,
-  ShoppingBag,
-  Repeat,
-  Star,
-  CheckCircle,
-  Shield,
-  ShieldCheck,
-} from "lucide-react";
+import { ShoppingBag, Repeat, Star, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 
 // Hit component to display each listing
-const ListingHit = ({ hit, authUser }) => {
+const ListingHit = ({ hit }) => {
   return (
     <Link href={`/listings/${hit.objectID}`}>
       <Card className="h-full max-w-82 hover:shadow-md transition-shadow duration-200">

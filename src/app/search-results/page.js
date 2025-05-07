@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React from "react";
 import { Navigation } from "@/components/ui/navigation.jsx";
 import { Footer } from "@/components/ui/footer.jsx";
 import { algoliasearch } from "algoliasearch";

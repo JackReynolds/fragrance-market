@@ -1,8 +1,9 @@
 // src/components/marketplace/InstantSearchWrapper.jsx
 "use client";
 
+/* eslint-disable react/prop-types */
+
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { algoliasearch } from "algoliasearch";
 import {
   InstantSearch,
@@ -28,7 +29,6 @@ const client = algoliasearch(
 const InstantSearchWrapper = ({ initialQuery }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [listingTypeFilter, setListingTypeFilter] = useState("all");
-  const router = useRouter();
 
   // Create a simple routing state manager
   const simpleStateMapping = {

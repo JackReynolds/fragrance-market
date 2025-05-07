@@ -1,4 +1,5 @@
 // src/components/ui/Sheet.jsx
+/* eslint-disable react/prop-types */
 "use client";
 
 import * as React from "react";

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   collection,
   query,
@@ -14,17 +13,14 @@ import {
   MessageCircleIcon,
   MessageCircleWarningIcon,
   Menu,
-  X,
   User,
   LogOut,
-  Home,
   ShoppingBag,
   Repeat,
   HelpCircle,
   LogIn,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../firebase.config";
 import { toast } from "sonner";
@@ -40,7 +36,6 @@ import { Button } from "@/components/ui/button.jsx";
 
 export function Navigation() {
   const { authUser } = useAuth();
-  const router = useRouter();
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   const handleSignOut = () => {

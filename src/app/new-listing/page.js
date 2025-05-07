@@ -30,7 +30,6 @@ import {
   Upload,
   PlusCircle,
   Trash2,
-  DollarSign,
   Sparkles,
   EuroIcon,
 } from "lucide-react";

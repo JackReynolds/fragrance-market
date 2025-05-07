@@ -1,3 +1,6 @@
+/* eslint-disable react/prop-types */
+
+"use client";
 // src/components/listing/SwapOfferModal.jsx
 import React, { useState, useEffect } from "react";
 import {

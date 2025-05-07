@@ -44,11 +44,11 @@ const EditListing = () => {
   const params = useParams();
   const listingId = params.id;
 
-  const [imageFiles, setImageFiles] = useState([]);
+  // const [imageFiles, setImageFiles] = useState([]);
   const [imageURLs, setImageURLs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [listingData, setListingData] = useState(null);
+  // const [listingData, setListingData] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [notAuthorized, setNotAuthorized] = useState(false);
 
@@ -98,8 +98,6 @@ const EditListing = () => {
           toast.error("You don't have permission to edit this listing");
           return;
         }
-
-        setListingData(data);
 
         // Populate form data
         setFormData({
@@ -169,7 +167,6 @@ const EditListing = () => {
         },
         (error, result) => {
           if (!error && result && result.event === "success") {
-            setImageFiles((prevFiles) => [...prevFiles, result.info]);
             setImageURLs((prevUrls) => [...prevUrls, result.info.secure_url]);
           } else if (error) {
             console.error("Cloudinary upload error:", error);
@@ -181,7 +178,6 @@ const EditListing = () => {
   };
 
   const removeImage = (index) => {
-    setImageFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     setImageURLs((prevUrls) => prevUrls.filter((_, i) => i !== index));
   };
 

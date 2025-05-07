@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable react/prop-types */
 import React, { useState } from "react";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 
