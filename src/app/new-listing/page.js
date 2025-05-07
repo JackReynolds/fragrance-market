@@ -233,6 +233,8 @@ const NewListing = () => {
         createdAt: serverTimestamp(),
         ownerUid: authUser.uid,
         ownerIsPremium: userDoc?.isPremium,
+        country: userDoc?.country,
+        countryCode: userDoc?.countryCode,
         ownerIsIdVerified: userDoc?.isIdVerified,
         ownerUsername: authUser.displayName || "Anonymous User",
         status: "active",

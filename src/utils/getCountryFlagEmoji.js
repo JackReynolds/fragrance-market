@@ -1,5 +1,6 @@
 // Helper function to convert country code to flag emoji
 export default function getCountryFlagEmoji(countryCode) {
+  if (!countryCode) return "";
   const codePoints = countryCode
     .toUpperCase()
     .split("")

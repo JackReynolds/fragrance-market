@@ -1,56 +1,52 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-
-// Sample featured items data (in a real app, this would come from a database/API)
-const FEATURED_ITEMS = [
-  {
-    id: 1,
-    name: "Tom Ford Oud Wood",
-    price: 249.99,
-    type: "Sale",
-    image: "/fragrances/tom-ford-oud-wood.jpg",
-    brand: "Tom Ford",
-  },
-  {
-    id: 2,
-    name: "Creed Aventus",
-    price: 329.99,
-    type: "Sale",
-    image: "/fragrances/creed-aventus.jpg",
-    brand: "Creed",
-  },
-  {
-    id: 3,
-    name: "Maison Francis Kurkdjian Baccarat Rouge 540",
-    price: 299.99,
-    type: "Swap",
-    image: "/fragrances/baccarat-rouge-540.jpg",
-    brand: "Maison Francis Kurkdjian",
-  },
-  {
-    id: 4,
-    name: "Dior Sauvage",
-    price: 159.99,
-    type: "Sale",
-    image: "/fragrances/dior-sauvage.jpg",
-    brand: "Dior",
-  },
-];
+import { getDocs, collection, query, orderBy, limit } from "firebase/firestore";
+import { db } from "@/firebase.config.js";
+import ListingCard from "@/components//listingCard";
+import ListingHit from "../marketplace/listingHit";
 
 export function FeaturedItems() {
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLatestListings = async () => {
+      try {
+        const listingsQuery = query(
+          collection(db, "listings"),
+          orderBy("createdAt", "desc"),
+          limit(8)
+        );
+
+        const listingsSnapshot = await getDocs(listingsQuery);
+        const listingsData = listingsSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setListings(listingsData);
+      } catch (error) {
+        console.error("Error fetching latest listings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestListings();
+  }, []);
+
   return (
     <section className="py-16 bg-secondary/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between mb-10 md:flex-row">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">
-              Featured Fragrances
+              Latest Fragrances
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Explore our curated selection of exclusive fragrances
+              Explore our newest fragrance listings
             </p>
           </div>
           <Link
@@ -75,40 +71,22 @@ export function FeaturedItems() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {FEATURED_ITEMS.map((item) => (
-            <Link
-              key={item.id}
-              href={`/marketplace/${item.id}`}
-              className="group relative overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all hover:shadow-md"
-            >
-              <div className="aspect-[3/4] w-full relative bg-primary/5">
-                <div className="absolute top-2 right-2 z-10">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      item.type === "Sale"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
-                  >
-                    {item.type}
-                  </span>
-                </div>
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                />
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-muted-foreground">{item.brand}</p>
-                <h3 className="mt-1 font-medium line-clamp-1">{item.name}</h3>
-                <p className="mt-2 font-semibold">${item.price.toFixed(2)}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="h-64 rounded-lg bg-gray-200 animate-pulse"
+              ></div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {listings.map((listing) => (
+              <ListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
