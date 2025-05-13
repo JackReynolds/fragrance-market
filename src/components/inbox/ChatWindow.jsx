@@ -8,6 +8,7 @@ import {
   collection,
   query,
   orderBy,
+  onSnapshot,
   addDoc,
   getDocs,
   serverTimestamp,
@@ -58,33 +59,55 @@ export default function ChatWindow({
       : `${swapRequest.offeredListing.title} for your ${swapRequest.requestedListing.title}`;
 
   // Fetch messages
+  // useEffect(() => {
+  //   const fetchMessages = async () => {
+  //     try {
+  //       const messagesRef = collection(
+  //         db,
+  //         "swap_requests",
+  //         swapRequest.id,
+  //         "messages"
+  //       );
+  //       const q = query(messagesRef, orderBy("createdAt", "asc"));
+  //       const querySnapshot = await getDocs(q);
+
+  //       const messagesList = [];
+  //       querySnapshot.forEach((doc) => {
+  //         messagesList.push({ id: doc.id, ...doc.data() });
+  //       });
+
+  //       setMessages(messagesList);
+  //     } catch (error) {
+  //       console.error("Error fetching messages:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchMessages();
+  // }, [swapRequest.id]);
+
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const messagesRef = collection(
-          db,
-          "swap_requests",
-          swapRequest.id,
-          "messages"
-        );
-        const q = query(messagesRef, orderBy("createdAt", "asc"));
-        const querySnapshot = await getDocs(q);
-
-        const messagesList = [];
-        querySnapshot.forEach((doc) => {
-          messagesList.push({ id: doc.id, ...doc.data() });
+    if (swapRequest) {
+      const messagesRef = collection(
+        db,
+        "swap_requests",
+        swapRequest.id,
+        "messages"
+      );
+      const q = query(messagesRef, orderBy("createdAt", "asc"));
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const messagesData = querySnapshot.docs.map((doc) => {
+          const data = { id: doc.id, ...doc.data() };
+          return data;
         });
-
-        setMessages(messagesList);
-      } catch (error) {
-        console.error("Error fetching messages:", error);
-      } finally {
+        setMessages(messagesData);
         setLoading(false);
-      }
-    };
+      });
 
-    fetchMessages();
-  }, [swapRequest.id]);
+      return () => unsubscribe();
+    }
+  }, [swapRequest]);
 
   // Scroll to bottom when messages change
   useEffect(() => {

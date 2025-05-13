@@ -1,16 +1,17 @@
 "use client";
 /* eslint-disable react/prop-types */
 
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
+  const [isAcceptingSwap, setIsAcceptingSwap] = useState(false);
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
   const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
@@ -22,6 +23,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
     await updateDoc(swapRequestRef, {
       status: "swap_accepted",
+      updatedAt: serverTimestamp(),
     });
   };
 
@@ -36,17 +38,21 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     );
     await updateDoc(swapRequestMessageRef, {
       type: "swap_accepted",
+      createdAt: serverTimestamp(),
     });
   };
 
   const handleAcceptSwap = async () => {
     try {
+      setIsAcceptingSwap(true);
       await changeSwapRequestStatus();
       await changeSwapRequestMessageType();
       toast.success("Swap request accepted");
     } catch (error) {
       console.error("Error accepting swap:", error);
       toast.error("Error accepting swap");
+    } finally {
+      setIsAcceptingSwap(false);
     }
   };
 
@@ -166,8 +172,9 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               size="sm"
               className="hover:cursor-pointer hover:bg-primary/80"
               onClick={() => handleAcceptSwap()}
+              disabled={isAcceptingSwap}
             >
-              Accept
+              {isAcceptingSwap ? "Accepting..." : "Accept"}
             </Button>
           </>
         ) : isOfferedByUser ? (
