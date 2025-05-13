@@ -41,7 +41,7 @@ export default function SwapRequestsList({
       case "swap_request":
         return (
           <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
-            Pending
+            Swap Request
           </span>
         );
       case "swap_accepted":

@@ -8,6 +8,7 @@ import {
   collection,
   query,
   orderBy,
+  addDoc,
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
@@ -20,7 +21,12 @@ import SwapRequestMessageCard from "./swapRequestMessageCard";
 import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
 import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
 import SwapCompletedMessageCard from "./swapCompletedMessageCard";
-export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
+export default function ChatWindow({
+  swapRequest,
+  authUser,
+  onBackClick,
+  userDoc,
+}) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -94,7 +100,7 @@ export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
     const message = {
       text: newMessage.trim(),
       senderUid: authUser.uid,
-      senderName: "You", // This would come from auth context
+      senderUsername: userDoc.username,
       createdAt: serverTimestamp(),
     };
 
@@ -109,7 +115,10 @@ export default function ChatWindow({ swapRequest, authUser, onBackClick }) {
     ]);
 
     // Add logic to save to Firestore here
-    console.log("Message would be sent:", message);
+    await addDoc(
+      collection(db, "swap_requests", swapRequest.id, "messages"),
+      message
+    );
   };
 
   // Function to render message based upon message type

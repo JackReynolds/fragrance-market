@@ -76,7 +76,7 @@ const SwapOfferModal = ({
             where("offeredBy.uid", "==", currentUser.uid),
             where("requestedListing.id", "==", targetListing.id),
             where("requestedFrom.uid", "==", targetOwner.uid),
-            where("status", "==", "pending")
+            where("status", "==", "swap_request")
           )
         );
 
@@ -159,7 +159,7 @@ const SwapOfferModal = ({
       // Create a new swap request
       const swapRequest = {
         ...swapRequestCoreInfo,
-        status: "pending",
+        status: "swap_request",
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };

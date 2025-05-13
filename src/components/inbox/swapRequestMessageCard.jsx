@@ -8,6 +8,8 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
@@ -23,8 +25,8 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     });
   };
 
-  // Helper function to change swap_request message document status to swap_accepted
-  const changeSwapRequestMessageStatus = async () => {
+  // Helper function to change swap_request message type to swap_accepted
+  const changeSwapRequestMessageType = async () => {
     const swapRequestMessageRef = doc(
       db,
       "swap_requests",
@@ -33,13 +35,19 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
       message.id
     );
     await updateDoc(swapRequestMessageRef, {
-      status: "swap_accepted",
+      type: "swap_accepted",
     });
   };
 
   const handleAcceptSwap = async () => {
-    await changeSwapRequestStatus();
-    await changeSwapRequestMessageStatus();
+    try {
+      await changeSwapRequestStatus();
+      await changeSwapRequestMessageType();
+      toast.success("Swap request accepted");
+    } catch (error) {
+      console.error("Error accepting swap:", error);
+      toast.error("Error accepting swap");
+    }
   };
 
   const handleRejectSwap = () => {

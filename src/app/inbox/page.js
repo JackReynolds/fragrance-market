@@ -15,6 +15,7 @@ import { db } from "@/firebase.config";
 import SwapRequestsList from "@/components/inbox/swapRequestsList";
 import ChatWindow from "@/components/inbox/chatWindow";
 import { Loader2 } from "lucide-react";
+import { useUserDoc } from "@/hooks/useUserDoc";
 import { Navigation } from "@/components/ui/navigation";
 
 export default function InboxPage() {
@@ -23,7 +24,7 @@ export default function InboxPage() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-
+  const { userDoc } = useUserDoc();
   // Detect mobile screen
   useEffect(() => {
     const checkScreenSize = () => {
@@ -140,6 +141,7 @@ export default function InboxPage() {
                 swapRequest={selectedRequest}
                 authUser={authUser}
                 onBackClick={isMobile ? handleBackToList : null}
+                userDoc={userDoc}
               />
             ) : (
               <div className="flex items-center justify-center h-full">
