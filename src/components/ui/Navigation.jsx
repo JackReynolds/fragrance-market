@@ -49,11 +49,14 @@ export function Navigation() {
       const q = query(
         swapRequestsRef,
         where("requestedFrom.uid", "==", authUser.uid),
-        where("status", "==", "pending"),
+        where("status", "==", "swap_request"),
         limit(1)
       );
 
       const unsubscribe = onSnapshot(q, (snapshot) => {
+        snapshot.docs.forEach((doc) => {
+          console.log(doc.data());
+        });
         setHasUnreadMessages(!snapshot.empty);
       });
 

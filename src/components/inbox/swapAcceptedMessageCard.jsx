@@ -68,7 +68,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
       // Create an object to update just the current user's confirmation status
       const addressConfirmation = {
-        ...(message?.addressConfirmation || {}),
+        ...(swapRequest?.addressConfirmation || {}),
         [currentUserInfo.uid]: confirmed,
       };
 
@@ -86,7 +86,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
       ) {
         // Update swap_request document status to pending_shipment
         await updateDoc(swapRequestRef, { status: "pending_shipment" });
-        // Update message document status to pending_shipment
+        // Update message document type to pending_shipment
         await updateDoc(
           doc(db, "swap_requests", swapRequest.id, "messages", message.id),
           {
@@ -104,10 +104,10 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   };
 
   // Handle address form submission
-  const handleSaveAddress = (locationData) => {
+  const handleSaveAddress = async (locationData) => {
     setCurrentUserAddress(locationData.formattedAddress);
     setShowAddressForm(false);
-    updateAddressConfirmation(true);
+    await updateAddressConfirmation(true);
   };
 
   return (

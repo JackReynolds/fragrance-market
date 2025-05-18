@@ -34,6 +34,9 @@ export default function ManualAddressForm({ onSave, onCancel, initialValue }) {
 
     const addressComponents = { ...fields };
 
+    console.log(addressComponents);
+    console.log(formattedAddress);
+
     onSave({
       formattedAddress,
       addressComponents,
@@ -74,8 +77,17 @@ export default function ManualAddressForm({ onSave, onCancel, initialValue }) {
         onChange={handleChange}
       />
       <div className="flex gap-2 mt-4">
-        <Button onClick={handleSave}>Save Changes</Button>
-        <Button variant="outline" onClick={onCancel}>
+        <Button
+          className="hover:cursor-pointer hover:bg-primary/80"
+          onClick={handleSave}
+        >
+          Save Changes
+        </Button>
+        <Button
+          className="hover:cursor-pointer"
+          variant="outline"
+          onClick={onCancel}
+        >
           Cancel
         </Button>
       </div>

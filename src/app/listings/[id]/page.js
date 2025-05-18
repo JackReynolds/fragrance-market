@@ -41,6 +41,7 @@ import {
   StarIcon,
   ShieldCheck,
   Loader2,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -108,7 +109,7 @@ const ListingDetailPage = () => {
   }, [params.id, router]);
 
   // Check if current user is the owner
-  const isOwner = authUser && listing && authUser.uid === listing.ownerUid;
+  const isOwner = authUser && listing && authUser?.uid === listing.ownerUid;
 
   // Handle sharing listing
   const handleShare = () => {
@@ -189,7 +190,7 @@ const ListingDetailPage = () => {
         className: "bg-green-100 text-green-700",
       },
       premium: {
-        icon: <StarIcon size={16} className="mr-1" />,
+        icon: <Crown size={16} className="mr-1" />,
         text: "Premium Member",
         className: "bg-slate-200 text-slate-700",
       },
@@ -219,7 +220,7 @@ const ListingDetailPage = () => {
       const listingsRef = collection(db, "listings");
       const q = query(
         listingsRef,
-        where("ownerUid", "==", authUser.uid),
+        where("ownerUid", "==", authUser?.uid),
         where("type", "==", "swap"),
         where("status", "==", "active")
       );

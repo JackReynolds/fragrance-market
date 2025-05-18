@@ -235,7 +235,11 @@ export default function ChatWindow({
               <div
                 key={message.id}
                 className={`flex ${
-                  message.senderUid === authUser.uid
+                  message.senderUid === authUser.uid ||
+                  message.type === "pending_shipment" ||
+                  message.type === "swap_completed" ||
+                  message.type === "swap_request" ||
+                  message.type === "swap_accepted"
                     ? "justify-end"
                     : "justify-start"
                 }`}

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Navigation } from "@/components/ui/navigation.jsx";
 import { Footer } from "@/components/ui/footer.jsx";
 import { Button } from "@/components/ui/button.jsx";
@@ -15,10 +15,60 @@ import {
   Check,
   Medal,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const HowItWorks = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const { authUser } = useAuth();
+
+  // Function to create Stripe Checkout Session for Premium Membership
+  const createCheckoutSession = async () => {
+    setIsLoading(true);
+    try {
+      // Get user information from auth context (adjust based on your auth setup)
+
+      if (!authUser) {
+        toast.error("Please sign in to continue");
+        router.push("/sign-in");
+        return;
+      }
+
+      const response = await fetch(
+        "https://europe-west2-fragrancemarket-f9b90.cloudfunctions.net/createCheckoutSession-createCheckoutSession",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userUid: authUser.uid,
+            email: authUser.email,
+            successUrl: `${window.location.origin}/subscription/success`,
+            cancelUrl: `${window.location.origin}/how-it-works`,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const { sessionId, url } = await response.json();
+      setIsLoading(false);
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Something went wrong. Please try again later.");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex w-full min-h-screen justify-center items-center flex-col">
       <Navigation />
@@ -213,8 +263,15 @@ const HowItWorks = () => {
                     </li>
                   </ul>
 
-                  <Button className="w-full" asChild>
-                    <Link href="/premium">Go Premium</Link>
+                  <Button
+                    onClick={createCheckoutSession}
+                    className="w-full hover:cursor-pointer hover:bg-primary/80"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      "Go Premium"
+                    )}
                   </Button>
                 </CardContent>
               </Card>

@@ -25,10 +25,10 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     : message.requestedFrom;
 
   const [isCurrentUserShipped, setIsCurrentUserShipped] = useState(
-    swapRequest?.shipmentStatus?.[currentUserInfo.uid] || false
+    message?.shipmentStatus?.[currentUserInfo.uid] || false
   );
   const [isOtherUserShipped, setIsOtherUserShipped] = useState(
-    swapRequest?.shipmentStatus?.[otherUserInfo.uid] || false
+    message?.shipmentStatus?.[otherUserInfo.uid] || false
   );
 
   const handleConfirmShipment = async () => {
@@ -41,6 +41,15 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       updateData[`shipmentStatus.${currentUserInfo.uid}.trackingNumber`] =
         trackingNumber;
     }
+
+    // update message with shipment status and tracking number
+    await updateDoc(
+      doc(db, "swap_requests", swapRequest.id, "messages", message.id),
+      {
+        ...updateData,
+        createdAt: serverTimestamp(),
+      }
+    );
 
     try {
       await updateDoc(swapRequestRef, updateData);
@@ -71,6 +80,20 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
   return (
     <Card className="my-4">
       <CardContent className="p-4">
+        {/* Section to show the required recipient address */}
+        <div className="mb-4">
+          <h4 className="font-semibold mb-3">Send your fragrance to:</h4>
+          <p className="text-sm text-muted-foreground">
+            {
+              swapRequest?.[
+                currentUserInfo.uid === message.requestedFrom.uid
+                  ? "requestedFrom"
+                  : "offeredBy"
+              ]?.formattedAddress
+            }
+          </p>
+        </div>
+
         <h4 className="font-semibold mb-3">Shipment Status</h4>
 
         <div className="flex justify-between gap-3 mb-4">

@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -56,8 +56,11 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     }
   };
 
-  const handleRejectSwap = () => {
-    console.log("Reject swap");
+  const handleRejectSwap = async () => {
+    // delete swap request and messages collection
+    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+    await deleteDoc(swapRequestRef);
+    toast.success("Swap request rejected");
   };
 
   return (

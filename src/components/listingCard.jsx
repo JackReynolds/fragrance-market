@@ -3,18 +3,9 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  ShoppingBag,
-  Repeat,
-  Star,
-  ShieldCheck,
-  Heart,
-  Eye,
-} from "lucide-react";
+import { ShoppingBag, Repeat, ShieldCheck, Crown } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 
 const ListingCard = ({
@@ -24,8 +15,6 @@ const ListingCard = ({
   showViewButton = false,
 }) => {
   const router = useRouter();
-
-  console.log(listing);
 
   // Normalize ID (handle both Algolia listings and Firestore docs)
   const id = listing.objectID || listing.id;
@@ -105,7 +94,7 @@ const ListingCard = ({
             </p>
             <p>
               {listing.ownerIsPremium ? (
-                <Star className="w-5 h-5 text-yellow-500" />
+                <Crown className="w-5 h-5 text-yellow-500" />
               ) : null}
             </p>
             <p>
