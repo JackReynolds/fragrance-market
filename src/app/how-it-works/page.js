@@ -38,7 +38,7 @@ const HowItWorks = () => {
       }
 
       const response = await fetch(
-        "https://europe-west2-fragrancemarket-f9b90.cloudfunctions.net/createCheckoutSession-createCheckoutSession",
+        "https://createcheckoutsession-createcheckoutsession-qwe4clieqa-nw.a.run.app",
         {
           method: "POST",
           headers: {

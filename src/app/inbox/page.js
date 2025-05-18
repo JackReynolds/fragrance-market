@@ -9,7 +9,7 @@ import {
   where,
   or,
   orderBy,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import SwapRequestsList from "@/components/inbox/swapRequestsList";
@@ -38,39 +38,38 @@ export default function InboxPage() {
 
   // Fetch swap requests
   useEffect(() => {
-    const fetchSwapRequests = async () => {
-      if (!authUser?.uid) return;
+    if (!authUser?.uid) return;
 
-      try {
-        const requestsRef = collection(db, "swap_requests");
-        const q = query(
-          requestsRef,
-          or(
-            where("requestedFrom.uid", "==", authUser.uid),
-            where("offeredBy.uid", "==", authUser.uid)
-          ),
-          orderBy("updatedAt", "desc")
-        );
+    const requestsRef = collection(db, "swap_requests");
+    const q = query(
+      requestsRef,
+      or(
+        where("requestedFrom.uid", "==", authUser.uid),
+        where("offeredBy.uid", "==", authUser.uid)
+      ),
+      orderBy("updatedAt", "desc")
+    );
 
-        const querySnapshot = await getDocs(q);
-        const requests = [];
-        querySnapshot.forEach((doc) => {
-          requests.push({ id: doc.id, ...doc.data() });
-        });
+    // Replace getDocs with onSnapshot for real-time updates
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const requests = [];
+      querySnapshot.forEach((doc) => {
+        requests.push({ id: doc.id, ...doc.data() });
+      });
 
-        setSwapRequests(requests);
-        // Select first request by default if any exist
-        if (requests.length > 0 && !selectedRequest) {
-          setSelectedRequest(requests[0]);
-        }
-      } catch (error) {
-        console.error("Error fetching swap requests:", error);
-      } finally {
-        setLoading(false);
+      setSwapRequests(requests);
+
+      // Update selectedRequest if it was deleted
+      if (
+        selectedRequest &&
+        !requests.find((r) => r.id === selectedRequest.id)
+      ) {
+        setSelectedRequest(requests.length > 0 ? requests[0] : null);
       }
-    };
+    });
 
-    fetchSwapRequests();
+    setLoading(false);
+    return () => unsubscribe();
   }, [authUser?.uid]);
 
   // Handle request selection

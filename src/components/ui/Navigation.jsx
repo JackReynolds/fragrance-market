@@ -7,6 +7,8 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
+  getDocs,
   limit,
 } from "firebase/firestore";
 import {
@@ -37,31 +39,56 @@ import { Button } from "@/components/ui/button.jsx";
 export function Navigation() {
   const { authUser } = useAuth();
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const handleSignOut = () => {
     signOut(auth);
     toast.success("Signed out successfully");
   };
 
+  // Check for unread messages in swap requests
   useEffect(() => {
-    if (authUser) {
-      const swapRequestsRef = collection(db, "swap_requests");
-      const q = query(
-        swapRequestsRef,
-        where("requestedFrom.uid", "==", authUser.uid),
-        where("status", "==", "swap_request"),
-        limit(1)
-      );
+    if (!authUser) return;
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        snapshot.docs.forEach((doc) => {
-          console.log(doc.data());
-        });
-        setHasUnreadMessages(!snapshot.empty);
+    // Query all swap requests where the user is involved
+    const swapRequestsRef = collection(db, "swap_requests");
+    const swapQuery = query(
+      swapRequestsRef,
+      where("participants", "array-contains", authUser.uid)
+    );
+
+    const unsubscribe = onSnapshot(swapQuery, async (snapshot) => {
+      let hasUnread = false;
+      let unreadCount = 0;
+
+      // Check each swap request's messages
+      const checkPromises = snapshot.docs.map(async (doc) => {
+        const swapId = doc.id;
+        const messagesRef = collection(db, "swap_requests", swapId, "messages");
+        const unreadQuery = query(
+          messagesRef,
+          where("readBy", "array-contains", authUser.uid),
+          orderBy("createdAt", "desc"),
+          limit(20)
+        );
+
+        const messagesSnap = await getDocs(unreadQuery);
+        const unreadMessages = messagesSnap.docs.filter(
+          (msg) => !msg.data().readBy.includes(authUser.uid)
+        );
+
+        if (unreadMessages.length > 0) {
+          hasUnread = true;
+          unreadCount += unreadMessages.length;
+        }
       });
 
-      return () => unsubscribe();
-    }
+      await Promise.all(checkPromises);
+      setHasUnreadMessages(hasUnread);
+      setUnreadCount(unreadCount);
+    });
+
+    return () => unsubscribe();
   }, [authUser]);
 
   // Navigation links configuration
@@ -116,15 +143,13 @@ export function Navigation() {
             <div className="hidden md:flex items-center gap-5">
               <Link
                 href="/inbox"
-                className={`flex gap-2 items-center text-sm font-medium transition-colors ${
-                  hasUnreadMessages
-                    ? "text-red-500 hover:text-red-500/70"
-                    : "hover:text-primary/70"
-                }`}
+                className="flex text-sm items-center font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
               >
                 Inbox
                 {hasUnreadMessages && (
-                  <MessageCircleWarningIcon className="w-5 h-5" />
+                  <span className="ml-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
                 )}
               </Link>
               <Link

@@ -50,17 +50,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     return userDoc.data().formattedAddress;
   };
 
-  // Use effect to get the other user's address
-  // useEffect(() => {
-  //   getUserAddress(
-  //     authUser.uid === message.offeredBy.uid
-  //       ? message.requestedFrom.uid
-  //       : message.offeredBy.uid
-  //   ).then((address) => {
-  //     setOtherUserAddress(address);
-  //   });
-  // }, [message]);
-
   // Function to update address confirmation in Firestore
   const updateAddressConfirmation = async (confirmed) => {
     try {
@@ -91,6 +80,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           doc(db, "swap_requests", swapRequest.id, "messages", message.id),
           {
             type: "pending_shipment",
+            readBy: [authUser.uid],
           }
         );
         toast.success("Both addresses confirmed! Waiting for shipment.");

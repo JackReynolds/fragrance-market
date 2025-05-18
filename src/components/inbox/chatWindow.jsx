@@ -125,6 +125,7 @@ export default function ChatWindow({
       senderUid: authUser.uid,
       senderUsername: userDoc.username,
       createdAt: serverTimestamp(),
+      readBy: [authUser.uid],
     };
 
     // Clear input

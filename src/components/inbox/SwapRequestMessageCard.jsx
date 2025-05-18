@@ -11,7 +11,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
-  const [isAcceptingSwap, setIsAcceptingSwap] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
   const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
@@ -39,12 +40,13 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     await updateDoc(swapRequestMessageRef, {
       type: "swap_accepted",
       createdAt: serverTimestamp(),
+      readBy: [authUser.uid],
     });
   };
 
   const handleAcceptSwap = async () => {
     try {
-      setIsAcceptingSwap(true);
+      setIsAccepting(true);
       await changeSwapRequestStatus();
       await changeSwapRequestMessageType();
       toast.success("Swap request accepted");
@@ -52,15 +54,46 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
       console.error("Error accepting swap:", error);
       toast.error("Error accepting swap");
     } finally {
-      setIsAcceptingSwap(false);
+      setIsAccepting(false);
     }
   };
 
-  const handleRejectSwap = async () => {
-    // delete swap request and messages collection
-    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
-    await deleteDoc(swapRequestRef);
-    toast.success("Swap request rejected");
+  // Helper function to delete swap request and messages collection
+  const deleteSwapRequestAndMessages = async () => {
+    console.log(swapRequest.id);
+    try {
+      const response = await fetch(
+        `https://deleteswaprequest-deleteswaprequest-qwe4clieqa-nw.a.run.app`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ swapRequestId: swapRequest.id }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to delete swap request");
+      }
+    } catch (error) {
+      console.error("Error deleting swap request:", error);
+      toast.error("Error deleting swap request");
+    }
+  };
+
+  const handleRejectOrCancelSwap = async (decision) => {
+    try {
+      setIsRejecting(true);
+      // delete swap request and messages collection
+      await deleteSwapRequestAndMessages();
+
+      toast.success(
+        `Swap request ${decision === "reject" ? "rejected" : "cancelled"}`
+      );
+    } catch (error) {
+      console.error(`Error ${decision}ing swap:`, error);
+      toast.error(`Error ${decision}ing swap`);
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   return (
@@ -168,16 +201,18 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               size="sm"
               variant="destructive"
               className="hover:cursor-pointer hover:bg-destructive/80"
+              onClick={() => handleRejectOrCancelSwap("reject")}
+              disabled={isRejecting}
             >
-              Reject
+              {isRejecting ? "Rejecting..." : "Reject"}
             </Button>
             <Button
               size="sm"
               className="hover:cursor-pointer hover:bg-primary/80"
               onClick={() => handleAcceptSwap()}
-              disabled={isAcceptingSwap}
+              disabled={isAccepting}
             >
-              {isAcceptingSwap ? "Accepting..." : "Accept"}
+              {isAccepting ? "Accepting..." : "Accept"}
             </Button>
           </>
         ) : isOfferedByUser ? (
@@ -185,9 +220,10 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
             size="sm"
             variant="destructive"
             className="hover:cursor-pointer hover:bg-destructive/80"
-            onClick={() => handleRejectSwap()}
+            onClick={() => handleRejectOrCancelSwap("cancel")}
+            disabled={isRejecting}
           >
-            Cancel Request
+            {isRejecting ? "Cancelling..." : "Cancel Request"}
           </Button>
         ) : null}
       </div>

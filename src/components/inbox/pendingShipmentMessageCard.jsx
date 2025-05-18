@@ -48,6 +48,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       {
         ...updateData,
         createdAt: serverTimestamp(),
+        readBy: [authUser.uid],
       }
     );
 
