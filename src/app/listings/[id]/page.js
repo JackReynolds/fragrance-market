@@ -680,14 +680,16 @@ const ListingDetailPage = () => {
       <Footer />
 
       {/* Swap Offer Modal */}
-      <SwapOfferModal
-        isOpen={isSwapModalOpen}
-        onClose={() => setIsSwapModalOpen(false)}
-        currentUser={authUser}
-        userDoc={userDoc}
-        targetListing={listing}
-        targetOwner={owner}
-      />
+      {authUser && listing && (
+        <SwapOfferModal
+          isOpen={isSwapModalOpen}
+          onClose={() => setIsSwapModalOpen(false)}
+          currentUser={authUser}
+          userDoc={userDoc}
+          targetListing={listing}
+          targetOwner={owner}
+        />
+      )}
     </div>
   );
 };
