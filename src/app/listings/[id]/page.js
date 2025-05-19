@@ -9,7 +9,6 @@ import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Navigation } from "@/components/ui/navigation.jsx";
 import { Footer } from "@/components/ui/footer.jsx";
-import { PropTypes } from "prop-types";
 import { Button } from "@/components/ui/button.jsx";
 import {
   Card,
@@ -38,7 +37,6 @@ import {
   Heart,
   ShoppingBag,
   Mail,
-  StarIcon,
   ShieldCheck,
   Loader2,
   Crown,
@@ -49,16 +47,17 @@ import SwapOfferModal from "@/components/listing/swapOfferModal.jsx";
 import { useUserDoc } from "@/hooks/useUserDoc.js";
 
 const ListingDetailPage = () => {
-  const router = useRouter();
-  const params = useParams();
-  const { authUser } = useAuth();
   const [listing, setListing] = useState(null);
   const [owner, setOwner] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [isCheckingListings, setIsCheckingListings] = useState(false);
+  const router = useRouter();
+  const params = useParams();
+  const { authUser } = useAuth();
   const { userDoc } = useUserDoc();
+
   // Fetch listing data
   useEffect(() => {
     const fetchListingData = async () => {
@@ -109,7 +108,8 @@ const ListingDetailPage = () => {
   }, [params.id, router]);
 
   // Check if current user is the owner
-  const isOwner = authUser && listing && authUser?.uid === listing.ownerUid;
+  const isOwner =
+    authUser?.uid && listing?.ownerUid && authUser.uid === listing.ownerUid;
 
   // Handle sharing listing
   const handleShare = () => {
@@ -692,11 +692,4 @@ const ListingDetailPage = () => {
   );
 };
 
-ListingDetailPage.propTypes = {
-  params: PropTypes.object.isRequired,
-  router: PropTypes.object.isRequired,
-  authUser: PropTypes.object,
-  listing: PropTypes.object,
-  owner: PropTypes.object,
-};
 export default ListingDetailPage;
