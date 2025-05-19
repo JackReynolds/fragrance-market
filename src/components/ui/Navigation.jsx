@@ -7,6 +7,7 @@ import {
   query,
   where,
   onSnapshot,
+  collectionGroup,
   orderBy,
   getDocs,
   limit,
@@ -35,61 +36,21 @@ import {
   SheetClose,
 } from "@/components/ui/sheet.jsx";
 import { Button } from "@/components/ui/button.jsx";
+import { useUserDoc } from "@/hooks/useUserDoc";
 
 export function Navigation() {
   const { authUser } = useAuth();
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+
+  const { userDoc } = useUserDoc();
+
+  // assume userDoc.unreadCount is kept up-to-date by your Cloud Function
+  const unreadCount = userDoc?.unreadCount || 0;
+  const hasUnreadMessages = unreadCount > 0;
 
   const handleSignOut = () => {
     signOut(auth);
     toast.success("Signed out successfully");
   };
-
-  // Check for unread messages in swap requests
-  useEffect(() => {
-    if (!authUser) return;
-
-    // Query all swap requests where the user is involved
-    const swapRequestsRef = collection(db, "swap_requests");
-    const swapQuery = query(
-      swapRequestsRef,
-      where("participants", "array-contains", authUser.uid)
-    );
-
-    const unsubscribe = onSnapshot(swapQuery, async (snapshot) => {
-      let hasUnread = false;
-      let unreadCount = 0;
-
-      // Check each swap request's messages
-      const checkPromises = snapshot.docs.map(async (doc) => {
-        const swapId = doc.id;
-        const messagesRef = collection(db, "swap_requests", swapId, "messages");
-        const unreadQuery = query(
-          messagesRef,
-          where("readBy", "array-contains", authUser.uid),
-          orderBy("createdAt", "desc"),
-          limit(20)
-        );
-
-        const messagesSnap = await getDocs(unreadQuery);
-        const unreadMessages = messagesSnap.docs.filter(
-          (msg) => !msg.data().readBy.includes(authUser.uid)
-        );
-
-        if (unreadMessages.length > 0) {
-          hasUnread = true;
-          unreadCount += unreadMessages.length;
-        }
-      });
-
-      await Promise.all(checkPromises);
-      setHasUnreadMessages(hasUnread);
-      setUnreadCount(unreadCount);
-    });
-
-    return () => unsubscribe();
-  }, [authUser]);
 
   // Navigation links configuration
   const navigationLinks = [

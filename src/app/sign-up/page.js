@@ -208,6 +208,7 @@ export default function SignUp() {
         countryCode: formData.countryCode,
         isPremium: false,
         isIdVerified: false,
+        unreadMessagesCount: 0,
         createdAt: serverTimestamp(),
       });
 
