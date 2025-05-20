@@ -208,15 +208,15 @@ export default function Profile() {
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-primary/10">
                       {userDoc?.profileImage ? (
                         <Image
-                          src={userDoc.profileImage}
-                          alt={authUser.displayName || "User"}
+                          src={userDoc?.profileImage}
+                          alt={authUser?.displayName || "User"}
                           fill
                           className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-semibold text-primary">
                           {(
-                            authUser.displayName ||
+                            authUser?.displayName ||
                             userDoc?.username ||
                             "U"
                           ).charAt(0)}
@@ -229,10 +229,10 @@ export default function Profile() {
 
                     <div className="text-center">
                       <h2 className="text-xl font-bold">
-                        {authUser.displayName || userDoc?.username || "User"}
+                        {authUser?.displayName || userDoc?.username || "User"}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {authUser.email}
+                        {authUser?.email}
                       </p>
                     </div>
 

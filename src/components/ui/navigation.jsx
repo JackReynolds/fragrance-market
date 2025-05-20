@@ -1,17 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  collectionGroup,
-  orderBy,
-  getDocs,
-  limit,
-} from "firebase/firestore";
 import {
   MessageCircleIcon,
   MessageCircleWarningIcon,
@@ -44,8 +34,8 @@ export function Navigation() {
   const { userDoc } = useUserDoc();
 
   // assume userDoc.unreadCount is kept up-to-date by your Cloud Function
-  const unreadCount = userDoc?.unreadCount || 0;
-  const hasUnreadMessages = unreadCount > 0;
+  const unreadCount = userDoc?.unreadMessagesCount || 0;
+  const hasUnreadMessages = userDoc?.unreadMessagesCount > 0;
 
   const handleSignOut = () => {
     signOut(auth);
@@ -62,7 +52,7 @@ export function Navigation() {
     },
     {
       href: "/new-listing",
-      label: "Sell/Swap",
+      label: "Swap or Sell",
       icon: <Repeat className="h-4 w-4 mr-2" />,
     },
     {

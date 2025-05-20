@@ -146,7 +146,6 @@ const SwapOfferModal = ({
       fragrance: targetListing?.fragrance,
       amountLeft: targetListing?.amountLeft,
     },
-    participants: [currentUser.uid, targetOwner.uid],
   };
 
   // Check if a listing already has a pending request
@@ -161,6 +160,7 @@ const SwapOfferModal = ({
       const swapRequest = {
         ...swapRequestCoreInfo,
         status: "swap_request",
+        participants: [currentUser.uid, targetOwner.uid],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };

@@ -12,6 +12,9 @@ import {
   addDoc,
   getDocs,
   serverTimestamp,
+  writeBatch,
+  doc,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
@@ -184,6 +187,58 @@ export default function ChatWindow({
         return <StandardMessage message={message} authUser={authUser} />;
     }
   };
+
+  // marks messages as read
+  useEffect(() => {
+    if (!swapRequest?.id || !authUser?.uid) return;
+
+    const markMessagesAsRead = async () => {
+      try {
+        // Get all messages in this conversation
+        const messagesRef = collection(
+          db,
+          "swap_requests",
+          swapRequest.id,
+          "messages"
+        );
+        const messagesQuery = query(messagesRef);
+        const querySnapshot = await getDocs(messagesQuery);
+
+        // Filter messages not read by current user (excluding those sent by the user)
+        const unreadMessages = querySnapshot.docs.filter((doc) => {
+          const data = doc.data();
+          return (
+            data.senderUid !== authUser.uid &&
+            (!data.readBy || !data.readBy.includes(authUser.uid))
+          );
+        });
+
+        if (unreadMessages.length === 0) return;
+
+        // Just mark messages as read, let the cloud function handle the unreadMessagesCount counter
+        const batch = writeBatch(db);
+        unreadMessages.forEach((messageDoc) => {
+          const messageRef = doc(
+            db,
+            "swap_requests",
+            swapRequest.id,
+            "messages",
+            messageDoc.id
+          );
+          batch.update(messageRef, {
+            readBy: arrayUnion(authUser.uid),
+          });
+        });
+
+        await batch.commit();
+        console.log(`Marked ${unreadMessages.length} messages as read`);
+      } catch (error) {
+        console.error("Error marking messages as read:", error);
+      }
+    };
+
+    markMessagesAsRead();
+  }, [swapRequest?.id, authUser?.uid]);
 
   return (
     <div className="flex flex-col h-full">

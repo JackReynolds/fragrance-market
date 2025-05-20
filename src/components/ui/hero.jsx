@@ -5,11 +5,12 @@ import Image from "next/image";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Hero() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-
+  const { authUser } = useAuth();
   // When the user submits the form, route to search-results page with the query param.
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -46,15 +47,29 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button className="hover:cursor-pointer hover:bg-primary/60 py-6">
+            <Button
+              onClick={() => router.push("/marketplace")}
+              className="hover:cursor-pointer hover:bg-primary/60 py-6"
+            >
               Browse Fragrances
             </Button>
-            <Button
-              variant={"secondary"}
-              className={"hover:cursor-pointer py-6"}
-            >
-              Join the Community
-            </Button>
+            {authUser ? (
+              <Button
+                variant={"secondary"}
+                className={"hover:cursor-pointer py-6"}
+                onClick={() => router.push("/new-listing")}
+              >
+                Swap or Sell
+              </Button>
+            ) : (
+              <Button
+                variant={"secondary"}
+                className={"hover:cursor-pointer py-6"}
+                onClick={() => router.push("/sign-up")}
+              >
+                Join the Community
+              </Button>
+            )}
           </div>
 
           {/* Integrated search box wrapped in a form */}

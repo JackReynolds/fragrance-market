@@ -34,6 +34,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import ListingCard from "@/components/listingCard";
 
 const PublicUserProfile = () => {
   const router = useRouter();
@@ -245,7 +246,7 @@ const PublicUserProfile = () => {
       <Navigation />
 
       <main className="flex-1 py-8 md:py-12">
-        <div className="container px-4 md:px-6">
+        <div className="px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
             {/* User profile sidebar */}
             <div className="space-y-6">
@@ -407,11 +408,17 @@ const PublicUserProfile = () => {
               >
                 <div className="flex items-center justify-between mb-6">
                   <TabsList>
-                    <TabsTrigger value="listings" className="px-4">
+                    <TabsTrigger
+                      value="listings"
+                      className="px-4 hover:cursor-pointer"
+                    >
                       <Package size={16} className="mr-2" />
                       Listings
                     </TabsTrigger>
-                    <TabsTrigger value="reviews" className="px-4">
+                    <TabsTrigger
+                      value="reviews"
+                      className="px-4 hover:cursor-pointer"
+                    >
                       <MessageSquare size={16} className="mr-2" />
                       Reviews
                     </TabsTrigger>
@@ -435,74 +442,12 @@ const PublicUserProfile = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {userListings.map((listing) => (
-                        <Card key={listing.id} className="overflow-hidden">
-                          <div className="aspect-[4/3] relative">
-                            <Image
-                              src={
-                                listing.imageURLs &&
-                                listing.imageURLs.length > 0
-                                  ? listing.imageURLs[0]
-                                  : "/profile-placeholder.jpg"
-                              }
-                              alt={listing.title}
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute top-2 right-2">
-                              <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                  listing.type === "sell"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-blue-100 text-blue-800"
-                                }`}
-                              >
-                                {listing.type === "sell"
-                                  ? "For Sale"
-                                  : "For Swap"}
-                              </span>
-                            </div>
-                          </div>
-                          <CardContent className="p-4">
-                            <h3 className="font-semibold line-clamp-1">
-                              {listing.title}
-                            </h3>
-                            <div className="mt-1 mb-3 text-sm text-muted-foreground">
-                              <p>{listing.amountLeft}% Full</p>
-                              <p>
-                                Posted:{" "}
-                                {listing.createdAt
-                                  ? new Date(
-                                      listing.createdAt.seconds * 1000
-                                    ).toLocaleDateString()
-                                  : "N/A"}
-                              </p>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              {listing.type === "sell" ? (
-                                <span className="font-medium">
-                                  €{listing.price?.toFixed(2) || "0.00"}
-                                </span>
-                              ) : (
-                                <span className="font-medium text-blue-600">
-                                  Swap
-                                </span>
-                              )}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  router.push(`/listings/${listing.id}`)
-                                }
-                              >
-                                <Eye size={14} className="mr-1" />
-                                View
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                    <div className="flex justify-center items-center">
+                      <div className="w-full grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {userListings.map((listing) => (
+                          <ListingCard key={listing.id} listing={listing} />
+                        ))}
+                      </div>
                     </div>
                   )}
                 </TabsContent>

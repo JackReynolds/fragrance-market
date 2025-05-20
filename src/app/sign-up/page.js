@@ -46,12 +46,17 @@ import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 
 // List of countries with names and ISO codes
 const countries = [
+  { name: "Australia", code: "AU" },
   { name: "Austria", code: "AT" },
   { name: "Belgium", code: "BE" },
   { name: "Bulgaria", code: "BG" },
+  { name: "Brazil", code: "BR" },
+  { name: "Canada", code: "CA" },
+  { name: "Switzerland", code: "CH" },
+  { name: "China", code: "CN" },
   { name: "Croatia", code: "HR" },
-  { name: "Cyprus", code: "CY" },
   { name: "Czech Republic", code: "CZ" },
+  { name: "Cyprus", code: "CY" },
   { name: "Denmark", code: "DK" },
   { name: "Estonia", code: "EE" },
   { name: "Finland", code: "FI" },
@@ -59,20 +64,31 @@ const countries = [
   { name: "Germany", code: "DE" },
   { name: "Greece", code: "GR" },
   { name: "Hungary", code: "HU" },
+  { name: "Iceland", code: "IS" },
   { name: "Ireland", code: "IE" },
   { name: "Italy", code: "IT" },
+  { name: "Japan", code: "JP" },
   { name: "Latvia", code: "LV" },
+  { name: "Liechtenstein", code: "LI" },
   { name: "Lithuania", code: "LT" },
   { name: "Luxembourg", code: "LU" },
   { name: "Malta", code: "MT" },
+  { name: "Mexico", code: "MX" },
   { name: "Netherlands", code: "NL" },
+  { name: "New Zealand", code: "NZ" },
+  { name: "Norway", code: "NO" },
   { name: "Poland", code: "PL" },
   { name: "Portugal", code: "PT" },
   { name: "Romania", code: "RO" },
+  { name: "Russia", code: "RU" },
   { name: "Slovakia", code: "SK" },
   { name: "Slovenia", code: "SI" },
-  { name: "Spain", code: "ES" },
+  { name: "South Africa", code: "ZA" },
+  { name: "South Korea", code: "KR" },
   { name: "Sweden", code: "SE" },
+  { name: "Switzerland", code: "CH" },
+  { name: "Turkey", code: "TR" },
+  { name: "Ukraine", code: "UA" },
   { name: "United Kingdom", code: "GB" },
   { name: "United States", code: "US" },
   // Add more countries as needed
@@ -100,7 +116,6 @@ export default function SignUp() {
   useEffect(() => {
     if (auth.currentUser) {
       router.push("/");
-      toast.info("You are already logged in");
     }
   }, [auth.currentUser, router]);
 
@@ -192,6 +207,7 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
+      // Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
@@ -200,26 +216,32 @@ export default function SignUp() {
       const user = userCredential.user;
       await updateProfile(user, { displayName: formData.username });
 
-      await setDoc(doc(db, "users", user.uid), {
-        username: formData.username,
-        usernameLowercase: formData.username.toLowerCase(),
-        email: trimmedData.email,
-        country: formData.country,
-        countryCode: formData.countryCode,
-        isPremium: false,
-        isIdVerified: false,
-        unreadMessagesCount: 0,
-        createdAt: serverTimestamp(),
-      });
+      // Call Firebase function to create Firestore user document
+      const response = await fetch(
+        "https://createnewuseraccount-createnewuseraccount-qwe4clieqa-nw.a.run.app",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formData.username,
+            email: formData.email,
+            uid: user.uid,
+            country: formData.country,
+            countryCode: formData.countryCode,
+          }),
+        }
+      );
 
-      console.log("User registered successfully", formData);
-      toast.success("You have successfully created an account");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create user account");
+      }
+
+      toast.success("Account created successfully");
       router.push("/");
     } catch (error) {
-      console.error("Error during registration:", error);
-      setErrors({
-        submit: error.message || "An error occurred during registration",
-      });
+      console.error("Registration error:", error);
+      toast.error(error.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }

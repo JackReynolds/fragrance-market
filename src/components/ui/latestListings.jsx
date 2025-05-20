@@ -7,7 +7,7 @@ import { db } from "@/firebase.config.js";
 import ListingCard from "@/components//listingCard";
 import ListingHit from "../marketplace/listingHit";
 
-export function FeaturedItems() {
+export function LatestListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,19 +72,23 @@ export function FeaturedItems() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="h-64 rounded-lg bg-gray-200 animate-pulse"
-              ></div>
-            ))}
+          <div className="flex justify-center items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-64 rounded-lg bg-gray-200 animate-pulse"
+                ></div>
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
+          <div className="flex justify-center items-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
           </div>
         )}
       </div>
