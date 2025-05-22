@@ -12,7 +12,7 @@ exports.onMessageCreated = onDocumentCreated(
       const message = event.data.data();
       const { swapId, msgId } = event.params;
 
-      logger.info(`New message ${msgId} created in swap ${swapId}`);
+      logger.info(`Processing new message ${msgId} in swap ${swapId}`);
 
       // Only proceed if there's a sender
       if (!message.senderUid) {
@@ -20,52 +20,61 @@ exports.onMessageCreated = onDocumentCreated(
         return;
       }
 
-      // Get the Firestore instance
+      // CRITICAL FIX: Wait a moment before checking read status
+      // This allows active recipients to mark as read first
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Get the latest version of the message (it might have been updated)
       const db = getFirestore();
+      const updatedMessageSnap = await db
+        .doc(`swap_requests/${swapId}/messages/${msgId}`)
+        .get();
 
-      // Fetch the swap request to get participants
-      const swapSnapshot = await db.doc(`swap_requests/${swapId}`).get();
-
-      if (!swapSnapshot.exists) {
-        logger.warn(`Swap request ${swapId} not found for message ${msgId}`);
+      if (!updatedMessageSnap.exists) {
+        logger.warn(`Message ${msgId} no longer exists`);
         return;
       }
 
+      const updatedMessage = updatedMessageSnap.data();
+      const readBy = updatedMessage.readBy || [];
+
+      // Fetch the swap request to get participants
+      const swapSnapshot = await db.doc(`swap_requests/${swapId}`).get();
+      if (!swapSnapshot.exists) return;
+
       const swapData = swapSnapshot.data();
 
-      // Get participants from the swap request
-      // If participants array doesn't exist, fall back to offered/requested
+      // Get participants
       let participants = swapData.participants || [];
-
       if (
         participants.length === 0 &&
         swapData.offeredBy?.uid &&
         swapData.requestedFrom?.uid
       ) {
         participants = [swapData.offeredBy.uid, swapData.requestedFrom.uid];
-        logger.info(`Using fallback participant list for swap ${swapId}`);
       }
 
-      if (participants.length === 0) {
-        logger.warn(`No participants found for swap ${swapId}`);
+      // Find participants who need counter increment (not sender, not already read)
+      const recipientsToUpdate = participants.filter(
+        (uid) => uid !== updatedMessage.senderUid && !readBy.includes(uid)
+      );
+
+      if (recipientsToUpdate.length === 0) {
+        logger.info(`No recipients need counter update for message ${msgId}`);
         return;
       }
 
-      // Increment unreadMessagesCount for each other participant
+      // Increment counter only for recipients who haven't read the message
       const batch = db.batch();
-
-      participants
-        .filter((uid) => uid !== message.senderUid)
-        .forEach((uid) => {
-          logger.info(`Incrementing unread count for user ${uid}`);
-          const userRef = db.doc(`users/${uid}`);
-          batch.update(userRef, {
-            unreadMessagesCount: FieldValue.increment(1),
-          });
+      recipientsToUpdate.forEach((uid) => {
+        logger.info(`Incrementing unread count for user ${uid}`);
+        const userRef = db.doc(`users/${uid}`);
+        batch.update(userRef, {
+          unreadMessagesCount: FieldValue.increment(1),
         });
+      });
 
       await batch.commit();
-      logger.info(`Successfully updated unread counters for message ${msgId}`);
     } catch (error) {
       logger.error("Error processing new message:", error);
     }

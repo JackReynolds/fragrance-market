@@ -15,6 +15,9 @@ import {
   writeBatch,
   doc,
   arrayUnion,
+  setDoc,
+  limit,
+  startAfter,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
@@ -36,6 +39,12 @@ export default function ChatWindow({
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
   const router = useRouter();
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
+  const messagesPerPage = 25;
 
   // Get the other person in the conversation
   const otherParty =
@@ -99,18 +108,52 @@ export default function ChatWindow({
         "messages"
       );
       const q = query(messagesRef, orderBy("createdAt", "asc"));
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const messagesData = querySnapshot.docs.map((doc) => {
+
+      const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+        const messagesData = [];
+        const newUnreadMessages = [];
+
+        // Process all messages, identify new unread ones
+        querySnapshot.forEach((doc) => {
           const data = { id: doc.id, ...doc.data() };
-          return data;
+          messagesData.push(data);
+
+          // Check if this is a new message not from current user and not yet read
+          if (
+            data.senderUid !== authUser.uid &&
+            (!data.readBy || !data.readBy.includes(authUser.uid)) &&
+            data.createdAt
+          ) {
+            // Ensure it has a timestamp (not a local optimistic update)
+            newUnreadMessages.push(doc.id);
+          }
         });
+
+        // Mark new messages as read immediately
+        if (newUnreadMessages.length > 0) {
+          const batch = writeBatch(db);
+          newUnreadMessages.forEach((msgId) => {
+            const messageRef = doc(
+              db,
+              "swap_requests",
+              swapRequest.id,
+              "messages",
+              msgId
+            );
+            batch.update(messageRef, {
+              readBy: arrayUnion(authUser.uid),
+            });
+          });
+          await batch.commit();
+        }
+
         setMessages(messagesData);
         setLoading(false);
       });
 
       return () => unsubscribe();
     }
-  }, [swapRequest]);
+  }, [swapRequest, authUser?.uid]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -239,6 +282,127 @@ export default function ChatWindow({
 
     markMessagesAsRead();
   }, [swapRequest?.id, authUser?.uid]);
+
+  // Active presence tracker
+  useEffect(() => {
+    if (!swapRequest?.id || !authUser?.uid) return;
+
+    // Create a presence indicator
+    const presenceRef = doc(
+      db,
+      "swap_requests",
+      swapRequest.id,
+      "presence",
+      authUser.uid
+    );
+    setDoc(presenceRef, {
+      active: true,
+      lastActive: serverTimestamp(),
+    });
+
+    // Set up cleanup when leaving chat
+    return () => {
+      setDoc(presenceRef, {
+        active: false,
+        lastActive: serverTimestamp(),
+      });
+    };
+  }, [swapRequest?.id, authUser?.uid]);
+
+  // Handle typing status
+  const handleTyping = () => {
+    if (!isTyping) {
+      setIsTyping(true);
+      const typingRef = doc(
+        db,
+        "swap_requests",
+        swapRequest.id,
+        "typing",
+        authUser.uid
+      );
+      setDoc(typingRef, { isTyping: true, timestamp: serverTimestamp() });
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      const typingRef = doc(
+        db,
+        "swap_requests",
+        swapRequest.id,
+        "typing",
+        authUser.uid
+      );
+      setDoc(typingRef, { isTyping: false, timestamp: serverTimestamp() });
+    }, 2000);
+  };
+
+  // Listen for other user typing
+  useEffect(() => {
+    if (!swapRequest?.id || !authUser?.uid) return;
+
+    const otherUserId = otherParty.uid;
+    const typingRef = doc(
+      db,
+      "swap_requests",
+      swapRequest.id,
+      "typing",
+      otherUserId
+    );
+
+    const unsubscribe = onSnapshot(typingRef, (doc) => {
+      if (doc.exists() && doc.data().isTyping) {
+        setOtherUserTyping(true);
+      } else {
+        setOtherUserTyping(false);
+      }
+    });
+
+    return unsubscribe;
+  }, [swapRequest?.id, otherParty?.uid]);
+
+  const loadMoreMessages = async () => {
+    if (!hasMoreMessages) return;
+
+    try {
+      let q = query(
+        collection(db, "swap_requests", swapRequest.id, "messages"),
+        orderBy("createdAt", "desc"),
+        limit(messagesPerPage)
+      );
+
+      if (lastVisibleMessage) {
+        q = query(q, startAfter(lastVisibleMessage));
+      }
+
+      const querySnapshot = await getDocs(q);
+      const newMessages = [];
+
+      querySnapshot.forEach((doc) => {
+        newMessages.push({ id: doc.id, ...doc.data() });
+      });
+
+      if (newMessages.length < messagesPerPage) {
+        setHasMoreMessages(false);
+      }
+
+      if (querySnapshot.docs.length > 0) {
+        setLastVisibleMessage(
+          querySnapshot.docs[querySnapshot.docs.length - 1]
+        );
+      }
+
+      // Add new messages to state (maintaining order)
+      setMessages((prev) => [...prev, ...newMessages.reverse()]);
+    } catch (error) {
+      console.error("Error loading more messages:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">

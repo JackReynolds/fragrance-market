@@ -32,7 +32,7 @@ exports.createNewUserAccount = onRequest(
         uid,
         isPremium: false,
         isIdVerified: false,
-        unreadCount: 0,
+        unreadMessagesCount: 0,
         createdAt: FieldValue.serverTimestamp(),
       });
 
