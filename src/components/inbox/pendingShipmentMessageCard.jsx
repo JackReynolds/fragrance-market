@@ -1,17 +1,24 @@
 /* eslint-disable react/prop-types */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  serverTimestamp,
+  onSnapshot,
+} from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Truck } from "lucide-react";
+import { Truck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
 const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [isConfirmingShipment, setIsConfirmingShipment] = useState(false);
 
   // Get user info from message
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
@@ -24,42 +31,75 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     ? message.offeredBy
     : message.requestedFrom;
 
+  // State for shipment status (initialize from swapRequest, not message)
   const [isCurrentUserShipped, setIsCurrentUserShipped] = useState(
-    message?.shipmentStatus?.[currentUserInfo.uid] || false
+    swapRequest?.shipmentStatus?.[currentUserInfo.uid] || false
   );
   const [isOtherUserShipped, setIsOtherUserShipped] = useState(
-    message?.shipmentStatus?.[otherUserInfo.uid] || false
+    swapRequest?.shipmentStatus?.[otherUserInfo.uid] || false
   );
 
-  const handleConfirmShipment = async () => {
-    // Update swap_request document with shipment confirmed and tracking number if provided
-    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
-    const updateData = {
-      [`shipmentStatus.${currentUserInfo.uid}`]: true,
-    };
-    if (trackingNumber) {
-      updateData[`shipmentStatus.${currentUserInfo.uid}.trackingNumber`] =
-        trackingNumber;
-    }
+  // Real-time listener for swap request changes
+  useEffect(() => {
+    if (!swapRequest?.id) return;
 
-    // update message with shipment status and tracking number
-    await updateDoc(
-      doc(db, "swap_requests", swapRequest.id, "messages", message.id),
-      {
-        ...updateData,
-        createdAt: serverTimestamp(),
-        readBy: [authUser.uid],
+    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+    const unsubscribe = onSnapshot(swapRequestRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const shipmentStatus = data.shipmentStatus || {};
+
+        console.log("Shipment status update:", shipmentStatus); // Debug
+
+        // Update both users' shipment status
+        setIsCurrentUserShipped(!!shipmentStatus[currentUserInfo.uid]);
+        setIsOtherUserShipped(!!shipmentStatus[otherUserInfo.uid]);
       }
-    );
+    });
+
+    return () => unsubscribe();
+  }, [swapRequest?.id, currentUserInfo.uid, otherUserInfo.uid]);
+
+  const handleConfirmShipment = async () => {
+    if (isConfirmingShipment) return;
 
     try {
-      await updateDoc(swapRequestRef, updateData);
-      setIsCurrentUserShipped(true);
+      setIsConfirmingShipment(true);
 
-      // Check if other user has confirmed shipment
+      const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+      const updateData = {
+        [`shipmentStatus.${currentUserInfo.uid}`]: true,
+        updatedAt: serverTimestamp(),
+        lastUpdatedBy: authUser.uid,
+      };
+
+      // Add tracking number if provided
+      if (trackingNumber.trim()) {
+        updateData[`trackingNumbers.${currentUserInfo.uid}`] =
+          trackingNumber.trim();
+      }
+
+      // Update swap request
+      await updateDoc(swapRequestRef, updateData);
+
+      // Update the message to reflect the change and reset readBy
+      await updateDoc(
+        doc(db, "swap_requests", swapRequest.id, "messages", message.id),
+        {
+          [`shipmentStatus.${currentUserInfo.uid}`]: true,
+          updatedAt: serverTimestamp(),
+          readBy: [authUser.uid], // Reset readBy since this is a significant update
+        }
+      );
+
+      // Check if both users have now shipped (use updated state)
       if (isOtherUserShipped) {
-        // Both users have confirmed shipment, so we can mark the swap as completed
-        await updateDoc(swapRequestRef, { status: "swap_completed" });
+        // Both users confirmed - transition to completed
+        await updateDoc(swapRequestRef, {
+          status: "swap_completed",
+          completedAt: serverTimestamp(),
+          completedBy: "both_users_shipped",
+        });
 
         // Update message type to swap_completed
         await updateDoc(
@@ -67,16 +107,26 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
           {
             type: "swap_completed",
             completedAt: serverTimestamp(),
+            readBy: [authUser.uid],
           }
         );
-      }
 
-      toast.success("Shipment confirmed!");
+        toast.success("Swap completed! Both parties have shipped.");
+      } else {
+        toast.success("Shipment confirmed! Waiting for other party to ship.");
+      }
     } catch (error) {
       console.error("Error confirming shipment:", error);
       toast.error("Error confirming shipment. Please try again.");
+    } finally {
+      setIsConfirmingShipment(false);
     }
   };
+
+  // Get the correct address to display
+  const recipientAddress = isRequestedFromUser
+    ? swapRequest.offeredBy?.formattedAddress
+    : swapRequest.requestedFrom?.formattedAddress;
 
   return (
     <Card className="my-4">
@@ -85,13 +135,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
         <div className="mb-4">
           <h4 className="font-semibold mb-3">Send your fragrance to:</h4>
           <p className="text-sm text-muted-foreground">
-            {
-              swapRequest?.[
-                currentUserInfo.uid === message.requestedFrom.uid
-                  ? "requestedFrom"
-                  : "offeredBy"
-              ]?.formattedAddress
-            }
+            {recipientAddress || "Address not provided"}
           </p>
         </div>
 
@@ -136,11 +180,35 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
               variant="default"
               className="w-full flex items-center gap-2 hover:cursor-pointer hover:bg-primary/80"
               onClick={handleConfirmShipment}
+              disabled={isConfirmingShipment}
             >
-              <Truck className="h-4 w-4" />
-              <span>Confirm Shipment</span>
+              {isConfirmingShipment ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Truck className="h-4 w-4" />
+              )}
+              <span>
+                {isConfirmingShipment ? "Confirming..." : "Confirm Shipment"}
+              </span>
             </Button>
           </>
+        )}
+
+        {isCurrentUserShipped && !isOtherUserShipped && (
+          <div className="text-center p-3 bg-green-50 rounded-md">
+            <p className="text-sm text-green-700">
+              ✅ You&apos;ve confirmed shipment. Waiting for{" "}
+              {otherUserInfo.username} to ship.
+            </p>
+          </div>
+        )}
+
+        {isCurrentUserShipped && isOtherUserShipped && (
+          <div className="text-center p-3 bg-blue-50 rounded-md">
+            <p className="text-sm text-blue-700">
+              🎉 Both parties have shipped! Swap will be marked as completed.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

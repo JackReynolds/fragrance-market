@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
-import { doc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -28,27 +28,36 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     });
   };
 
-  // Helper function to change swap_request message type to swap_accepted
-  const changeSwapRequestMessageType = async () => {
-    const swapRequestMessageRef = doc(
-      db,
-      "swap_requests",
-      swapRequest.id,
-      "messages",
-      message.id
-    );
-    await updateDoc(swapRequestMessageRef, {
-      type: "swap_accepted",
-      createdAt: serverTimestamp(),
-      readBy: [authUser.uid],
-    });
+  // Helpder function to update the swap_request message document with type = swap_accepted
+  const updateSwapRequestMessage = async () => {
+    try {
+      setIsAccepting(true);
+      const swapRequestMessageRef = doc(
+        db,
+        "swap_requests",
+        swapRequest.id,
+        "messages",
+        message.id
+      );
+      await updateDoc(swapRequestMessageRef, {
+        type: "swap_accepted",
+        createdAt: serverTimestamp(),
+        senderUid: authUser.uid,
+        readBy: [authUser.uid],
+      });
+    } catch (error) {
+      console.error("Error updating swap request message:", error);
+      toast.error("Error updating swap request message");
+    } finally {
+      setIsAccepting(false);
+    }
   };
 
   const handleAcceptSwap = async () => {
     try {
       setIsAccepting(true);
       await changeSwapRequestStatus();
-      await changeSwapRequestMessageType();
+      await updateSwapRequestMessage();
       toast.success("Swap request accepted");
     } catch (error) {
       console.error("Error accepting swap:", error);
@@ -193,40 +202,53 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
         </div>
       </div>
 
+      {/* Check if swap_request is accepted - if so, show the swap_accepted message and remove the action buttons */}
+      {swapRequest.status !== "swap_request" && (
+        <div className="flex flex-col w-full items-start justify-start gap-3 mb-4">
+          <p className="text-xs text-green-600 mb-1">
+            {isRequestedFromUser
+              ? "You've accepted the swap request!"
+              : `${message.requestedFrom.username} has accepted the swap request`}
+          </p>
+        </div>
+      )}
+
       {/* Action buttons */}
-      <div className="mt-4 flex gap-2 justify-end">
-        {isRequestedFromUser ? (
-          <>
+      {swapRequest.status === "swap_request" && (
+        <div className="mt-4 flex gap-2 justify-end">
+          {isRequestedFromUser ? (
+            <>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="hover:cursor-pointer hover:bg-destructive/80"
+                onClick={() => handleRejectOrCancelSwap("reject")}
+                disabled={isRejecting}
+              >
+                {isRejecting ? "Rejecting..." : "Reject"}
+              </Button>
+              <Button
+                size="sm"
+                className="hover:cursor-pointer hover:bg-primary/80"
+                onClick={() => handleAcceptSwap()}
+                disabled={isAccepting}
+              >
+                {isAccepting ? "Accepting..." : "Accept"}
+              </Button>
+            </>
+          ) : isOfferedByUser ? (
             <Button
               size="sm"
               variant="destructive"
               className="hover:cursor-pointer hover:bg-destructive/80"
-              onClick={() => handleRejectOrCancelSwap("reject")}
+              onClick={() => handleRejectOrCancelSwap("cancel")}
               disabled={isRejecting}
             >
-              {isRejecting ? "Rejecting..." : "Reject"}
+              {isRejecting ? "Cancelling..." : "Cancel Request"}
             </Button>
-            <Button
-              size="sm"
-              className="hover:cursor-pointer hover:bg-primary/80"
-              onClick={() => handleAcceptSwap()}
-              disabled={isAccepting}
-            >
-              {isAccepting ? "Accepting..." : "Accept"}
-            </Button>
-          </>
-        ) : isOfferedByUser ? (
-          <Button
-            size="sm"
-            variant="destructive"
-            className="hover:cursor-pointer hover:bg-destructive/80"
-            onClick={() => handleRejectOrCancelSwap("cancel")}
-            disabled={isRejecting}
-          >
-            {isRejecting ? "Cancelling..." : "Cancel Request"}
-          </Button>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 };

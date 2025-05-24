@@ -1,13 +1,13 @@
 "use client";
 /* eslint-disable react/prop-types */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button.jsx";
-import { Check, CheckCircle, X } from "lucide-react";
+import { Check, CheckCircle, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
 import { useUserDoc } from "@/hooks/useUserDoc";
@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const [showAddressForm, setShowAddressForm] = useState(false);
-  // const [otherUserAddress, setOtherUserAddress] = useState("");
+  const [isConfirmingAddress, setIsConfirmingAddress] = useState(false);
 
   const { userDoc } = useUserDoc();
   const router = useRouter();
@@ -24,13 +24,13 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
   const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
 
-  // Determine current user and other party
+  // Determine current user and other party using swapRequest data
   const currentUserInfo = isRequestedFromUser
-    ? message.requestedFrom
-    : message.offeredBy;
+    ? swapRequest.requestedFrom
+    : swapRequest.offeredBy;
   const otherUserInfo = isRequestedFromUser
-    ? message.offeredBy
-    : message.requestedFrom;
+    ? swapRequest.offeredBy
+    : swapRequest.requestedFrom;
 
   const [currentUserAddressConfirmed, setCurrentUserAddressConfirmed] =
     useState(swapRequest?.addressConfirmation?.[currentUserInfo.uid] || false);
@@ -38,58 +38,64 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     swapRequest?.addressConfirmation?.[otherUserInfo.uid] || false
   );
 
-  // Store the address for current user
+  // Initialize addresses from the swapRequest data
   const [currentUserAddress, setCurrentUserAddress] = useState(
-    userDoc?.formattedAddress || ""
+    currentUserInfo?.formattedAddress || userDoc?.formattedAddress || ""
   );
-
-  // Function to get address from the user document
-  const getUserAddress = async (userUid) => {
-    const userRef = doc(db, "users", userUid);
-    const userDoc = await getDoc(userRef);
-    return userDoc.data().formattedAddress;
-  };
+  const [otherUserAddress, setOtherUserAddress] = useState(
+    otherUserInfo?.formattedAddress || ""
+  );
 
   // Function to update address confirmation in Firestore
   const updateAddressConfirmation = async (confirmed) => {
+    if (!confirmed) return; // Only handle confirmation, not un-confirmation
+
     try {
-      const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+      setIsConfirmingAddress(true);
+      // Determine user role
+      const userRole = isRequestedFromUser ? "requestedFrom" : "offeredBy";
 
-      // Create an object to update just the current user's confirmation status
-      const addressConfirmation = {
-        ...(swapRequest?.addressConfirmation || {}),
-        [currentUserInfo.uid]: confirmed,
-      };
+      // Call the cloud function
+      const response = await fetch(
+        "https://handleconfirmaddress-handleconfirmaddress-qwe4clieqa-nw.a.run.app",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            swapRequestId: swapRequest.id,
+            userUid: authUser.uid,
+            address: currentUserAddress,
+            userRole,
+            messageId: message.id,
+          }),
+        }
+      );
 
-      await updateDoc(swapRequestRef, {
-        addressConfirmation,
-        [`${
-          isRequestedFromUser ? "requestedFrom" : "offeredBy"
-        }.formattedAddress`]: currentUserAddress,
-      });
+      const result = await response.json();
 
-      // check if both parties have confirmed the address
-      if (
-        addressConfirmation[currentUserInfo.uid] &&
-        addressConfirmation[otherUserInfo.uid]
-      ) {
-        // Update swap_request document status to pending_shipment
-        await updateDoc(swapRequestRef, { status: "pending_shipment" });
-        // Update message document type to pending_shipment
-        await updateDoc(
-          doc(db, "swap_requests", swapRequest.id, "messages", message.id),
-          {
-            type: "pending_shipment",
-            readBy: [authUser.uid],
-          }
-        );
-        toast.success("Both addresses confirmed! Waiting for shipment.");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to confirm address");
       }
 
-      // Update local state
-      setCurrentUserAddressConfirmed(confirmed);
+      // Update local state based on server response
+      setCurrentUserAddressConfirmed(true);
+
+      if (result.data.bothConfirmed) {
+        if (result.data.pendingShipmentCreated) {
+          toast.success("Both addresses confirmed! Ready for shipment.");
+        } else {
+          toast.success("Address confirmed! Waiting for shipment phase.");
+        }
+      } else {
+        toast.success("Address confirmed! Waiting for other user.");
+      }
     } catch (error) {
-      console.error("Error updating address confirmation:", error);
+      console.error("Error confirming address:", error);
+      toast.error(error.message || "Failed to confirm address");
+    } finally {
+      setIsConfirmingAddress(false);
     }
   };
 
@@ -97,8 +103,55 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const handleSaveAddress = async (locationData) => {
     setCurrentUserAddress(locationData.formattedAddress);
     setShowAddressForm(false);
+
+    // The cloud function will save to user doc, so we don't need to do it here
     await updateAddressConfirmation(true);
   };
+
+  // Add this after your existing useEffects
+  useEffect(() => {
+    if (!swapRequest?.id) return;
+
+    // Set up real-time listener for swap request changes
+    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+    const unsubscribe = onSnapshot(swapRequestRef, (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        const addressConfirmation = data.addressConfirmation || {};
+
+        // Update both users' confirmation status
+        setCurrentUserAddressConfirmed(
+          !!addressConfirmation[currentUserInfo.uid]
+        );
+        setOtherUserAddressConfirmed(!!addressConfirmation[otherUserInfo.uid]);
+
+        // FIXED: Access addresses correctly from the swap request structure
+        const updatedCurrentUserAddress = isRequestedFromUser
+          ? data.requestedFrom?.formattedAddress
+          : data.offeredBy?.formattedAddress;
+
+        const updatedOtherUserAddress = isRequestedFromUser
+          ? data.offeredBy?.formattedAddress
+          : data.requestedFrom?.formattedAddress;
+
+        // Update addresses if they exist
+        if (updatedCurrentUserAddress) {
+          setCurrentUserAddress(updatedCurrentUserAddress);
+        }
+        if (updatedOtherUserAddress) {
+          setOtherUserAddress(updatedOtherUserAddress);
+        }
+      }
+    });
+
+    // Clean up listener
+    return () => unsubscribe();
+  }, [
+    swapRequest?.id,
+    currentUserInfo.uid,
+    otherUserInfo.uid,
+    isRequestedFromUser,
+  ]);
 
   return (
     <div className="max-w-[90%] w-[400px] rounded-lg p-4 border bg-card shadow-sm">
@@ -198,21 +251,41 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
                 {!currentUserAddressConfirmed ? (
                   <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      onClick={() => updateAddressConfirmation(true)}
-                      className="hover:cursor-pointer hover:bg-primary/80"
-                    >
-                      <Check size={14} /> Confirm Address
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowAddressForm(true)}
-                      className="hover:cursor-pointer"
-                    >
-                      <X size={14} /> Update Address
-                    </Button>
+                    {currentUserAddress ? (
+                      <Button
+                        size="sm"
+                        onClick={() => updateAddressConfirmation(true)}
+                        className="hover:cursor-pointer hover:bg-primary/80"
+                      >
+                        {isConfirmingAddress ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <>
+                            <Check size={14} /> Confirm Address
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={() => setShowAddressForm(true)}
+                        className="hover:cursor-pointer w-full"
+                      >
+                        Add Address
+                      </Button>
+                    )}
+
+                    {currentUserAddress && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowAddressForm(true)}
+                        className="hover:cursor-pointer"
+                      >
+                        <X size={14} /> Update Address
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center text-green-600 mt-1">
@@ -228,7 +301,13 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
                     streetAddress: currentUserAddress,
                   }}
                   onSave={handleSaveAddress}
-                  onCancel={() => setShowAddressForm(false)}
+                  onCancel={() => {
+                    if (currentUserAddress) {
+                      setShowAddressForm(false);
+                    } else {
+                      toast.error("Please add an address to proceed");
+                    }
+                  }}
                 />
               </div>
             )}
@@ -237,19 +316,20 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           {/* Other user address confirmation status */}
           <div className="p-3 bg-muted/40 rounded-md">
             <p className="text-sm font-medium mb-1">
-              {otherUserInfo.username}&apos;s Address:
+              {otherUserInfo.username}&apos;s Shipping Address:{" "}
+              {otherUserAddress || "No address provided"}
             </p>
 
             {otherUserAddressConfirmed ? (
               <div className="flex items-center text-green-600 mt-1">
                 <Check size={16} className="mr-1" />
-                <span className="text-sm">Address Confirmed</span>
+                <span className="text-sm">Shipping Address Confirmed</span>
               </div>
             ) : (
               <div className="flex items-center text-amber-600 mt-1">
                 <X size={16} className="mr-1" />
                 <span className="text-sm">
-                  Waiting for Address Confirmation
+                  Waiting for Shipping Address Confirmation
                 </span>
               </div>
             )}

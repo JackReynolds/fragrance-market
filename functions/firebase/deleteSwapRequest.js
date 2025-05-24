@@ -48,6 +48,9 @@ exports.deleteSwapRequest = onRequest(
       // Delete messages collection
       await deleteCollection(db, `swap_requests/${swapRequestId}/messages`, 50);
 
+      // Delete presence collection if present
+      await deleteCollection(db, `swap_requests/${swapRequestId}/presence`);
+
       // Delete rental-request document
       await db.collection("swap_requests").doc(swapRequestId).delete();
       res.status(200).send({ message: "Swap request deleted." });

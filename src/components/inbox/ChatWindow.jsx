@@ -39,9 +39,6 @@ export default function ChatWindow({
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
   const router = useRouter();
-  const [isTyping, setIsTyping] = useState(false);
-  const [otherUserTyping, setOtherUserTyping] = useState(false);
-  const typingTimeoutRef = useRef(null);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
   const messagesPerPage = 25;
@@ -101,13 +98,18 @@ export default function ChatWindow({
 
   useEffect(() => {
     if (swapRequest) {
+      // Initial message load with pagination
       const messagesRef = collection(
         db,
         "swap_requests",
         swapRequest.id,
         "messages"
       );
-      const q = query(messagesRef, orderBy("createdAt", "asc"));
+      const q = query(
+        messagesRef,
+        orderBy("createdAt", "desc"),
+        limit(messagesPerPage)
+      );
 
       const unsubscribe = onSnapshot(q, async (querySnapshot) => {
         const messagesData = [];
@@ -309,63 +311,6 @@ export default function ChatWindow({
     };
   }, [swapRequest?.id, authUser?.uid]);
 
-  // Handle typing status
-  const handleTyping = () => {
-    if (!isTyping) {
-      setIsTyping(true);
-      const typingRef = doc(
-        db,
-        "swap_requests",
-        swapRequest.id,
-        "typing",
-        authUser.uid
-      );
-      setDoc(typingRef, { isTyping: true, timestamp: serverTimestamp() });
-    }
-
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set new timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      const typingRef = doc(
-        db,
-        "swap_requests",
-        swapRequest.id,
-        "typing",
-        authUser.uid
-      );
-      setDoc(typingRef, { isTyping: false, timestamp: serverTimestamp() });
-    }, 2000);
-  };
-
-  // Listen for other user typing
-  useEffect(() => {
-    if (!swapRequest?.id || !authUser?.uid) return;
-
-    const otherUserId = otherParty.uid;
-    const typingRef = doc(
-      db,
-      "swap_requests",
-      swapRequest.id,
-      "typing",
-      otherUserId
-    );
-
-    const unsubscribe = onSnapshot(typingRef, (doc) => {
-      if (doc.exists() && doc.data().isTyping) {
-        setOtherUserTyping(true);
-      } else {
-        setOtherUserTyping(false);
-      }
-    });
-
-    return unsubscribe;
-  }, [swapRequest?.id, otherParty?.uid]);
-
   const loadMoreMessages = async () => {
     if (!hasMoreMessages) return;
 
@@ -403,6 +348,18 @@ export default function ChatWindow({
       console.error("Error loading more messages:", error);
     }
   };
+
+  const sortedMessages = [...messages].sort((a, b) => {
+    const dateA =
+      a.createdAt instanceof Date
+        ? a.createdAt
+        : a.createdAt?.toDate?.() || new Date(0);
+    const dateB =
+      b.createdAt instanceof Date
+        ? b.createdAt
+        : b.createdAt?.toDate?.() || new Date(0);
+    return dateA - dateB; // Sort in ascending order (oldest first)
+  });
 
   return (
     <div className="flex flex-col h-full">
@@ -451,7 +408,7 @@ export default function ChatWindow({
           </div>
         ) : (
           <>
-            {messages.map((message) => (
+            {sortedMessages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${
