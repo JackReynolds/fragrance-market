@@ -41,6 +41,9 @@ const SwapOfferModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingRequests, setExistingRequests] = useState({});
 
+  console.log("targetListing", targetListing);
+  console.log("targetOwner", targetOwner);
+
   // Fetch user's swap listings and check for existing requests
   useEffect(() => {
     const fetchUserListings = async () => {
@@ -75,8 +78,7 @@ const SwapOfferModal = ({
           and(
             where("offeredBy.uid", "==", currentUser.uid),
             where("requestedListing.id", "==", targetListing.id),
-            where("requestedFrom.uid", "==", targetOwner.uid),
-            where("status", "==", "swap_request")
+            where("requestedFrom.uid", "==", targetOwner.uid)
           )
         );
 
@@ -211,7 +213,7 @@ const SwapOfferModal = ({
 
     // Double check for existing request
     if (hasExistingRequest(selectedListing.id)) {
-      toast.error("You already have a pending request for this fragrance");
+      toast.error("You already have a swap request for this fragrance");
       return;
     }
 
@@ -261,10 +263,10 @@ const SwapOfferModal = ({
             <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-amber-800">
-                You already have pending swap requests for this listing
+                You already have a swap request for this listing
               </p>
               <p className="text-xs text-amber-700 mt-1">
-                Fragrances with pending requests are marked below
+                Fragrances with existing swap requests are marked below
               </p>
             </div>
           </div>
@@ -312,7 +314,7 @@ const SwapOfferModal = ({
                         setSelectedListing(listing);
                       } else {
                         toast.info(
-                          "You already have a pending request with this fragrance"
+                          "You already have an existing swap request with this fragrance"
                         );
                       }
                     }}
