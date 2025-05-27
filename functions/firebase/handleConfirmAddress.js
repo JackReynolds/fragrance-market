@@ -84,6 +84,12 @@ exports.handleConfirmAddress = onRequest(
             ? "offeredBy.formattedAddress"
             : "requestedFrom.formattedAddress";
 
+        // get other user uid
+        const otherUserUid =
+          userRole === "offeredBy"
+            ? swapData.requestedFrom?.uid
+            : swapData.offeredBy?.uid;
+
         // Update swap request with address confirmation
         transaction.update(swapRequestRef, {
           addressConfirmation: updatedConfirmations,
@@ -98,27 +104,24 @@ exports.handleConfirmAddress = onRequest(
           updatedAt: FieldValue.serverTimestamp(),
         });
 
-        // Update the swap_accepted message with the address
+        // Update the swap_accepted message to notify the other user that the address has been confirmed
         const messageRef = db.doc(
           `swap_requests/${swapRequestId}/messages/${messageId}`
         );
         transaction.update(messageRef, {
           updatedAt: FieldValue.serverTimestamp(),
+          addressConfirmation: updatedConfirmations,
+          readBy: [userUid],
+          senderUid: userUid,
         });
 
         // Check if both users have confirmed
-        const otherUserUid =
-          swapData.offeredBy?.uid === userUid
-            ? swapData.requestedFrom?.uid
-            : swapData.offeredBy?.uid;
-
         const bothConfirmed =
           updatedConfirmations[userUid] && updatedConfirmations[otherUserUid];
 
         let messageUpdated = false;
 
         if (bothConfirmed) {
-          // FIXED: Remove query, use status check instead
           // Only proceed if status is still "swap_accepted"
           if (swapData.status === "swap_accepted") {
             // Update swap request status

@@ -167,6 +167,7 @@ function MarketplaceContent() {
                       checkbox:
                         "mr-2 rounded border-gray-300 text-primary focus:ring-primary",
                       label: "text-sm cursor-pointer",
+
                       count:
                         "ml-2 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full",
                     }}

@@ -317,7 +317,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           <div className="p-3 bg-muted/40 rounded-md">
             <p className="text-sm font-medium mb-1">
               {otherUserInfo.username}&apos;s Shipping Address:{" "}
-              {otherUserAddress || "No address provided"}
+              {otherUserAddressConfirmed ? otherUserAddress : null}
             </p>
 
             {otherUserAddressConfirmed ? (

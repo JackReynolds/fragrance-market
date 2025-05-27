@@ -32,34 +32,26 @@ exports.onMessageWritten = onDocumentWritten(
       }
 
       const isNewDocument = !beforeData;
-      const isTypeChange = beforeData && beforeData.type !== afterData.type;
+      const hasSignificantChange =
+        beforeData &&
+        (beforeData.type !== afterData.type ||
+          JSON.stringify(beforeData.addressConfirmation || {}) !==
+            JSON.stringify(afterData.addressConfirmation || {}));
+
+      // Skip if this is just a readBy update
       const isReadByOnlyChange =
         beforeData &&
-        JSON.stringify({ ...beforeData, readBy: null }) ===
-          JSON.stringify({ ...afterData, readBy: null });
+        JSON.stringify({ ...beforeData, readBy: null, updatedAt: null }) ===
+          JSON.stringify({ ...afterData, readBy: null, updatedAt: null });
 
-      // Skip if this is just a readBy update with no other changes
-      if (!isNewDocument && isReadByOnlyChange && !isTypeChange) {
-        logger.info(
-          `Message ${msgId} only readBy changed, skipping counter update`
-        );
+      if (!isNewDocument && (isReadByOnlyChange || !hasSignificantChange)) {
+        logger.info(`Message ${msgId} - no significant changes, skipping`);
         return;
       }
 
-      // For updates, only process meaningful changes
-      if (!isNewDocument && !isTypeChange) {
-        logger.info(
-          `Message ${msgId} updated but no significant changes, skipping`
-        );
-        return;
-      }
-
-      logger.info(`Processing message ${msgId} in swap ${swapId}`, {
-        isNewDocument,
-        isTypeChange,
-        type: afterData.type,
-        senderUid: afterData.senderUid,
-      });
+      // For ANY significant change (new message, type change, address confirmation),
+      // increment counter ONCE per recipient
+      logger.info(`Processing message ${msgId} - significant change detected`);
 
       const db = getFirestore();
 
@@ -113,22 +105,16 @@ exports.onMessageWritten = onDocumentWritten(
           const presenceSnap = await presenceRef.get();
           if (presenceSnap.exists) {
             const presenceData = presenceSnap.data();
-            if (presenceData.active && presenceData.lastActive) {
-              const now = new Date();
-              const lastActive = presenceData.lastActive.toDate();
-              const timeDiff = now - lastActive;
 
-              // If user was active in the last 30 seconds, don't increment counter
-              if (timeDiff < 30000) {
-                logger.info(
-                  `Recipient ${recipientUid} is currently active, skipping counter increment`
-                );
-                continue;
-              }
+            // Simple check: if active = true, they're in the chat
+            if (presenceData.active === true) {
+              logger.info(
+                `Recipient ${recipientUid} is currently active in chat, skipping counter increment`
+              );
+              continue;
             }
           }
         } catch (presenceError) {
-          // Continue if presence check fails
           logger.warn(
             `Presence check failed for ${recipientUid}:`,
             presenceError.message
@@ -139,8 +125,8 @@ exports.onMessageWritten = onDocumentWritten(
         logger.info(`Incrementing unread count for user ${recipientUid}`, {
           reason: isNewDocument
             ? "new_message"
-            : isTypeChange
-            ? "type_change"
+            : hasSignificantChange
+            ? "significant_change"
             : "unknown",
           messageType: afterData.type,
         });

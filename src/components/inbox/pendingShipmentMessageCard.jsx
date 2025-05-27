@@ -66,58 +66,47 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     try {
       setIsConfirmingShipment(true);
 
-      const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
-      const updateData = {
-        [`shipmentStatus.${currentUserInfo.uid}`]: true,
-        updatedAt: serverTimestamp(),
-        lastUpdatedBy: authUser.uid,
-      };
-
-      // Add tracking number if provided
-      if (trackingNumber.trim()) {
-        updateData[`trackingNumbers.${currentUserInfo.uid}`] =
-          trackingNumber.trim();
-      }
-
-      // Update swap request
-      await updateDoc(swapRequestRef, updateData);
-
-      // Update the message to reflect the change and reset readBy
-      await updateDoc(
-        doc(db, "swap_requests", swapRequest.id, "messages", message.id),
+      // Call the cloud function
+      const response = await fetch(
+        "https://handleconfirmshipment-handleconfirmshipment-qwe4clieqa-nw.a.run.app",
         {
-          [`shipmentStatus.${currentUserInfo.uid}`]: true,
-          updatedAt: serverTimestamp(),
-          readBy: [authUser.uid], // Reset readBy since this is a significant update
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            swapRequestId: swapRequest.id,
+            userUid: authUser.uid,
+            trackingNumber: trackingNumber.trim() || null,
+            messageId: message.id,
+          }),
         }
       );
 
-      // Check if both users have now shipped (use updated state)
-      if (isOtherUserShipped) {
-        // Both users confirmed - transition to completed
-        await updateDoc(swapRequestRef, {
-          status: "swap_completed",
-          completedAt: serverTimestamp(),
-          completedBy: "both_users_shipped",
-        });
+      const result = await response.json();
 
-        // Update message type to swap_completed
-        await updateDoc(
-          doc(db, "swap_requests", swapRequest.id, "messages", message.id),
-          {
-            type: "swap_completed",
-            completedAt: serverTimestamp(),
-            readBy: [authUser.uid],
-          }
-        );
+      if (!result.success) {
+        throw new Error(result.error || "Failed to confirm shipment");
+      }
 
+      // Update local state based on server response
+      setIsCurrentUserShipped(true);
+
+      if (result.data.swapCompleted) {
         toast.success("Swap completed! Both parties have shipped.");
+      } else if (result.data.bothShipped) {
+        toast.success("Both parties have shipped! Swap is being completed.");
       } else {
         toast.success("Shipment confirmed! Waiting for other party to ship.");
       }
+
+      // Clear tracking number input
+      setTrackingNumber("");
     } catch (error) {
       console.error("Error confirming shipment:", error);
-      toast.error("Error confirming shipment. Please try again.");
+      toast.error(
+        error.message || "Error confirming shipment. Please try again."
+      );
     } finally {
       setIsConfirmingShipment(false);
     }

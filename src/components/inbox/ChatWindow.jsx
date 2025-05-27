@@ -1,8 +1,6 @@
 "use client";
 
 /* eslint-disable react/prop-types */
-
-// src/components/inbox/ChatWindow.jsx
 import React, { useState, useEffect, useRef } from "react";
 import {
   collection,

@@ -204,7 +204,8 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Essence. All rights reserved.
+            &copy; {new Date().getFullYear()} The Fragrance Market. All rights
+            reserved.
           </p>
           <div className="flex space-x-6 text-sm">
             <Link
