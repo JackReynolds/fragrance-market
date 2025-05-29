@@ -4,7 +4,7 @@ const stripeTestSecretKey = defineSecret("STRIPE_TEST_SECRET_KEY");
 const stripeProdSecretKey = defineSecret("STRIPE_PROD_SECRET_KEY");
 let stripe;
 
-exports.createCheckoutSession = onRequest(
+exports.createBillingCheckoutSession = onRequest(
   {
     cors: true,
     region: "europe-west2",

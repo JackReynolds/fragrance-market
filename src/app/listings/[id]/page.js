@@ -252,6 +252,53 @@ const ListingDetailPage = () => {
     setIsSwapModalOpen(true);
   };
 
+  // Handle buy now button click
+  // Replace the handleBuyNow function (around line 223) with this:
+
+  const handleBuyNow = async () => {
+    if (!authUser) {
+      toast.warning("Please sign in to buy now");
+      return;
+    }
+
+    if (!userDoc?.email) {
+      toast.error("Please complete your profile with an email address");
+      return;
+    }
+
+    try {
+      // Create checkout session
+      const response = await fetch(
+        "https://createbuycheckoutsession-createbuycheckoutsession-qwe4clieqa-nw.a.run.app",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            listingId: listing.id,
+            buyerUid: authUser.uid,
+            buyerEmail: userDoc.email,
+            successUrl: `${window.location.origin}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
+            cancelUrl: window.location.href,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create checkout session");
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = result.data.url;
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
+      toast.error(error.message || "Failed to initiate purchase");
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -522,7 +569,11 @@ const ListingDetailPage = () => {
               {!isOwner && (
                 <div className="mt-8 flex flex-col sm:flex-row gap-4">
                   {listing.type === "sell" ? (
-                    <Button className="flex-1 py-2" size="lg">
+                    <Button
+                      className="flex-1 py-2"
+                      size="lg"
+                      onClick={handleBuyNow}
+                    >
                       <ShoppingBag className="mr-2 h-4 w-4" /> Buy Now
                     </Button>
                   ) : (

@@ -34,6 +34,7 @@ import {
   Eye,
   Package,
   MessageSquare,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -85,6 +86,9 @@ export default function Profile() {
   );
   const [showEnterAddressManually, setShowEnterAddressManually] =
     useState(false);
+  const [stripeStatus, setStripeStatus] = useState(null);
+  const [loadingStripeStatus, setLoadingStripeStatus] = useState(false);
+  const [creatingStripeAccount, setCreatingStripeAccount] = useState(false);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -178,6 +182,43 @@ export default function Profile() {
     saveAddressToFirestore(locationData);
     console.log(locationData);
     toast.success("Address updated!");
+  };
+
+  const getStripeActionButtonText = () => {
+    if (!stripeStatus) return "Loading...";
+
+    switch (stripeStatus.actionRequired) {
+      case "create_account":
+        return "Set Up Seller Account";
+      case "complete_onboarding":
+        return "Complete Setup";
+      case "complete_requirements":
+        return "Complete Requirements";
+      case "manage_account":
+        return "Manage Account";
+      case "wait_verification":
+        return "Under Review";
+      default:
+        return "Contact Support";
+    }
+  };
+
+  const getStripeStatusColor = () => {
+    if (!stripeStatus) return "bg-gray-100 text-gray-700";
+
+    switch (stripeStatus.status) {
+      case "active":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
+      case "requirements_due":
+      case "past_due":
+        return "bg-red-100 text-red-700";
+      case "incomplete":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
   };
 
   // Loading state
@@ -714,6 +755,119 @@ export default function Profile() {
                             }
                           >
                             Start Verification
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Seller Account</CardTitle>
+                      <CardDescription>
+                        Manage your seller account to receive payments from
+                        sales
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {loadingStripeStatus ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-pulse text-sm">
+                            Checking account status...
+                          </div>
+                        </div>
+                      ) : stripeStatus ? (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Status</span>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStripeStatusColor()}`}
+                            >
+                              {stripeStatus.status
+                                .replace("_", " ")
+                                .toUpperCase()}
+                            </span>
+                          </div>
+
+                          <div className="p-3 bg-muted/40 rounded-md">
+                            <p className="text-sm">{stripeStatus.message}</p>
+
+                            {stripeStatus.canReceivePayments && (
+                              <div className="flex items-center text-green-600 mt-2">
+                                <Check size={16} className="mr-1" />
+                                <span className="text-sm">
+                                  Ready to receive payments
+                                </span>
+                              </div>
+                            )}
+
+                            {stripeStatus.details?.requirementsCounts && (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                {stripeStatus.details.requirementsCounts
+                                  .currentlyDue > 0 && (
+                                  <p>
+                                    •{" "}
+                                    {
+                                      stripeStatus.details.requirementsCounts
+                                        .currentlyDue
+                                    }{" "}
+                                    requirement(s) due now
+                                  </p>
+                                )}
+                                {stripeStatus.details.requirementsCounts
+                                  .pastDue > 0 && (
+                                  <p className="text-red-600">
+                                    •{" "}
+                                    {
+                                      stripeStatus.details.requirementsCounts
+                                        .pastDue
+                                    }{" "}
+                                    past due requirement(s)
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <Button
+                            className="w-full hover:cursor-pointer hover:bg-primary/80"
+                            onClick={handleStripeAction}
+                            disabled={
+                              creatingStripeAccount ||
+                              stripeStatus.actionRequired ===
+                                "wait_verification"
+                            }
+                          >
+                            {creatingStripeAccount ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Loading...
+                              </>
+                            ) : (
+                              getStripeActionButtonText()
+                            )}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            // onClick={checkStripeAccountStatus}
+                            disabled={loadingStripeStatus}
+                          >
+                            Refresh Status
+                          </Button>
+                        </>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Unable to load account status
+                          </p>
+                          <Button
+                            variant="outline"
+                            // onClick={checkStripeAccountStatus}
+                          >
+                            Try Again
                           </Button>
                         </div>
                       )}
