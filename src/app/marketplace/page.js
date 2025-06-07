@@ -222,7 +222,7 @@ function MarketplaceContent() {
                 <Hits
                   hitComponent={ListingHit}
                   classNames={{
-                    root: "",
+                    root: "w-full",
                     list: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6",
                     item: "min-w-[250px]",
                   }}

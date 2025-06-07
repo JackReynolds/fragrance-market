@@ -50,6 +50,7 @@ const ListingDetailPage = () => {
   const [listing, setListing] = useState(null);
   const [owner, setOwner] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBuyNow, setIsLoadingBuyNow] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [isCheckingListings, setIsCheckingListings] = useState(false);
@@ -179,20 +180,25 @@ const ListingDetailPage = () => {
     if (!isVerified) return null;
 
     const badges = {
-      email: {
-        icon: <Mail size={16} className="mr-1" />,
-        text: "Email Verified",
-        className: " bg-blue-100 text-blue-700",
-      },
+      // ID badge is dark green and gradient
       id: {
         icon: <ShieldCheck size={16} className="mr-1" />,
         text: "ID Verified",
-        className: "bg-green-100 text-green-700",
+        className:
+          "bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100 font-semibold",
       },
+      email: {
+        icon: <Mail size={16} className="mr-1" />,
+        text: "Email Verified",
+        className:
+          "bg-gradient-to-r from-blue-500 to-blue-800 text-white font-semibold",
+      },
+      // Premium badge is gold gradient
       premium: {
         icon: <Crown size={16} className="mr-1" />,
         text: "Premium Member",
-        className: "bg-slate-200 text-slate-700",
+        className:
+          "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 font-semibold",
       },
     };
 
@@ -253,8 +259,6 @@ const ListingDetailPage = () => {
   };
 
   // Handle buy now button click
-  // Replace the handleBuyNow function (around line 223) with this:
-
   const handleBuyNow = async () => {
     if (!authUser) {
       toast.warning("Please sign in to buy now");
@@ -267,6 +271,7 @@ const ListingDetailPage = () => {
     }
 
     try {
+      setIsLoadingBuyNow(true);
       // Create checkout session
       const response = await fetch(
         "https://createbuycheckoutsession-createbuycheckoutsession-qwe4clieqa-nw.a.run.app",
@@ -296,6 +301,8 @@ const ListingDetailPage = () => {
     } catch (error) {
       console.error("Error creating checkout session:", error);
       toast.error(error.message || "Failed to initiate purchase");
+    } finally {
+      setIsLoadingBuyNow(false);
     }
   };
 
@@ -570,11 +577,21 @@ const ListingDetailPage = () => {
                 <div className="mt-8 flex flex-col sm:flex-row gap-4">
                   {listing.type === "sell" ? (
                     <Button
-                      className="flex-1 py-2"
+                      className="flex-1 py-2 hover:cursor-pointer hover:bg-primary/80"
                       size="lg"
                       onClick={handleBuyNow}
+                      disabled={isLoadingBuyNow}
                     >
-                      <ShoppingBag className="mr-2 h-4 w-4" /> Buy Now
+                      {isLoadingBuyNow ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="mr-2 h-4 w-4" /> Buy Now
+                        </>
+                      )}
                     </Button>
                   ) : (
                     <Button

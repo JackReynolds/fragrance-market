@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { getDocs, collection, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase.config.js";
-import ListingCard from "@/components//listingCard";
-import ListingHit from "../marketplace/listingHit";
+import ListingCard from "@/components/listingCard";
 
 export function LatestListings() {
   const [listings, setListings] = useState([]);

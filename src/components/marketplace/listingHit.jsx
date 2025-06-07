@@ -2,14 +2,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  ShoppingBag,
-  Repeat,
-  Star,
-  ShieldCheck,
-  User,
-  Crown,
-} from "lucide-react";
+import { ShoppingBag, Repeat, ShieldCheck, User, Crown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";

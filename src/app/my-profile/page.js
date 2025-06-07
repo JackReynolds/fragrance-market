@@ -52,6 +52,7 @@ import { db } from "../../firebase.config";
 import { useUserDoc } from "@/hooks/useUserDoc";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
 import GoogleLocationSearch from "@/components/googleLocationSearch";
+import ListingCard from "@/components/listingCard";
 
 const SAMPLE_REVIEWS = [
   {
@@ -542,68 +543,14 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className="flex justify-center">
-                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="w-full grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                         {userListings &&
                           userListings.map((listing) => (
-                            <Card
+                            <ListingCard
                               key={listing.id}
-                              className="overflow-hidden max-w-72 md:max-w-96 hover:shadow-md transition-all duration-300"
-                            >
-                              <div className="h-72 relative">
-                                <Image
-                                  src={listing.imageURLs[0]}
-                                  alt={listing.title}
-                                  fill
-                                  className="object-fit"
-                                />
-                                <div className="absolute top-2 right-2">
-                                  <span
-                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                      listing.type === "sell"
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-blue-100 text-blue-800"
-                                    }`}
-                                  >
-                                    {listing.type}
-                                  </span>
-                                </div>
-                              </div>
-                              <CardContent className="p-4">
-                                <h3 className="font-semibold line-clamp-1">
-                                  {listing.title}
-                                </h3>
-                                <div className="mt-1 mb-3 text-sm text-muted-foreground">
-                                  <p>{listing.condition}</p>
-                                  <p>
-                                    Posted:{" "}
-                                    {listing.createdAt &&
-                                    typeof listing.createdAt === "object" &&
-                                    "seconds" in listing.createdAt
-                                      ? new Date(
-                                          listing.createdAt.seconds * 1000
-                                        ).toLocaleDateString()
-                                      : listing.createdAt}
-                                  </p>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium">
-                                    {listing.price
-                                      ? "€" + listing.price.toFixed(2)
-                                      : "Swap"}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      router.push(`/listings/${listing.id}`)
-                                    }
-                                  >
-                                    <Eye size={14} className="mr-1" />
-                                    View
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
+                              listing={listing}
+                              showUserInfo={false}
+                            />
                           ))}
                       </div>
                     </div>

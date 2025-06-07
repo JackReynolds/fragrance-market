@@ -12,7 +12,7 @@ const ListingCard = ({
   listing,
   isFavorite = false,
   toggleFavorite = null,
-  showViewButton = false,
+  showUserInfo = true,
 }) => {
   const router = useRouter();
 
@@ -21,9 +21,7 @@ const ListingCard = ({
 
   // Handle clicks on card
   const handleCardClick = (e) => {
-    if (!showViewButton) {
-      router.push(`/listings/${id}`);
-    }
+    router.push(`/listings/${id}`);
   };
 
   return (
@@ -88,45 +86,50 @@ const ListingCard = ({
             </p>
           )}
 
-          <div className="flex mt-2 gap-2">
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">
-                {listing.ownerProfilePictureURL ? (
-                  <Image
-                    src={listing.ownerProfilePictureURL}
-                    alt={listing.ownerUsername}
-                    width={20}
-                    height={20}
-                  />
-                ) : (
-                  <User
-                    size={24}
-                    className="text-muted-foreground bg-muted rounded-full p-1"
-                  />
-                )}
-              </p>
+          {/* User info */}
+          {showUserInfo && (
+            <div>
+              <div className="flex mt-2 gap-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    {listing.ownerProfilePictureURL ? (
+                      <Image
+                        src={listing.ownerProfilePictureURL}
+                        alt={listing.ownerUsername}
+                        width={20}
+                        height={20}
+                      />
+                    ) : (
+                      <User
+                        size={24}
+                        className="text-muted-foreground bg-muted rounded-full p-1"
+                      />
+                    )}
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {listing.ownerUsername}
+                </p>
+                <p>
+                  {listing.ownerIsPremium ? (
+                    <Crown className="w-5 h-5 text-yellow-500" />
+                  ) : null}
+                </p>
+                <p>
+                  {listing.ownerIsIdVerified ? (
+                    <ShieldCheck className="w-5 h-5 text-green-600" />
+                  ) : null}
+                </p>
+              </div>
+              <div className="mt-2 flex items-center text-sm ">
+                <span>
+                  {getCountryFlagEmoji(listing?.countryCode) +
+                    " " +
+                    listing?.country || "Location not specified"}
+                </span>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {listing.ownerUsername}
-            </p>
-            <p>
-              {listing.ownerIsPremium ? (
-                <Crown className="w-5 h-5 text-yellow-500" />
-              ) : null}
-            </p>
-            <p>
-              {listing.ownerIsIdVerified ? (
-                <ShieldCheck className="w-5 h-5 text-green-600" />
-              ) : null}
-            </p>
-          </div>
-          <div className="mt-2 flex items-center text-sm ">
-            <span>
-              {getCountryFlagEmoji(listing?.countryCode) +
-                " " +
-                listing?.country || "Location not specified"}
-            </span>
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
