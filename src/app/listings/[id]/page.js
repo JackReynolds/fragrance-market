@@ -615,12 +615,13 @@ const ListingDetailPage = () => {
                 <CardContent>
                   <div className="flex items-center space-x-4">
                     <div className="relative h-12 w-12 overflow-hidden rounded-full bg-primary/10">
-                      {owner?.profileImage ? (
+                      {owner?.profilePictureURL ? (
                         <Image
-                          src={owner.profileImage}
+                          src={owner.profilePictureURL}
                           alt={owner.username || "Seller"}
                           fill
-                          className="object-cover"
+                          className="object-cover hover:cursor-pointer"
+                          onClick={() => router.push(`/users/${owner.uid}`)}
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-lg font-semibold text-primary">

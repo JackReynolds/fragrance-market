@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingBag, Repeat, ShieldCheck, Crown } from "lucide-react";
+import { ShoppingBag, Repeat, ShieldCheck, Crown, User } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
@@ -89,6 +89,23 @@ const ListingCard = ({
           )}
 
           <div className="flex mt-2 gap-2">
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">
+                {listing.ownerProfilePictureURL ? (
+                  <Image
+                    src={listing.ownerProfilePictureURL}
+                    alt={listing.ownerUsername}
+                    width={20}
+                    height={20}
+                  />
+                ) : (
+                  <User
+                    size={24}
+                    className="text-muted-foreground bg-muted rounded-full p-1"
+                  />
+                )}
+              </p>
+            </div>
             <p className="text-sm text-muted-foreground">
               {listing.ownerUsername}
             </p>

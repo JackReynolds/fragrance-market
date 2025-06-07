@@ -45,6 +45,8 @@ import {
   query,
   where,
   getDocs,
+  writeBatch,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
 import { useUserDoc } from "@/hooks/useUserDoc";
@@ -90,6 +92,7 @@ export default function Profile() {
   const [stripeStatus, setStripeStatus] = useState(null);
   const [loadingStripeStatus, setLoadingStripeStatus] = useState(false);
   const [creatingStripeAccount, setCreatingStripeAccount] = useState(false);
+  const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -103,6 +106,115 @@ export default function Profile() {
       fetchUserListings();
     }
   }, [authUser]);
+
+  // Load Cloudinary widget script
+  useEffect(() => {
+    loadCloudinaryScript(() => {});
+  }, []);
+
+  // Add Cloudinary functions from new-listing page
+  const loadCloudinaryScript = (callback) => {
+    const existingScript = document.getElementById("cloudinaryWidgetScript");
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.src = "https://widget.cloudinary.com/v2.0/global/all.js";
+      script.id = "cloudinaryWidgetScript";
+      document.body.appendChild(script);
+      script.onload = () => {
+        if (callback) callback();
+      };
+    } else if (callback) {
+      callback();
+    }
+  };
+
+  const cloudName = "prodcloudinary";
+  const uploadPreset = "fragrance-market";
+
+  const openProfilePictureUploadWidget = () => {
+    setUploadingProfilePicture(true);
+    window.cloudinary
+      .createUploadWidget(
+        {
+          cloudName: cloudName,
+          uploadPreset: uploadPreset,
+          multiple: false,
+          maxFiles: 1,
+          sources: ["local", "camera"],
+          folder: "fragrance-market/profile-pictures",
+          context: {
+            alt: "profile_picture",
+            caption: "Profile picture uploaded on Fragrance Market",
+          },
+          resourceType: "image",
+          cropping: true,
+          croppingAspectRatio: 1,
+          croppingShowDimensions: true,
+        },
+        async (error, result) => {
+          if (!error && result && result.event === "success") {
+            try {
+              const newProfilePictureURL = result.info.secure_url;
+
+              // 1. Update user document first
+              const userRef = doc(db, "users", authUser.uid);
+              await updateDoc(userRef, {
+                profilePictureURL: newProfilePictureURL,
+              });
+
+              // 2. Update all user's listings in background (don't block UI)
+              updateUserListingsProfilePicture(
+                authUser.uid,
+                newProfilePictureURL
+              );
+
+              toast.success("Profile picture updated successfully!");
+            } catch (updateError) {
+              console.error("Error updating profile picture:", updateError);
+              toast.error(
+                "Failed to update profile picture. Please try again."
+              );
+            }
+          } else if (error) {
+            console.error("Cloudinary upload error:", error);
+            toast.error("Failed to upload profile picture. Please try again.");
+          }
+          setUploadingProfilePicture(false);
+        }
+      )
+      .open();
+  };
+
+  // Background function to update listings
+  const updateUserListingsProfilePicture = async (
+    userUid,
+    newProfilePictureURL
+  ) => {
+    try {
+      // Get all user's listings
+      const listingsRef = collection(db, "listings");
+      const q = query(listingsRef, where("ownerUid", "==", userUid));
+      const querySnapshot = await getDocs(q);
+
+      // Update all listings in batch (more efficient)
+      const batch = writeBatch(db);
+      querySnapshot.forEach((docSnapshot) => {
+        batch.update(docSnapshot.ref, {
+          ownerProfilePictureURL: newProfilePictureURL,
+          profilePictureUpdatedAt: serverTimestamp(),
+        });
+      });
+
+      await batch.commit();
+      console.log(
+        `Updated ${querySnapshot.size} listings with new profile picture`
+      );
+    } catch (error) {
+      console.error("Error updating listings profile pictures:", error);
+      // Don't show error to user since this is background operation
+      // Could implement retry logic here
+    }
+  };
 
   // Function to fetch users listings
   const fetchUserListings = async () => {
@@ -260,8 +372,16 @@ export default function Profile() {
                           <User size={36} />
                         </div>
                       )}
-                      <button className="absolute bottom-3 right-3 rounded-full bg-primary p-1 text-white shadow-sm hover:cursor-pointer">
-                        <Edit size={14} />
+                      <button
+                        className="absolute bottom-3 right-3 rounded-full bg-primary p-1 text-white shadow-sm hover:cursor-pointer disabled:opacity-50"
+                        onClick={openProfilePictureUploadWidget}
+                        disabled={uploadingProfilePicture}
+                      >
+                        {uploadingProfilePicture ? (
+                          <Loader2 size={14} className="animate-spin" />
+                        ) : (
+                          <Edit size={14} />
+                        )}
                       </button>
                     </div>
 
@@ -322,8 +442,17 @@ export default function Profile() {
                     <Button
                       variant="outline"
                       className="w-full hover:cursor-pointer"
+                      onClick={openProfilePictureUploadWidget}
+                      disabled={uploadingProfilePicture}
                     >
-                      Change Profile Picture
+                      {uploadingProfilePicture ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        "Change Profile Picture"
+                      )}
                     </Button>
                   </div>
                 </CardContent>

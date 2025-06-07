@@ -32,6 +32,8 @@ import {
   CalendarDays,
   Eye,
   MapPin,
+  ShieldCheck,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ListingCard from "@/components/listingCard";
@@ -169,20 +171,25 @@ const PublicUserProfile = () => {
     if (!isVerified) return null;
 
     const badges = {
+      // ID badge is dark green and gradient
+      id: {
+        icon: <ShieldCheck size={16} className="mr-1" />,
+        text: "ID Verified",
+        className:
+          "bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100 font-semibold",
+      },
       email: {
         icon: <Mail size={16} className="mr-1" />,
         text: "Email Verified",
-        className: " bg-blue-100 text-blue-700",
+        className:
+          "bg-gradient-to-r from-blue-500 to-blue-800 text-white font-semibold",
       },
-      id: {
-        icon: <CheckCircle2 size={16} className="mr-1" />,
-        text: "ID Verified",
-        className: "bg-green-100 text-green-700",
-      },
+      // Premium badge is gold gradient
       premium: {
-        icon: <Medal size={16} className="mr-1" />,
+        icon: <Crown size={16} className="mr-1" />,
         text: "Premium Member",
-        className: "bg-slate-200 text-slate-700",
+        className:
+          "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 font-semibold",
       },
     };
 
@@ -196,16 +203,6 @@ const PublicUserProfile = () => {
         {badge.text}
       </div>
     );
-  };
-
-  // Add PropTypes for the components
-  StarRating.propTypes = {
-    rating: PropTypes.number.isRequired,
-  };
-
-  VerificationBadge.propTypes = {
-    type: PropTypes.string.isRequired,
-    isVerified: PropTypes.bool.isRequired,
   };
 
   // Loading state
@@ -255,12 +252,13 @@ const PublicUserProfile = () => {
                   <div className="flex flex-col items-center space-y-4">
                     {/* Profile image */}
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-primary/10">
-                      {userData.profileImage ? (
+                      {userData.profilePictureURL ? (
                         <Image
-                          src={userData.profileImage}
+                          src={userData.profilePictureURL}
                           alt={userData.username || "User"}
                           fill
-                          className="object-cover"
+                          className="object-cover hover:cursor-pointer"
+                          onClick={() => router.push(`/users/${userData.id}`)}
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-semibold text-primary">
@@ -271,6 +269,11 @@ const PublicUserProfile = () => {
                       {userData.isPremium && (
                         <div className="absolute -top-1 -right-1 bg-amber-400 rounded-full p-1.5">
                           <Medal size={14} className="text-white" />
+                        </div>
+                      )}
+                      {userData.isIdVerified && (
+                        <div className="absolute -top-1 -right-1 bg-amber-400 rounded-full p-1.5">
+                          <ShieldCheck size={14} className="text-white" />
                         </div>
                       )}
                     </div>
@@ -327,13 +330,10 @@ const PublicUserProfile = () => {
                           type="premium"
                           isVerified={userData.isPremium}
                         />
-                        <VerificationBadge
-                          type="email"
-                          isVerified={userData.emailVerified}
-                        />
+                        <VerificationBadge type="email" isVerified={true} />
                         <VerificationBadge
                           type="id"
-                          isVerified={userData.idVerified}
+                          isVerified={userData.isIdVerified}
                         />
                       </div>
                     </div>

@@ -13,6 +13,7 @@ import {
   HelpCircle,
   LogIn,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "firebase/auth";
@@ -31,7 +32,7 @@ import { useUserDoc } from "@/hooks/useUserDoc";
 
 export function Navigation() {
   const { authUser } = useAuth();
-
+  const router = useRouter();
   const { userDoc } = useUserDoc();
 
   // assume userDoc.unreadCount is kept up-to-date by your Cloud Function

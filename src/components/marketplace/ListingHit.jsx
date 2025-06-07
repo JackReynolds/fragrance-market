@@ -2,7 +2,14 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingBag, Repeat, Star, ShieldCheck } from "lucide-react";
+import {
+  ShoppingBag,
+  Repeat,
+  Star,
+  ShieldCheck,
+  User,
+  Crown,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
@@ -63,18 +70,33 @@ const ListingHit = ({ hit }) => {
                 {hit.amountLeft}% full
               </p>
             </div>
-            <h3 className="font-semibold truncate">{hit.title}</h3>
+            <h3 className="font-semibold truncate mb-3">{hit.title}</h3>
             {hit.price && hit.type === "sell" && (
               <p className="text-lg font-bold mt-1">€{hit.price.toFixed(2)}</p>
             )}
 
             <div className="flex mt-2 gap-2">
-              <p className="text-sm text-muted-foreground">
-                {hit.ownerUsername}
-              </p>
+              <div className="flex items-center gap-2">
+                {hit.ownerProfilePictureURL ? (
+                  <Image
+                    src={hit.ownerProfilePictureURL}
+                    alt={hit.ownerUsername}
+                    width={20}
+                    height={20}
+                  />
+                ) : (
+                  <User
+                    size={24}
+                    className="text-muted-foreground bg-muted rounded-full p-1"
+                  />
+                )}
+                <p className="text-sm text-muted-foreground">
+                  {hit.ownerUsername}
+                </p>
+              </div>
               <p>
                 {hit.ownerIsPremium ? (
-                  <Star className="w-5 h-5 text-yellow-500" />
+                  <Crown className="w-5 h-5 text-yellow-500" />
                 ) : null}
               </p>
               <p>
@@ -83,7 +105,7 @@ const ListingHit = ({ hit }) => {
                 ) : null}
               </p>
             </div>
-            <div className="mt-2 flex items-center text-sm ">
+            <div className="mt-3 flex items-center text-sm ">
               <span>
                 {getCountryFlagEmoji(hit.countryCode) + " " + hit.country ||
                   "Location not specified"}
