@@ -260,11 +260,6 @@ const ListingDetailPage = () => {
 
   // Handle buy now button click
   const handleBuyNow = async () => {
-    if (!authUser) {
-      toast.warning("Please sign in to buy now");
-      return;
-    }
-
     if (!userDoc?.email) {
       toast.error("Please complete your profile with an email address");
       return;
