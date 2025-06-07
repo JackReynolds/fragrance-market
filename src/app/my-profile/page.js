@@ -35,6 +35,7 @@ import {
   Package,
   MessageSquare,
   Loader2,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -247,23 +248,19 @@ export default function Profile() {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-primary/10">
-                      {userDoc?.profileImage ? (
+                      {userDoc?.profilePictureURL ? (
                         <Image
-                          src={userDoc?.profileImage}
+                          src={userDoc?.profilePictureURL}
                           alt={authUser?.displayName || "User"}
                           fill
                           className="object-cover"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-semibold text-primary">
-                          {(
-                            authUser?.displayName ||
-                            userDoc?.username ||
-                            "U"
-                          ).charAt(0)}
+                          <User size={36} />
                         </div>
                       )}
-                      <button className="absolute bottom-0 right-0 rounded-full bg-primary p-1 text-white shadow-sm">
+                      <button className="absolute bottom-3 right-3 rounded-full bg-primary p-1 text-white shadow-sm hover:cursor-pointer">
                         <Edit size={14} />
                       </button>
                     </div>
@@ -320,6 +317,13 @@ export default function Profile() {
                       }}
                     >
                       Edit Profile
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      className="w-full hover:cursor-pointer"
+                    >
+                      Change Profile Picture
                     </Button>
                   </div>
                 </CardContent>

@@ -13,11 +13,10 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <Image
-                src="/logo.svg"
+                src="/the-fragrance-market-logo.png"
                 alt="Fragrance Market Logo"
-                width={32}
-                height={32}
-                className="h-8 w-auto"
+                width={50}
+                height={50}
               />
               <span className="text-lg font-semibold">
                 The Fragrance Market

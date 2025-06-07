@@ -13,6 +13,7 @@ import {
   HelpCircle,
   LogIn,
 } from "lucide-react";
+import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../firebase.config";
@@ -66,10 +67,18 @@ export function Navigation() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="w-full px-6 h-16 flex items-center justify-between max-w-[2000px] mx-auto">
         {/* Left section - Logo */}
-        <div className="flex-none">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-lg font-semibold">The Fragrance Market</span>
-          </Link>
+        <div
+          className="flex items-center gap-2 hover:cursor-pointer"
+          onClick={() => router.push("/")}
+        >
+          <Image
+            src="/the-fragrance-market-logo.png"
+            alt="The Fragrance Market"
+            width={60}
+            height={60}
+          />
+
+          <p className="text-lg font-semibold">The Fragrance Market</p>
         </div>
 
         {/* Center section - Main Navigation (desktop) */}
@@ -103,12 +112,22 @@ export function Navigation() {
                   </span>
                 )}
               </Link>
-              <Link
-                href="/my-profile"
-                className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
-              >
-                Profile
-              </Link>
+              <div>
+                {userDoc?.profilePicture && (
+                  <Image
+                    src={userDoc.profilePictureURL}
+                    alt="Profile Picture"
+                    width={32}
+                    height={32}
+                  />
+                )}
+                <Link
+                  href="/my-profile"
+                  className="flex text-sm items-center font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
+                >
+                  Profile
+                </Link>
+              </div>
               <button
                 onClick={handleSignOut}
                 className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
