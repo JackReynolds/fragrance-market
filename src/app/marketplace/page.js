@@ -53,9 +53,15 @@ function MarketplaceContent() {
         />
 
         {/* Hero section with search */}
-        <div className="bg-muted py-8 md:py-12">
+        <div
+          style={{
+            background:
+              "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+          }}
+          className="py-8 md:py-12"
+        >
           <div className="mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-center mb-6">
+            <h1 className="text-3xl md:text-4xl text-gray-100 font-bold text-center mb-6">
               Discover Fragrances
             </h1>
             <div className="max-w-2xl mx-auto">

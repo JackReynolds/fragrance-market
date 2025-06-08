@@ -113,14 +113,17 @@ export function Navigation() {
                   </span>
                 )}
               </Link>
-              <div>
-                {userDoc?.profilePicture && (
+              <div className="flex items-center gap-1 hover:cursor-pointer">
+                {userDoc?.profilePictureURL ? (
                   <Image
                     src={userDoc.profilePictureURL}
+                    onClick={() => router.push("/my-profile")}
                     alt="Profile Picture"
                     width={32}
                     height={32}
                   />
+                ) : (
+                  <User className="h-4 w-4 mr-2" />
                 )}
                 <Link
                   href="/my-profile"

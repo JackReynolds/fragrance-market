@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
+// Add background styling to hero section
+// background: #1F725A;
+// background: linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%);
+
 export function Hero() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,14 +29,20 @@ export function Hero() {
     <section className="relative w-full h-[600px] sm:h-[700px] flex items-center overflow-hidden">
       {/* Hero background image */}
       <div className="absolute inset-0 z-0">
-        <div className="relative w-full h-full bg-gradient-to-r from-black/60 to-transparent bg-primary/5">
-          <Image
+        <div
+          style={{
+            background:
+              "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+          }}
+          className="relative w-full h-full"
+        >
+          {/* <Image
             src="/hero-background.jpg"
             alt="Luxury fragrance bottles"
             fill
             className="object-cover object-center mix-blend-overlay opacity-75"
             priority
-          />
+          /> */}
         </div>
       </div>
 
@@ -49,14 +59,15 @@ export function Hero() {
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
               onClick={() => router.push("/marketplace")}
-              className="hover:cursor-pointer hover:bg-primary/60 py-6"
+              variant={"secondary"}
+              className="hover:cursor-pointer py-6"
             >
               Browse Fragrances
             </Button>
             {authUser ? (
               <Button
-                variant={"secondary"}
-                className={"hover:cursor-pointer py-6"}
+                variant={"default"}
+                className={"hover:cursor-pointer py-6 hover:bg-primary/80"}
                 onClick={() => router.push("/new-listing")}
               >
                 Swap or Sell
@@ -80,7 +91,7 @@ export function Hero() {
             <input
               type="search"
               placeholder="Search by brand, name, or notes..."
-              className="h-12 w-full rounded-md border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 pl-10 text-white placeholder:text-white/60 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="h-12 w-full rounded-md border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 pl-10 text-white placeholder:text-white/80 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

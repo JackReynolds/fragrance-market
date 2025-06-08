@@ -38,7 +38,7 @@ const HowItWorks = () => {
       }
 
       const response = await fetch(
-        "https://createcheckoutsession-createcheckoutsession-qwe4clieqa-nw.a.run.app",
+        "https://createbillingcheckoutsession-createbillingcheckou-qwe4clieqa-nw.a.run.app",
         {
           method: "POST",
           headers: {
@@ -75,23 +75,34 @@ const HowItWorks = () => {
 
       <main className="flex-1 justify-center w-full">
         {/* Hero Section */}
-        <section className="bg-gradient-to-b w-full from-background to-muted py-16 md:py-24">
+        <section
+          style={{
+            background:
+              "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+          }}
+          className="py-16 md:py-24"
+        >
           <div className=" px-4 md:px-6">
             <div className="flex flex-col items-center text-center space-y-4">
-              <h1 className="text-3xl md:text-5xl font-bold tracking-tighter">
+              <h1 className="text-3xl md:text-5xl font-bold text-gray-100 tracking-tight">
                 How The Fragrance Market Works
               </h1>
-              <p className="text-muted-foreground md:text-xl max-w-[700px] mx-auto">
+              <p className="text-gray-100 md:text-xl max-w-[700px] mx-auto">
                 Your destination for swapping and discovering premium fragrances
                 from enthusiasts around the world.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Button size="lg" asChild>
+                <Button size="lg" asChild variant="secondary">
                   <Link href="/marketplace">
                     Browse Fragrances <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
+                <Button
+                  size="lg"
+                  variant="default"
+                  asChild
+                  className="hover:bg-primary/80"
+                >
                   <Link href="/new-listing">
                     Add Your Fragrance <Upload className="ml-2 h-4 w-4" />
                   </Link>
