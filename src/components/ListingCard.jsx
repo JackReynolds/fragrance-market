@@ -29,7 +29,7 @@ const ListingCard = ({
       className="h-full max-w-82 hover:shadow-md hover:cursor-pointer transition-shadow duration-200"
       onClick={handleCardClick}
     >
-      <div className="relative w-full h-86">
+      <div className="relative w-full h-56 lg:h-72 xl:h-86">
         <Image
           src={listing.imageURLs[0] || "/fragrance-placeholder.jpg"}
           alt={listing.title}

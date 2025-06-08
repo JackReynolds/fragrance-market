@@ -12,12 +12,11 @@ const ListingHit = ({ hit }) => {
   return (
     <Link href={`/listings/${hit.objectID}`}>
       <Card className="h-full max-w-82 hover:shadow-md transition-shadow duration-200">
-        <div className="relative w-full h-86">
+        <div className="relative w-full h-56 lg:h-72 xl:h-86">
           <Image
             src={hit.imageURLs[0] || "/fragrance-placeholder.jpg"}
             alt={hit.title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-fit rounded-t-lg"
           />
           {/* {authUser && authUser.uid !== hit.ownerUid && (
