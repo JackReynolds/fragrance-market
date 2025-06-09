@@ -1,14 +1,13 @@
-"use client";
 /* eslint-disable react/prop-types */
-
+"use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { Navigation } from "@/components/ui/navigation.jsx";
-import { Footer } from "@/components/ui/footer.jsx";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button.jsx";
 import {
   Card,
@@ -305,11 +304,11 @@ const ListingDetailPage = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-pulse text-xl">Loading listing...</div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
@@ -318,7 +317,7 @@ const ListingDetailPage = () => {
   if (!listing) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Listing Not Found</h1>
@@ -331,14 +330,14 @@ const ListingDetailPage = () => {
             </Button>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-1 py-8">
         <div className="container px-4 md:px-6">
@@ -741,7 +740,7 @@ const ListingDetailPage = () => {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
 
       {/* Swap Offer Modal */}
       {authUser && listing && (

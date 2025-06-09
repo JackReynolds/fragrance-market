@@ -24,7 +24,7 @@ const steps = [
   },
 ];
 
-export function HowItWorks() {
+const HowItWorks = () => {
   return (
     <section className="py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,4 +62,6 @@ export function HowItWorks() {
       </div>
     </section>
   );
-}
+};
+
+export default HowItWorks;

@@ -9,10 +9,9 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { app, db } from "../../firebase.config";
-import { setDoc, doc, serverTimestamp } from "firebase/firestore";
-import { Navigation } from "@/components/ui/navigation";
-import { Footer } from "@/components/ui/footer";
+import { app } from "../../firebase.config";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -249,7 +248,7 @@ export default function SignUp() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-1 py-12 md:py-16 lg:py-20">
         <div className="container px-4 md:px-6">
@@ -567,7 +566,7 @@ export default function SignUp() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

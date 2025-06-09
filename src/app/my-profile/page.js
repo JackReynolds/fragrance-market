@@ -1,12 +1,10 @@
 /* eslint-disable react/prop-types */
-
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Navigation } from "@/components/ui/navigation.jsx";
-import { Footer } from "@/components/ui/footer.jsx";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
@@ -339,18 +337,18 @@ export default function Profile() {
   if (authLoading || (!authUser && !userDoc)) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-pulse text-xl">Loading profile...</div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-1 py-8 md:py-12">
         <div className="container px-4 md:px-6">
@@ -993,7 +991,7 @@ export default function Profile() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

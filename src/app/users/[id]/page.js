@@ -17,8 +17,8 @@ import {
   orderBy,
   limit,
 } from "firebase/firestore";
-import { Navigation } from "@/components/ui/navigation";
-import { Footer } from "@/components/ui/footer";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -29,10 +29,8 @@ import {
   Package,
   MessageSquare,
   Mail,
-  CheckCircle2,
   Medal,
   CalendarDays,
-  Eye,
   MapPin,
   ShieldCheck,
   Crown,
@@ -211,11 +209,11 @@ const PublicUserProfile = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-pulse text-xl">Loading profile...</div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
@@ -224,7 +222,7 @@ const PublicUserProfile = () => {
   if (!userData) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">User Not Found</h1>
@@ -235,14 +233,14 @@ const PublicUserProfile = () => {
             <Button onClick={() => router.push("/")}>Back to Home</Button>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-1 py-8 md:py-12">
         <div className="px-4 md:px-6">
@@ -556,7 +554,7 @@ const PublicUserProfile = () => {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

@@ -1,22 +1,24 @@
 import React from "react";
-import { Navigation } from "@/components/ui/navigation";
-import { Hero } from "@/components/ui/hero";
-import { LatestListings } from "@/components/ui/latestListings";
-import { HowItWorks } from "@/components/ui/howItWorks";
-import { Testimonials } from "@/components/ui/testimonials";
-import { Footer } from "@/components/ui/footer";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
+import Hero from "@/components/ui/hero";
+import LatestListings from "@/components/ui/latestListings";
+import HowItWorks from "@/components/ui/howItWorks";
+import Testimonials from "@/components/ui/testimonials";
 
-export default function Home() {
+const Home = () => {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
       <main>
         <Hero />
         <LatestListings />
         <HowItWorks />
         <Testimonials />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
-}
+};
+
+export default Home;

@@ -1,12 +1,11 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "../../firebase.config";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
-import { Navigation } from "@/components/ui/navigation.jsx";
-import { Footer } from "@/components/ui/footer.jsx";
+// import { Navigation } from "@/components/ui/navigation.jsx";
+// import { Footer } from "@/components/ui/footer.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
@@ -257,11 +256,11 @@ const NewListing = () => {
   if (authLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-pulse text-xl">Loading...</div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
@@ -273,7 +272,7 @@ const NewListing = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex justify-center py-8 md:py-12">
         <div className="container px-4 md:px-6">
@@ -605,7 +604,7 @@ const NewListing = () => {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

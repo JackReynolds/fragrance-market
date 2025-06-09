@@ -1,9 +1,8 @@
 "use client";
-
 import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Navigation } from "@/components/ui/navigation";
-import { Footer } from "@/components/ui/footer";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { algoliasearch } from "algoliasearch";
 import {
   InstantSearch,
@@ -26,7 +25,7 @@ const client = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_API_KEY
 );
 
-function MarketplaceContent() {
+const MarketplaceContent = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [listingTypeFilter, setListingTypeFilter] = useState("all");
   const searchParams = useSearchParams();
@@ -255,16 +254,18 @@ function MarketplaceContent() {
       </InstantSearch>
     </div>
   );
-}
+};
 
-export default function Marketplace() {
+const Marketplace = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center">
-      <Navigation />
+      {/* <Navigation /> */}
       <Suspense fallback={<div>Loading...</div>}>
         <MarketplaceContent />
       </Suspense>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
-}
+};
+
+export default Marketplace;

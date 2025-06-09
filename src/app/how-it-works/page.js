@@ -1,8 +1,6 @@
-"use client";
-
-import React, { useState } from "react";
-import { Navigation } from "@/components/ui/navigation.jsx";
-import { Footer } from "@/components/ui/footer.jsx";
+import React from "react";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button.jsx";
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import {
@@ -15,63 +13,14 @@ import {
   Check,
   Medal,
   ArrowRight,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
+import GoPremiumButton from "@/components/goPremiumButton";
 
 const HowItWorks = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { authUser } = useAuth();
-
-  // Function to create Stripe Checkout Session for Premium Membership
-  const createCheckoutSession = async () => {
-    setIsLoading(true);
-    try {
-      // Get user information from auth context (adjust based on your auth setup)
-
-      if (!authUser) {
-        toast.error("Please sign in to continue");
-        router.push("/sign-in");
-        return;
-      }
-
-      const response = await fetch(
-        "https://createbillingcheckoutsession-createbillingcheckou-qwe4clieqa-nw.a.run.app",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userUid: authUser.uid,
-            email: authUser.email,
-            successUrl: `${window.location.origin}/subscription/success`,
-            cancelUrl: `${window.location.origin}/how-it-works`,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to create checkout session");
-      }
-
-      const { sessionId, url } = await response.json();
-      setIsLoading(false);
-
-      // Redirect to Stripe Checkout
-      window.location.href = url;
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong. Please try again later.");
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="flex w-full min-h-screen justify-center items-center flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-1 justify-center w-full">
         {/* Hero Section */}
@@ -274,16 +223,7 @@ const HowItWorks = () => {
                     </li>
                   </ul>
 
-                  <Button
-                    onClick={createCheckoutSession}
-                    className="w-full hover:cursor-pointer hover:bg-primary/80"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      "Go Premium"
-                    )}
-                  </Button>
+                  <GoPremiumButton />
                 </CardContent>
               </Card>
             </div>
@@ -400,11 +340,9 @@ const HowItWorks = () => {
                     </p>
                   </div>
 
-                  <Button className="w-full mb-4" size="lg">
-                    Become a Premium Member
-                  </Button>
+                  <GoPremiumButton />
 
-                  <p className="text-xs text-center text-muted-foreground">
+                  <p className="text-xs text-center text-muted-foreground mt-2">
                     Cancel anytime. No long-term commitment required.
                   </p>
                 </div>
@@ -494,7 +432,7 @@ const HowItWorks = () => {
         </section>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

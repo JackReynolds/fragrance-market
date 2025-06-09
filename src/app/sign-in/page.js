@@ -5,8 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Navigation } from "@/components/ui/navigation";
-import { Footer } from "@/components/ui/footer";
+import Navigation from "@/components/ui/navigation";
+import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -116,7 +116,7 @@ export default function SignIn() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex-1 py-12 md:py-16 lg:py-20">
         <div className="container px-4 md:px-6">
@@ -286,7 +286,7 @@ export default function SignIn() {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

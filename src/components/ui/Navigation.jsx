@@ -30,7 +30,7 @@ import {
 import { Button } from "@/components/ui/button.jsx";
 import { useUserDoc } from "@/hooks/useUserDoc";
 
-export function Navigation() {
+const Navigation = () => {
   const { authUser } = useAuth();
   const router = useRouter();
   const { userDoc } = useUserDoc();
@@ -248,4 +248,6 @@ export function Navigation() {
       </div>
     </header>
   );
-}
+};
+
+export default Navigation;

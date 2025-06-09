@@ -1,6 +1,4 @@
-// src/app/inbox/page.js
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -16,7 +14,7 @@ import SwapRequestsList from "@/components/inbox/swapRequestsList";
 import ChatWindow from "@/components/inbox/chatWindow";
 import { Loader2 } from "lucide-react";
 import { useUserDoc } from "@/hooks/useUserDoc";
-import { Navigation } from "@/components/ui/navigation";
+import Navigation from "@/components/ui/navigation";
 
 export default function InboxPage() {
   const { authUser } = useAuth();
@@ -108,7 +106,7 @@ export default function InboxPage() {
 
   return (
     <div>
-      <Navigation />
+      {/* <Navigation /> */}
       <div className="container px-4 py-6 mx-auto">
         <h1 className="text-2xl font-bold mb-6">Messages</h1>
 

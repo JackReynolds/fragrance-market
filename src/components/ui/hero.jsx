@@ -1,26 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import Image from "next/image";
-import { Search } from "lucide-react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
+import HeroSearchBar from "@/components/ui/heroSearchBar";
 
-export function Hero() {
-  const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
-  const { authUser } = useAuth();
-  // When the user submits the form, route to search-results page with the query param.
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchTerm.trim().length > 0) {
-      // Navigate to "/search-results?q=searchTerm"
-      //router.push(`/search-results?q=${encodeURIComponent(searchTerm.trim())}`);
-      router.push(`/marketplace?q=${encodeURIComponent(searchTerm.trim())}`);
-    }
-  };
-
+const Hero = () => {
   return (
     <section className="relative w-full h-[500px] sm:h-[600px] lg:h-[700px] flex items-center overflow-hidden">
       {/* Hero background image */}
@@ -31,15 +16,7 @@ export function Hero() {
               "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
           }}
           className="relative w-full h-full"
-        >
-          {/* <Image
-            src="/hero-background.jpg"
-            alt="Luxury fragrance bottles"
-            fill
-            className="object-cover object-center mix-blend-overlay opacity-75"
-            priority
-          /> */}
-        </div>
+        />
       </div>
 
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,53 +29,31 @@ export function Hero() {
             scents, connect with collectors, and trade with confidence.
           </p>
 
-          {/* Button Container - Mobile responsive */}
+          {/* Simple static buttons using Link */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start justify-center sm:justify-start mb-6 sm:mb-8">
             <Button
-              onClick={() => router.push("/marketplace")}
-              variant={"secondary"}
-              className="hover:cursor-pointer py-3 px-6 sm:py-4 sm:px-8 lg:py-6 w-full sm:w-auto text-sm sm:text-base"
+              asChild
+              variant="secondary"
+              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 w-full sm:w-auto text-sm sm:text-base"
             >
-              Browse Fragrances
+              <Link href="/marketplace">Browse Fragrances</Link>
             </Button>
-            {authUser ? (
-              <Button
-                variant={"default"}
-                className="hover:cursor-pointer py-3 px-6 sm:py-4 sm:px-8 lg:py-6 hover:bg-primary/80 w-full sm:w-auto text-sm sm:text-base"
-                onClick={() => router.push("/new-listing")}
-              >
-                Swap or Sell
-              </Button>
-            ) : (
-              <Button
-                variant={"secondary"}
-                className="hover:cursor-pointer py-3 px-6 sm:py-4 sm:px-8 lg:py-6 w-full sm:w-auto text-sm sm:text-base"
-                onClick={() => router.push("/sign-up")}
-              >
-                Join the Community
-              </Button>
-            )}
+
+            <Button
+              asChild
+              variant="default"
+              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 hover:bg-primary/80 w-full sm:w-auto text-sm sm:text-base"
+            >
+              <Link href="/new-listing">Swap or Sell</Link>
+            </Button>
           </div>
 
-          {/* Integrated search box wrapped in a form */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative mt-10 max-w-md"
-          >
-            <input
-              type="search"
-              placeholder="Search by brand, name, or notes..."
-              className="h-12 w-full rounded-md border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 pl-10 text-white placeholder:text-white/80 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Search
-              className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 hover:cursor-pointer"
-              onClick={handleSearchSubmit}
-            />
-          </form>
+          {/* Only the search bar needs to be client-side */}
+          <HeroSearchBar />
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default Hero;

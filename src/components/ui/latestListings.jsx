@@ -6,7 +6,7 @@ import { getDocs, collection, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase.config.js";
 import ListingCard from "@/components/listingCard";
 
-export function LatestListings() {
+const LatestListings = () => {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,4 +93,6 @@ export function LatestListings() {
       </div>
     </section>
   );
-}
+};
+
+export default LatestListings;

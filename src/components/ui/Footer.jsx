@@ -5,7 +5,7 @@ import Image from "next/image";
 import * as React from "react";
 import { Instagram, Twitter, Facebook, Youtube } from "lucide-react";
 
-export function Footer() {
+const Footer = () => {
   return (
     <footer className="bg-secondary/50 border-t border-border">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -230,4 +230,6 @@ export function Footer() {
       </div>
     </footer>
   );
-}
+};
+
+export default Footer;

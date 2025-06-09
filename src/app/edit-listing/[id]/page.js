@@ -1,12 +1,9 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
-import { Navigation } from "@/components/ui/navigation.jsx";
-import { Footer } from "@/components/ui/footer.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
@@ -305,7 +302,6 @@ const EditListing = () => {
   if (notFound) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Listing Not Found</h1>
@@ -319,7 +315,6 @@ const EditListing = () => {
             </Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -327,7 +322,6 @@ const EditListing = () => {
   if (notAuthorized) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Not Authorized</h1>
@@ -340,7 +334,6 @@ const EditListing = () => {
             </Button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -349,21 +342,21 @@ const EditListing = () => {
   if (isLoading || authLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="flex flex-col items-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
             <div className="text-xl">Loading listing details...</div>
           </div>
         </main>
-        <Footer />
+        {/* <Footer /> */}
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navigation />
+      {/* <Navigation /> */}
 
       <main className="flex justify-center py-8 md:py-12">
         <div className="container px-4 md:px-6">
@@ -701,7 +694,7 @@ const EditListing = () => {
         </div>
       </main>
 
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
