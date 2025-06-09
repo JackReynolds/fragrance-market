@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { algoliasearch } from "algoliasearch";
 import { InstantSearch } from "react-instantsearch";
 import dynamic from "next/dynamic";
