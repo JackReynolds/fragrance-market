@@ -122,13 +122,19 @@ export default function SignIn() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row items-stretch md:items-start gap-8 md:gap-16">
             {/* Image/Background side */}
-            <div className="hidden md:block md:w-1/2 bg-primary/5 rounded-lg relative min-h-[600px] overflow-hidden">
-              <Image
+            <div
+              className="hidden md:block md:w-1/2 bg-primary/5 rounded-lg relative min-h-[600px] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+              }}
+            >
+              {/* <Image
                 src="/signin-image.jpg"
                 alt="Fragrance collection"
                 fill
                 className="object-cover"
-              />
+              /> */}
               <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent mix-blend-multiply" />
               <div className="absolute bottom-0 left-0 p-8 text-white">
                 <h2 className="text-2xl font-bold mb-4">Welcome Back</h2>
