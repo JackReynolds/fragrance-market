@@ -11,6 +11,10 @@ const Hero = () => {
       {/* Hero background image */}
       <div className="absolute inset-0 z-0">
         <div
+          // style={{
+          //   background:
+          //     "linear-gradient(269deg, oklch(39.1% 0.09 240.876) 0%, oklch(29.3% 0.066 243.157) 80%, rgba(29, 35, 45, 1) 100%)",
+          // }}
           style={{
             background:
               "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",

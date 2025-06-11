@@ -4,10 +4,12 @@
 import React, { useState } from "react";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 
+const libraries = ["places"];
+
 const AddressLocationSearch = ({ defaultValue, onSelect }) => {
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
-    libraries: ["places"],
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+    libraries,
   });
 
   const [autocomplete, setAutocomplete] = useState(null);
@@ -20,7 +22,6 @@ const AddressLocationSearch = ({ defaultValue, onSelect }) => {
     if (!autocomplete) return;
     const place = autocomplete.getPlace();
     if (!place.geometry || !place.address_components) return;
-    console.log("place", place);
 
     // Use Google's formatted address for display/storage
     setInputValue(place.formatted_address);

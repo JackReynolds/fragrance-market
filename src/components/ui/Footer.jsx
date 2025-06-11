@@ -7,7 +7,17 @@ import { Instagram, Twitter, Facebook, Youtube } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="bg-secondary/50 border-t border-border">
+    <footer
+      // style={{
+      //   background:
+      //     "linear-gradient(269deg, oklch(39.1% 0.09 240.876) 0%, oklch(29.3% 0.066 243.157) 80%, rgba(29, 35, 45, 1) 100%)",
+      // }}
+      style={{
+        background:
+          "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+      }}
+      className="text-gray-50 border-t border-border"
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
           <div className="space-y-4">
@@ -22,21 +32,21 @@ const Footer = () => {
                 The Fragrance Market
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-100">
               The exclusive marketplace for fragrance enthusiasts, collectors,
               and sellers.
             </p>
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4 text-gray-100">
               Marketplace
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/marketplace"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Browse All
                 </Link>
@@ -44,7 +54,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/new-arrivals"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   New Arrivals
                 </Link>
@@ -52,7 +62,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/trending"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Trending
                 </Link>
@@ -60,7 +70,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/discounts"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Discounts
                 </Link>
@@ -69,14 +79,14 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4 text-gray-100">
               Account
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/signin"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Sign In
                 </Link>
@@ -84,7 +94,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/signup"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Sign Up
                 </Link>
@@ -92,7 +102,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/sell"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Sell/Swap
                 </Link>
@@ -100,7 +110,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/dashboard"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Dashboard
                 </Link>
@@ -109,14 +119,14 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4 text-gray-100">
               Company
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   href="/about"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   About Us
                 </Link>
@@ -124,7 +134,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/how-it-works"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   How It Works
                 </Link>
@@ -132,7 +142,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/blog"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Blog
                 </Link>
@@ -140,7 +150,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/contact"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Contact
                 </Link>
@@ -149,10 +159,10 @@ const Footer = () => {
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4">
+            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4 text-gray-100">
               Subscribe
             </h4>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-100">
               Get the latest news and updates directly to your inbox.
             </p>
 
@@ -175,25 +185,25 @@ const Footer = () => {
             <div className="flex space-x-4">
               <a
                 href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-white hover:text-gray-300 transition-colors"
               >
                 <Instagram className="h-5 w-5" />
               </a>
               <a
                 href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-white hover:text-gray-300 transition-colors"
               >
                 <Twitter className="h-5 w-5" />
               </a>
               <a
                 href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-white hover:text-gray-300 transition-colors"
               >
                 <Facebook className="h-5 w-5" />
               </a>
               <a
                 href="#"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-white hover:text-gray-300 transition-colors"
               >
                 <Youtube className="h-5 w-5" />
               </a>
@@ -202,26 +212,26 @@ const Footer = () => {
         </div>
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-100">
             &copy; {new Date().getFullYear()} The Fragrance Market. All rights
             reserved.
           </p>
           <div className="flex space-x-6 text-sm">
             <Link
               href="/privacy"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-gray-100 hover:text-gray-300 transition-colors"
             >
               Privacy Policy
             </Link>
             <Link
               href="/terms"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-gray-100 hover:text-gray-300 transition-colors"
             >
               Terms of Service
             </Link>
             <Link
               href="/cookies"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-gray-100 hover:text-gray-300 transition-colors"
             >
               Cookie Policy
             </Link>
