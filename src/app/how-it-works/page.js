@@ -1,6 +1,4 @@
 import React from "react";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button.jsx";
 import { Card, CardContent } from "@/components/ui/card.jsx";
 import {
@@ -20,8 +18,6 @@ import GoPremiumButton from "@/components/goPremiumButton";
 const HowItWorks = () => {
   return (
     <div className="flex w-full min-h-screen justify-center items-center flex-col">
-      {/* <Navigation /> */}
-
       <main className="flex-1 justify-center w-full">
         {/* Hero Section */}
         <section
@@ -431,8 +427,6 @@ const HowItWorks = () => {
           </div>
         </section>
       </main>
-
-      {/* <Footer /> */}
     </div>
   );
 };

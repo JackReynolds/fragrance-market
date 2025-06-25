@@ -25,29 +25,112 @@ import {
 } from "@/components/ui/select.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command.jsx";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover.jsx";
+import {
   Camera,
   Upload,
   PlusCircle,
   Trash2,
   Sparkles,
   EuroIcon,
+  Check,
+  ChevronsUpDown,
+  Plus,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
+import profanityList from "@/data/profanityList";
 import { useUserDoc } from "@/hooks/useUserDoc";
+
 const NewListing = () => {
   const { authUser, authLoading } = useAuth();
   const router = useRouter();
   const [imageFiles, setImageFiles] = useState([]);
   const [imageURLs, setImageURLs] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [brandOpen, setBrandOpen] = useState(false);
+  const [customBrand, setCustomBrand] = useState("");
+  const [showCustomBrand, setShowCustomBrand] = useState(false);
 
   const { userDoc } = useUserDoc();
+
+  const brands = [
+    "Acqua Colonia (4711)",
+    "Acqua di Parma",
+    "Aerin",
+    "Amouage",
+    "Annick Goutal",
+    "Antonio Banderas",
+    "Armani",
+    "Atelier Cologne",
+    "Aubusson",
+    "Aventus",
+    "Azzaro",
+    "Baccarat",
+    "Baldessarini",
+    "Balenciaga",
+    "Baylis & Harding",
+    "Billie Eilish",
+    "Boadicea the Victorious",
+    "Bond No. 9",
+    "Boucheron",
+    "Burberry",
+    "Bvlgari",
+    "By Kilian",
+    "Byredo",
+    "Calvin Klein",
+    "Carolina Herrera",
+    "Caron",
+    "Cartier",
+    "Chanel",
+    "Chloé",
+    "Clean Reserve",
+    "Clive Christian",
+    "Comme des Garçons",
+    "Comptoir Sud Pacifique",
+    "Costume National",
+    "Creed",
+    "Demeter Fragrance Library",
+    "Dior",
+    "Diptyque",
+    "Dolce & Gabbana",
+    "Dsquared2",
+    "Elizabeth Arden",
+    "Erbario Toscano",
+    "Escada",
+    "Etat Libre d'Orange",
+    "Ex Nihilo",
+    "Frédéric Malle",
+    "Gallagher Fragrances",
+    "Gallivant",
+    "Geoffrey Beene",
+    "Gianfranco Ferré",
+    "Givenchy",
+    "Gucci",
+    "Guy Laroche",
+    "Hermetica",
+    "Hermès",
+    "Hugo Boss",
+    "Initio",
+    "Issey Miyake",
+  ];
 
   // Form state
   const [formData, setFormData] = useState({
     title: "",
-    type: "sell",
+    type: "swap",
     description: "",
     price: "",
     amount: "100",
@@ -152,6 +235,44 @@ const NewListing = () => {
         ...prev,
         [name]: undefined,
       }));
+    }
+  };
+
+  const handleBrandSelect = (selectedBrand) => {
+    setFormData((prev) => ({
+      ...prev,
+      brand: selectedBrand,
+    }));
+    setBrandOpen(false);
+    setShowCustomBrand(false);
+    setCustomBrand("");
+
+    // Clear error when user makes a selection
+    if (errors.brand) {
+      setErrors((prev) => ({
+        ...prev,
+        brand: undefined,
+      }));
+    }
+  };
+
+  const handleCustomBrandSubmit = () => {
+    if (customBrand.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        brand: customBrand.trim(),
+      }));
+      setBrandOpen(false);
+      setShowCustomBrand(false);
+      setCustomBrand("");
+
+      // Clear error when user adds custom brand
+      if (errors.brand) {
+        setErrors((prev) => ({
+          ...prev,
+          brand: undefined,
+        }));
+      }
     }
   };
 
@@ -316,14 +437,120 @@ const NewListing = () => {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="brand">Brand/House</Label>
-                        <Input
-                          id="brand"
-                          name="brand"
-                          placeholder="E.g., Tom Ford, Creed, Dior"
-                          value={formData.brand}
-                          onChange={handleChange}
-                          className={errors.brand ? "border-destructive" : ""}
-                        />
+                        <Popover open={brandOpen} onOpenChange={setBrandOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              id="brand"
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={brandOpen}
+                              className={cn(
+                                "w-full justify-between",
+                                !formData.brand && "text-muted-foreground",
+                                errors.brand && "border-destructive"
+                              )}
+                            >
+                              {formData.brand || "Select a brand..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0">
+                            <Command>
+                              <CommandInput placeholder="Search brands..." />
+                              <CommandList>
+                                <CommandEmpty>
+                                  <div className="p-2 text-center">
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      No brand found.
+                                    </p>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setShowCustomBrand(true);
+                                        setBrandOpen(false);
+                                      }}
+                                      className="w-full"
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" />
+                                      Add Brand
+                                    </Button>
+                                  </div>
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {brands.map((brand) => (
+                                    <CommandItem
+                                      key={brand}
+                                      value={brand}
+                                      onSelect={() => handleBrandSelect(brand)}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          formData.brand === brand
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {brand}
+                                    </CommandItem>
+                                  ))}
+                                  <CommandItem
+                                    onSelect={() => {
+                                      setShowCustomBrand(true);
+                                      setBrandOpen(false);
+                                    }}
+                                    className="text-primary"
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Brand
+                                  </CommandItem>
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+
+                        {/* Custom Brand Input */}
+                        {showCustomBrand && (
+                          <div className="space-y-2 p-3 border rounded-md bg-muted/50">
+                            <Label htmlFor="customBrand">
+                              Brand/House Name
+                            </Label>
+                            <div className="flex gap-2">
+                              <Input
+                                id="customBrand"
+                                placeholder="Enter name..."
+                                value={customBrand}
+                                onChange={(e) => setCustomBrand(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleCustomBrandSubmit();
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleCustomBrandSubmit}
+                                disabled={!customBrand.trim()}
+                              >
+                                Add
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setShowCustomBrand(false);
+                                  setCustomBrand("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
                         {errors.brand && (
                           <p className="text-sm text-destructive">
                             {errors.brand}
@@ -387,16 +614,16 @@ const NewListing = () => {
                             <SelectValue placeholder="Select listing type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="sell">
-                              <div className="flex items-center">
-                                <EuroIcon className="mr-2 h-4 w-4" />
-                                <span>Sell</span>
-                              </div>
-                            </SelectItem>
                             <SelectItem value="swap">
                               <div className="flex items-center">
                                 <Sparkles className="mr-2 h-4 w-4" />
                                 <span>Swap</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="sell">
+                              <div className="flex items-center">
+                                <EuroIcon className="mr-2 h-4 w-4" />
+                                <span>Sell</span>
                               </div>
                             </SelectItem>
                           </SelectContent>

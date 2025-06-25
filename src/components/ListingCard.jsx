@@ -3,21 +3,44 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingBag, Repeat, ShieldCheck, Crown, User } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  ShoppingBag,
+  Repeat,
+  ShieldCheck,
+  Crown,
+  User,
+  MapPin,
+} from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 
+// Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
 const ListingCard = ({
   listing,
+  hit,
   isFavorite = false,
   toggleFavorite = null,
   showUserInfo = true,
 }) => {
   const router = useRouter();
 
+  // Use either listing or hit (for Algolia compatibility)
+  const data = listing || hit;
+
+  // Guard clause - return null if no data
+  if (!data) {
+    return null;
+  }
+
   // Normalize ID (handle both Algolia listings and Firestore docs)
-  const id = listing.objectID || listing.id;
+  const id = data.objectID || data.id;
 
   // Handle clicks on card
   const handleCardClick = (e) => {
@@ -25,114 +48,141 @@ const ListingCard = ({
   };
 
   return (
-    <Card
-      className="h-full max-w-82 hover:shadow-md hover:cursor-pointer transition-shadow duration-200"
-      onClick={handleCardClick}
-    >
-      <div className="relative w-full h-56 lg:h-72 xl:h-86">
-        <Image
-          src={listing.imageURLs[0] || "/fragrance-placeholder.jpg"}
-          alt={listing.title}
-          fill
-          className="object-fit rounded-t-lg"
-        />
-        {/* {authUser && authUser.uid !== hit.ownerUid && (
-            <div className="absolute top-2 right-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  console.log("clicked");
-                }}
-                className="h-8 w-8 rounded-full bg-white/80 hover:bg-white hover:cursor-pointer"
+    <TooltipProvider>
+      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group max-w-86">
+        {/* Image Section - Changed to shorter aspect ratio */}
+        <div className="relative aspect-[4/5] w-full overflow-hidden max-h-96">
+          <Image
+            src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
+            alt={data.title}
+            fill
+            className="object-fit transition-transform duration-300 group-hover:scale-105"
+            onClick={handleCardClick}
+          />
+
+          {/* Listing Type Badge */}
+          {data.type && (
+            <div className="absolute top-3 left-3">
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm ${
+                  data.type === "sell"
+                    ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white"
+                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                }`}
               >
-                <Heart className="h-4 w-4" />
-              </Button>
+                {data.type === "sell" ? (
+                  <ShoppingBag className="mr-1 h-3 w-3" />
+                ) : (
+                  <Repeat className="mr-1 h-3 w-3" />
+                )}
+                {data.type === "sell" ? "Sale" : "Swap"}
+              </span>
             </div>
-          )} */}
-        {listing.type && (
-          <div className="absolute top-2 left-2">
-            <span
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                listing.type === "sell"
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-blue-100 text-blue-800"
-              }`}
-            >
-              {listing.type === "sell" ? (
-                <ShoppingBag className="mr-1 h-3 w-3" />
-              ) : (
-                <Repeat className="mr-1 h-3 w-3" />
-              )}
-              {listing.type === "sell" ? "For Sale" : "For Swap"}
-            </span>
-          </div>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <div>
-          <div className="flex justify-between mb-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              {listing.brand}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {listing.amountLeft}% full
-            </p>
-          </div>
-          <h3 className="font-semibold truncate">{listing.title}</h3>
-          {listing.price && listing.type === "sell" && (
-            <p className="text-lg font-bold mt-1">
-              €{listing.price.toFixed(2)}
-            </p>
           )}
 
-          {/* User info */}
-          {showUserInfo && (
+          {/* Amount Left Badge */}
+          <div className="absolute top-3 right-3">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200/70 text-black backdrop-blur-sm">
+              {data.amountLeft}% full
+            </span>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <CardContent className="p-4 space-y-3" onClick={handleCardClick}>
+          {/* Brand Row */}
+          <div>
+            <p className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              {data.brand}
+            </p>
+          </div>
+
+          {/* Title */}
+          <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2 mb-5">
+            {data.title}
+          </h3>
+
+          {/* Price Row */}
+          {data.price && data.type === "sell" && (
             <div>
-              <div className="flex mt-2 gap-2">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    {listing.ownerProfilePictureURL ? (
+              <p className="text-lg md:text-xl font-bold text-emerald-600">
+                €{data.price.toFixed(2)}
+              </p>
+            </div>
+          )}
+
+          {/* User Info Section */}
+          {showUserInfo && (
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              {/* User Row */}
+              <div className="flex items-center justify-between mt-2 mb-4">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {/* Profile Picture */}
+                  <div className="flex-shrink-0">
+                    {data.ownerProfilePictureURL ? (
                       <Image
-                        src={listing.ownerProfilePictureURL}
-                        alt={listing.ownerUsername}
-                        width={20}
-                        height={20}
+                        src={data.ownerProfilePictureURL}
+                        alt={data.ownerUsername}
+                        width={24}
+                        height={24}
+                        className="rounded-full object-cover"
                       />
                     ) : (
-                      <User
-                        size={24}
-                        className="text-muted-foreground bg-muted rounded-full p-1"
-                      />
+                      <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                        <User size={14} className="text-muted-foreground" />
+                      </div>
                     )}
+                  </div>
+
+                  {/* Username */}
+                  <p className="text-sm font-medium text-gray-700 truncate">
+                    {data.ownerUsername}
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {listing.ownerUsername}
-                </p>
-                <p>
-                  {listing.ownerIsPremium ? (
-                    <Crown className="w-5 h-5 text-yellow-500" />
-                  ) : null}
-                </p>
-                <p>
-                  {listing.ownerIsIdVerified ? (
-                    <ShieldCheck className="w-5 h-5 text-green-600" />
-                  ) : null}
-                </p>
+
+                {/* Badges with Tooltips */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {data.ownerIsPremium && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-7 h-7 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center cursor-help">
+                          <Crown className="w-4 h-4 text-yellow-900" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Premium Member</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {data.ownerIsIdVerified && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="w-7 h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">
+                          <ShieldCheck className="w-4 h-4 text-white" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>ID Verified</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
-              <div className="mt-2 flex items-center text-sm ">
+
+              {/* Location Row */}
+              <div className="flex items-center gap-2 text-sm text-gray-700">
                 <span>
-                  {getCountryFlagEmoji(listing?.countryCode) +
-                    " " +
-                    listing?.country || "Location not specified"}
+                  {data?.countryCode && getCountryFlagEmoji(data.countryCode)}
+                </span>
+                <span className="truncate">
+                  {data?.country || "Location not specified"}
                 </span>
               </div>
             </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 };
 

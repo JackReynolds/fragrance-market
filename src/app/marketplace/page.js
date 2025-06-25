@@ -17,8 +17,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SlidersHorizontal, X } from "lucide-react";
-import ListingHit from "@/components/marketplace/listingHit";
 import DebouncedSearchBox from "@/components/marketplace/debouncedSearchBox";
+import ListingCard from "@/components/listingCard";
 
 const client = algoliasearch(
   process.env.NEXT_PUBLIC_ALGOLIA_SEARCH_APP_ID,
@@ -225,7 +225,7 @@ const MarketplaceContent = () => {
               {/* Results grid */}
               <div className="flex justify-center">
                 <Hits
-                  hitComponent={ListingHit}
+                  hitComponent={ListingCard}
                   classNames={{
                     root: "w-full",
                     list: "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6",
