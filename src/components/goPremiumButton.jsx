@@ -21,19 +21,16 @@ const GoPremiumButton = () => {
         return;
       }
 
-      const response = await fetch(
-        "https://createbillingcheckoutsession-createbillingcheckou-qwe4clieqa-nw.a.run.app",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userUid: authUser.uid,
-            email: authUser.email,
-            successUrl: `${window.location.origin}/subscription/success`,
-            cancelUrl: `${window.location.origin}/how-it-works`,
-          }),
-        }
-      );
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userUid: authUser.uid,
+          email: authUser.email,
+          successUrl: `${window.location.origin}/subscription/success`,
+          cancelUrl: `${window.location.origin}/how-it-works`,
+        }),
+      });
 
       if (!response.ok) throw new Error("Failed to create checkout session");
 

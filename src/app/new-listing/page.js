@@ -395,23 +395,42 @@ const NewListing = () => {
     <div className="flex min-h-screen flex-col">
       {/* <Navigation /> */}
 
+      {/* Full Width Header */}
+      <div className="relative py-8 md:py-12">
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+          }}
+        ></div>
+        <div className="relative container px-4 md:px-6 mx-auto">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-xl md:text-3xl font-bold mb-4 text-white">
+              Create New Listing
+            </h1>
+            <p className="text-xs md:text-base text-white/90">
+              Share your fragrance with the community. Provide clear details to
+              attract interested buyers or swappers.
+            </p>
+          </div>
+        </div>
+
+        {/* Optional: Add some decorative elements */}
+        <div className="absolute inset-0 bg-black/5"></div>
+      </div>
+
       <main className="flex justify-center py-8 md:py-12">
         <div className="container px-4 md:px-6">
           <div className="max-w-3xl mx-auto">
-            <div className="mb-8 text-center">
-              <h1 className="text-3xl font-bold mb-2">Create New Listing</h1>
-              <p className="text-muted-foreground">
-                Share your fragrance with the community. Provide clear details
-                to attract interested buyers or swappers.
-              </p>
-            </div>
-
             <form onSubmit={handleSubmit}>
               <div className="space-y-8">
                 {/* Basic Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Basic Information</CardTitle>
+                    <CardTitle className="text-lg md:text-xl">
+                      Basic Information
+                    </CardTitle>
                     <CardDescription>
                       Enter the details about your fragrance listing
                     </CardDescription>
@@ -620,12 +639,22 @@ const NewListing = () => {
                                 <span>Swap</span>
                               </div>
                             </SelectItem>
-                            <SelectItem value="sell">
-                              <div className="flex items-center">
-                                <EuroIcon className="mr-2 h-4 w-4" />
-                                <span>Sell</span>
-                              </div>
-                            </SelectItem>
+                            {/* Only showcase sell option if the user is premium */}
+                            {userDoc?.isPremium ? (
+                              <SelectItem value="sell">
+                                <div className="flex items-center">
+                                  <EuroIcon className="mr-2 h-4 w-4" />
+                                  <span>Sell</span>
+                                </div>
+                              </SelectItem>
+                            ) : (
+                              <SelectItem value="sell" disabled>
+                                <div className="flex items-center text-muted-foreground">
+                                  <EuroIcon className="mr-2 h-4 w-4" />
+                                  <span>Sell (Premium Only)</span>
+                                </div>
+                              </SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                         {errors.type && (
@@ -740,7 +769,7 @@ const NewListing = () => {
                 {/* Images */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Images</CardTitle>
+                    <CardTitle className="text-lg md:text-xl">Images</CardTitle>
                     <CardDescription>
                       Upload clear photos of your fragrance. Show the bottle,
                       box, fill level, and batch code if possible.

@@ -66,7 +66,7 @@ const ListingCard = ({
               <span
                 className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm ${
                   data.type === "sell"
-                    ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white"
+                    ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-black"
                     : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
                 }`}
               >

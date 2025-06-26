@@ -11,6 +11,8 @@ import {
   Check,
   Medal,
   ArrowRight,
+  X,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import GoPremiumButton from "@/components/goPremiumButton";
@@ -152,21 +154,21 @@ const HowItWorks = () => {
                       <span>1 swap per month</span>
                     </li>
                     <li className="flex items-center text-muted-foreground">
-                      <Check className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
+                      <X className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
                       <span>Sell fragrances</span>
                     </li>
                     <li className="flex items-center text-muted-foreground">
-                      <Check className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
+                      <X className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
                       <span>Premium badge</span>
                     </li>
                     <li className="flex items-center text-muted-foreground">
-                      <Check className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
+                      <X className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
                       <span>Discord community access</span>
                     </li>
                   </ul>
 
                   <Button className="w-full" variant="outline" asChild>
-                    <Link href="/sign-up">Sign Up Free</Link>
+                    <Link href="/sign-up">Sign Up for Free</Link>
                   </Button>
                 </CardContent>
               </Card>
