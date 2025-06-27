@@ -20,6 +20,7 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
+import formatCurrency from "@/utils/formatCurrency";
 
 // Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
 const ListingCard = ({
@@ -51,7 +52,7 @@ const ListingCard = ({
     <TooltipProvider>
       <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group max-w-86">
         {/* Image Section - Changed to shorter aspect ratio */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden max-h-96">
+        <div className="relative aspect-[4/5] w-full overflow-hidden max-h-82">
           <Image
             src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
             alt={data.title}
@@ -106,7 +107,7 @@ const ListingCard = ({
           {data.price && data.type === "sell" && (
             <div>
               <p className="text-lg md:text-xl font-bold text-emerald-600">
-                €{data.price.toFixed(2)}
+                {formatCurrency(data.price, data.currency || "EUR")}
               </p>
             </div>
           )}

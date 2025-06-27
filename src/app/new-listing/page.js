@@ -133,6 +133,7 @@ const NewListing = () => {
     type: "swap",
     description: "",
     price: "",
+    currency: "EUR",
     amount: "100",
     brand: "",
     fragrance: "",
@@ -335,8 +336,6 @@ const NewListing = () => {
 
     setIsLoading(true);
 
-    console.log(userDoc);
-
     try {
       // Create the listing object
       const listingData = {
@@ -359,6 +358,10 @@ const NewListing = () => {
         ownerUsername: authUser.displayName || "Anonymous User",
         status: "active",
       };
+
+      if (listingData.type === "sell") {
+        listingData.currency = formData.currency.toLowerCase();
+      }
 
       // Add to Firestore
       const docRef = await addDoc(collection(db, "listings"), listingData);
@@ -712,26 +715,45 @@ const NewListing = () => {
                     </div>
 
                     {formData.type === "sell" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="price">Price (EUR)</Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                            €
-                          </span>
-                          <Input
-                            id="price"
-                            name="price"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            value={formData.price}
-                            onChange={handleChange}
-                            className={`pl-8 ${
-                              errors.price ? "border-destructive" : ""
-                            }`}
-                          />
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="price">Price </Label>
+                          <div className="relative">
+                            <Input
+                              id="price"
+                              name="price"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              value={formData.price}
+                              onChange={handleChange}
+                              className={`pl-4 ${
+                                errors.price ? "border-destructive" : ""
+                              }`}
+                            />
+                          </div>
                         </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="currency">Currency </Label>
+                          <Select
+                            value={formData.currency}
+                            onValueChange={(value) =>
+                              handleSelectChange("currency", value)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="EUR">EUR</SelectItem>
+                              <SelectItem value="USD">USD</SelectItem>
+                              <SelectItem value="GBP">GBP</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         {errors.price && (
                           <p className="text-sm text-destructive">
                             {errors.price}

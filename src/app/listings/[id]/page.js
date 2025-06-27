@@ -44,6 +44,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import SwapOfferModal from "@/components/listing/swapOfferModal.jsx";
 import { useUserDoc } from "@/hooks/useUserDoc.js";
+import formatCurrency from "@/utils/formatCurrency";
 
 const ListingDetailPage = () => {
   const [listing, setListing] = useState(null);
@@ -143,14 +144,6 @@ const ListingDetailPage = () => {
       console.error("Error updating listing status:", error);
       toast.error("Failed to update listing status");
     }
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "EUR",
-    }).format(amount);
   };
 
   // Display star rating component
@@ -476,7 +469,7 @@ const ListingDetailPage = () => {
                 <div className="mt-4 flex items-center justify-between">
                   {listing.type === "sell" ? (
                     <div className="text-2xl font-bold text-primary">
-                      {formatCurrency(listing.price || 0)}
+                      {formatCurrency(listing.price || 0, listing.currency)}
                     </div>
                   ) : (
                     <div className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
