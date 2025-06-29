@@ -1,16 +1,18 @@
+/* eslint-disable react/prop-types */
+
 "use client";
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const GoPremiumButton = () => {
+const GoPremiumButton = ({ authUser, currency }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { authUser } = useAuth();
   const router = useRouter();
+
+  console.log(currency);
 
   const createCheckoutSession = async () => {
     setIsLoading(true);
@@ -27,8 +29,9 @@ const GoPremiumButton = () => {
         body: JSON.stringify({
           userUid: authUser.uid,
           email: authUser.email,
-          successUrl: `${window.location.origin}/subscription/success`,
+          successUrl: `${window.location.origin}/`,
           cancelUrl: `${window.location.origin}/how-it-works`,
+          currency: currency,
         }),
       });
 

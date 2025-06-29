@@ -7,15 +7,16 @@ import {
   Repeat,
   ShoppingBag,
   MessageSquare,
-  Crown,
-  Check,
   Medal,
   ArrowRight,
-  X,
-  XCircle,
+  ArrowUp,
 } from "lucide-react";
 import Link from "next/link";
 import GoPremiumButton from "@/components/goPremiumButton";
+import CrownBadge from "@/components/ui/crownBadge";
+import StandardCard from "@/components/ui/standardCard";
+import PremiumCard from "@/components/premiumCard";
+import PremiumMembershipWideCard from "@/components/premiumMembershipWideCard";
 
 const HowItWorks = () => {
   return (
@@ -125,105 +126,9 @@ const HowItWorks = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               {/* Standard Plan */}
-              <Card className="border-2">
-                <CardContent className="pt-6">
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold mb-2">Standard</h3>
-                    <p className="text-muted-foreground mb-4">
-                      Perfect for casual fragrance enthusiasts
-                    </p>
-                    <p className="text-3xl font-bold">
-                      €0
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /month
-                      </span>
-                    </p>
-                  </div>
+              <StandardCard />
 
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Upload up to 5 fragrances</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Browse all listings</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>1 swap per month</span>
-                    </li>
-                    <li className="flex items-center text-muted-foreground">
-                      <X className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
-                      <span>Sell fragrances</span>
-                    </li>
-                    <li className="flex items-center text-muted-foreground">
-                      <X className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
-                      <span>Premium badge</span>
-                    </li>
-                    <li className="flex items-center text-muted-foreground">
-                      <X className="h-5 w-5 mr-2 flex-shrink-0 opacity-40" />
-                      <span>Discord community access</span>
-                    </li>
-                  </ul>
-
-                  <Button className="w-full" variant="outline" asChild>
-                    <Link href="/sign-up">Sign Up for Free</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* Premium Plan */}
-              <Card className="border-2 border-primary relative">
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-medium rounded-bl-lg rounded-tr-md">
-                  POPULAR
-                </div>
-                <CardContent className="pt-6">
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold mb-2">Premium</h3>
-                    <p className="text-muted-foreground mb-4">
-                      For passionate collectors and traders
-                    </p>
-                    <p className="text-3xl font-bold">
-                      €7.99
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /month
-                      </span>
-                    </p>
-                  </div>
-
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Unlimited fragrance uploads</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Browse all listings</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>
-                        <strong>Unlimited swaps</strong>
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Sell fragrances with 5% fee</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Premium profile badge</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                      <span>Exclusive Discord community</span>
-                    </li>
-                  </ul>
-
-                  <GoPremiumButton />
-                </CardContent>
-              </Card>
+              <PremiumCard />
             </div>
           </div>
         </section>
@@ -268,14 +173,33 @@ const HowItWorks = () => {
                   </div>
 
                   <div className="flex items-start">
-                    <div className="mr-4 mt-1">
-                      <Crown className="h-6 w-6 text-primary" />
+                    <div className="mr-3 mt-1">
+                      <CrownBadge
+                        outerWidth="8"
+                        outerHeight="8"
+                        crownWidth="5"
+                        crownHeight="5"
+                      />
                     </div>
                     <div>
                       <h3 className="font-bold text-lg mb-1">Premium Badge</h3>
                       <p className="text-muted-foreground">
                         Stand out with a premium badge on your profile and
                         listings.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start">
+                    <div className="mr-4 mt-1">
+                      <ArrowUp className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">
+                        Priority Search Ranking
+                      </h3>
+                      <p className="text-muted-foreground">
+                        Your listings will appear higher in search results.
                       </p>
                     </div>
                   </div>
@@ -312,39 +236,7 @@ const HowItWorks = () => {
                 </div>
               </div>
 
-              <div className="bg-muted rounded-lg p-6">
-                <div className="bg-card border rounded-lg p-8">
-                  <div className="flex items-center mb-6">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mr-4">
-                      <Crown className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg">Premium Membership</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Billed monthly
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <p className="text-4xl font-bold mb-2">
-                      €7.99
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /month
-                      </span>
-                    </p>
-                    <p className="text-muted-foreground">
-                      Secure payment through Stripe
-                    </p>
-                  </div>
-
-                  <GoPremiumButton />
-
-                  <p className="text-xs text-center text-muted-foreground mt-2">
-                    Cancel anytime. No long-term commitment required.
-                  </p>
-                </div>
-              </div>
+              <PremiumMembershipWideCard />
             </div>
           </div>
         </section>

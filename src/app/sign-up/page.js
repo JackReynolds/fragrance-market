@@ -51,7 +51,6 @@ const countries = [
   { name: "Bulgaria", code: "BG" },
   { name: "Brazil", code: "BR" },
   { name: "Canada", code: "CA" },
-  { name: "Switzerland", code: "CH" },
   { name: "China", code: "CN" },
   { name: "Croatia", code: "HR" },
   { name: "Czech Republic", code: "CZ" },
@@ -254,13 +253,13 @@ export default function SignUp() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col md:flex-row items-stretch md:items-start gap-8 md:gap-16">
             {/* Image/Background side */}
-            <div className="hidden md:block md:w-1/2 bg-primary/5 rounded-lg relative min-h-[600px] overflow-hidden">
-              <Image
-                src="/signup-image.jpg"
-                alt="Fragrance collection"
-                fill
-                className="object-cover"
-              />
+            <div
+              className="hidden md:block md:w-1/2 bg-primary/5 rounded-lg relative min-h-[600px] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
+              }}
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-transparent mix-blend-multiply" />
               <div className="absolute bottom-0 left-0 p-8 text-white">
                 <h2 className="text-2xl font-bold mb-4">
@@ -281,7 +280,7 @@ export default function SignUp() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>Buy and sell rare fragrances</span>
+                    <span>Buy, sell and discover fragrances</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <svg

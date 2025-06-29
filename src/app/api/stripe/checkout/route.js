@@ -5,7 +5,8 @@ const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
 
 export async function POST(request) {
   try {
-    const { userUid, email, successUrl, cancelUrl } = await request.json();
+    const { userUid, email, successUrl, cancelUrl, currency } =
+      await request.json();
 
     // Validate required parameters
     if (!userUid || !successUrl || !cancelUrl) {
@@ -18,7 +19,12 @@ export async function POST(request) {
     }
 
     // Use provided priceId or fall back to your default
-    const selectedPriceId = "price_1RPW3vGfaSbiBr8Z22Hhrx04";
+    const selectedPriceId =
+      currency === "USD"
+        ? "price_1RexTuGfaSbiBr8ZKlzlS9cG"
+        : currency === "GBP"
+        ? "price_1RexSlGfaSbiBr8ZfozqXnpN"
+        : "price_1RexTRGfaSbiBr8ZOzzJMEfi";
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({

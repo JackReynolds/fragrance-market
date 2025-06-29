@@ -55,6 +55,13 @@ async function handleSubscriptionCreated(subscription) {
   console.log("Subscription created:", subscription.id);
 
   try {
+    const sessions = await stripe.checkout.sessions.list({
+      customer: subscription.customer,
+      limit: 1,
+    });
+
+    const userUid = sessions.data[0].client_reference_id;
+
     // Get customer details from Stripe
     const customer = await stripe.customers.retrieve(subscription.customer);
 
@@ -111,6 +118,13 @@ async function handleSubscriptionCreated(subscription) {
       subscriptionCurrentPeriodEnd: subscriptionCurrentPeriodEnd,
       subscriptionPriceId: subscription.items.data[0]?.price?.id,
       updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    // Add to customer metadata where it's actually visible
+    await stripe.customers.update(subscription.customer, {
+      metadata: {
+        firebase_uid: userUid,
+      },
     });
 
     console.log(`Premium subscription activated for user: ${userId}`);
