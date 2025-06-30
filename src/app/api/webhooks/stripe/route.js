@@ -7,6 +7,8 @@ const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_TEST_WEBHOOK_SECRET;
 
 export async function POST(request) {
+  console.log("🔥 WEBHOOK HIT! Timestamp:", new Date().toISOString());
+
   try {
     const body = await request.text();
     const signature = request.headers.get("stripe-signature");
@@ -15,93 +17,74 @@ export async function POST(request) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
     } catch (err) {
-      console.error("Webhook signature verification failed:", err.message);
+      console.error("❌ Webhook signature verification failed:", err.message);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
     // Handle the event
     switch (event.type) {
+      case "checkout.session.completed":
+        console.log("🎯 Handling checkout.session.completed");
+        await handleCheckoutCompleted(event.data.object);
+        break;
+
       case "customer.subscription.created":
+        console.log("🎯 Handling customer.subscription.created");
         await handleSubscriptionCreated(event.data.object);
         break;
 
       case "customer.subscription.updated":
+        console.log("🎯 Handling customer.subscription.updated");
         await handleSubscriptionUpdated(event.data.object);
         break;
 
       case "customer.subscription.deleted":
+        console.log("🎯 Handling customer.subscription.deleted");
         await handleSubscriptionDeleted(event.data.object);
         break;
 
-      case "invoice.payment_succeeded":
-        await handlePaymentSucceeded(event.data.object);
-        break;
-
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log(`⚠️ Unhandled event type: ${event.type}`);
     }
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true, eventType: event.type });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("💥 Webhook error:", error);
+    console.error("💥 Error stack:", error.stack);
     return NextResponse.json(
-      { error: "Webhook handler failed" },
+      { error: "Webhook handler failed", details: error.message },
       { status: 500 }
     );
   }
 }
 
-async function handleSubscriptionCreated(subscription) {
-  console.log("Subscription created:", subscription.id);
-
+async function handleCheckoutCompleted(session) {
   try {
-    const sessions = await stripe.checkout.sessions.list({
-      customer: subscription.customer,
-      limit: 1,
-    });
-
-    const userUid = sessions.data[0].client_reference_id;
-
-    // Get customer details from Stripe
-    const customer = await stripe.customers.retrieve(subscription.customer);
-
-    // Find user by email in Firebase
-    const usersRef = adminDb.collection("users");
-    const userQuery = await usersRef.where("email", "==", customer.email).get();
-
-    if (userQuery.empty) {
-      console.error("No user found with email:", customer.email);
+    // Only handle subscription checkouts
+    if (session.mode !== "subscription") {
       return;
     }
 
-    const userDoc = userQuery.docs[0];
-    const userId = userDoc.id;
+    const userUid = session.client_reference_id;
 
-    // 🔍 Debug: Log the subscription object
-    console.log(
-      "Full subscription object:",
-      JSON.stringify(subscription, null, 2)
-    );
-    console.log(
-      "current_period_end value:",
-      subscription.items.data[0].current_period_end
-    );
-    console.log(
-      "current_period_end type:",
-      typeof subscription.items.data[0].current_period_end
-    );
-
-    // Check if current_period_end exists
-    if (subscription.items.data[0].current_period_end) {
-      console.log(
-        "Period end exists:",
-        subscription.items.data[0].current_period_end
-      );
-    } else {
-      console.log("❌ Period end is null/undefined");
+    if (!userUid) {
+      console.error("❌ No client_reference_id in checkout session");
+      return;
     }
 
-    // Correct way to convert Stripe timestamp to Firebase Timestamp
+    // Update Stripe customer with metadata
+    await stripe.customers.update(session.customer, {
+      metadata: {
+        firebase_uid: userUid,
+        subscription_created: new Date().toISOString(),
+      },
+    });
+
+    // Get the subscription
+    const subscription = await stripe.subscriptions.retrieve(
+      session.subscription
+    );
+
     const subscriptionCurrentPeriodEnd = subscription.items.data[0]
       .current_period_end
       ? Timestamp.fromDate(
@@ -109,41 +92,32 @@ async function handleSubscriptionCreated(subscription) {
         )
       : null;
 
-    // Update user document with subscription info
-    await adminDb.collection("users").doc(userId).update({
+    // Update Firebase user
+    console.log("📝 Updating Firebase user...");
+    await adminDb.collection("users").doc(userUid).update({
       isPremium: true,
-      stripeCustomerId: customer.id,
-      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: session.customer,
+      stripeSubscriptionId: session.subscription,
       subscriptionStatus: subscription.status,
       subscriptionCurrentPeriodEnd: subscriptionCurrentPeriodEnd,
       subscriptionPriceId: subscription.items.data[0]?.price?.id,
       updatedAt: FieldValue.serverTimestamp(),
     });
-
-    // Add to customer metadata where it's actually visible
-    await stripe.customers.update(subscription.customer, {
-      metadata: {
-        firebase_uid: userUid,
-      },
-    });
-
-    console.log(`Premium subscription activated for user: ${userId}`);
   } catch (error) {
-    console.error("Error handling subscription created:", error);
+    console.error("❌ Error in handleCheckoutCompleted:", error);
+    console.error("❌ Error stack:", error.stack);
   }
 }
 
+async function handleSubscriptionCreated(subscription) {
+  console.log("📝 Subscription created:", subscription.id);
+  // For now, just log - main logic is in checkout.session.completed
+}
+
 async function handleSubscriptionUpdated(subscription) {
-  console.log("Subscription updated:", subscription.id);
-  // Add your logic here
+  console.log("📝 Subscription updated:", subscription.id);
 }
 
 async function handleSubscriptionDeleted(subscription) {
-  console.log("Subscription deleted:", subscription.id);
-  // Add your logic here
-}
-
-async function handlePaymentSucceeded(invoice) {
-  console.log("Payment succeeded:", invoice.id);
-  // Add your logic here
+  console.log("🗑️ Subscription deleted:", subscription.id);
 }

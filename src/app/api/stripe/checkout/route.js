@@ -40,8 +40,10 @@ export async function POST(request) {
       cancel_url: cancelUrl,
       customer_email: email,
       client_reference_id: userUid,
-      metadata: {
-        userUid: userUid,
+      subscription_data: {
+        metadata: {
+          userUid: userUid,
+        },
       },
     });
 

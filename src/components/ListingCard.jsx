@@ -57,6 +57,7 @@ const ListingCard = ({
             src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
             alt={data.title}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-fit transition-transform duration-300 group-hover:scale-105"
             onClick={handleCardClick}
           />

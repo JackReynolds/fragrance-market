@@ -34,6 +34,7 @@ import {
   MessageSquare,
   Loader2,
   User,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -51,6 +52,7 @@ import { useUserDoc } from "@/hooks/useUserDoc";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
 import GoogleLocationSearch from "@/components/googleLocationSearch";
 import ListingCard from "@/components/listingCard";
+import GoPremiumButton from "@/components/goPremiumButton";
 
 const SAMPLE_REVIEWS = [
   {
@@ -641,7 +643,7 @@ export default function Profile() {
                         <Input
                           id="display-name"
                           defaultValue={
-                            authUser.displayName || userDoc?.username || ""
+                            authUser?.displayName || userDoc?.username || ""
                           }
                           placeholder="Your display name"
                         />
@@ -651,7 +653,7 @@ export default function Profile() {
                         <Label htmlFor="email">Email</Label>
                         <Input
                           id="email"
-                          defaultValue={authUser.email}
+                          defaultValue={authUser?.email}
                           disabled
                         />
                         {!userStats.isEmailVerified && (
@@ -685,6 +687,38 @@ export default function Profile() {
                       >
                         Save Changes
                       </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        Premium Account Subscription:{" "}
+                        {userDoc?.isPremium ? (
+                          <span className="text-primary">Active</span>
+                        ) : (
+                          <span className="text-destructive">Inactive</span>
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        Manage your premium account subscription
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="w-3/5 md:w-2/5 lg:w-1/4 2xl:w-1/5">
+                      {userDoc?.isPremium ? (
+                        <Button
+                          className="w-full hover:cursor-pointer hover:bg-primary/80"
+                          onClick={() =>
+                            router.push(
+                              `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${authUser?.email}`
+                            )
+                          }
+                        >
+                          Manage Subscription
+                        </Button>
+                      ) : (
+                        <GoPremiumButton />
+                      )}
                     </CardContent>
                   </Card>
 
@@ -735,13 +769,13 @@ export default function Profile() {
                             <div className="flex items-center mt-4 gap-2">
                               <Button
                                 variant="destructive"
-                                size="sm"
+                                className="hover:cursor-pointer hover:bg-destructive/80"
                                 onClick={() => setEditingAddress(false)}
                               >
                                 Cancel
                               </Button>
                               <Button
-                                size="sm"
+                                className="hover:cursor-pointer hover:bg-primary/80"
                                 onClick={() =>
                                   setShowEnterAddressManually(true)
                                 }
@@ -813,7 +847,7 @@ export default function Profile() {
                     <CardContent>
                       {userStats.isIdVerified ? (
                         <div className="flex items-center text-green-600">
-                          <Shield className="mr-2" size={20} />
+                          <ShieldCheck className="mr-2" size={20} />
                           <div>
                             <p className="font-medium">ID Verified</p>
                             <p className="text-sm text-muted-foreground">
