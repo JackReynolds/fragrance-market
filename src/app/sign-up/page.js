@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -10,8 +9,6 @@ import {
 } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { app } from "../../firebase.config";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -185,6 +182,25 @@ export default function SignUp() {
     return newErrors;
   };
 
+  // Function to send verification email
+  const sendVerificationEmail = async (username, email) => {
+    const response = await fetch("/api/email/verification-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, email }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Verification email error:", errorData);
+      throw new Error(errorData.error || "Failed to send verification email");
+    }
+
+    return response.json();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -234,6 +250,9 @@ export default function SignUp() {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to create user account");
       }
+
+      // Send verification email
+      await sendVerificationEmail(formData.username, formData.email);
 
       toast.success("Account created successfully");
       router.push("/");
