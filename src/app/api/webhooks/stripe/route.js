@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
@@ -94,7 +94,7 @@ async function handleCheckoutCompleted(session) {
 
     // Update Firebase user
     console.log("📝 Updating Firebase user...");
-    await adminDb.collection("users").doc(userUid).update({
+    await db.collection("users").doc(userUid).update({
       isPremium: true,
       stripeCustomerId: session.customer,
       stripeSubscriptionId: session.subscription,

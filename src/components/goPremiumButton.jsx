@@ -46,17 +46,19 @@ const GoPremiumButton = ({ authUser, currency }) => {
   };
 
   return (
-    <Button
-      onClick={createCheckoutSession}
-      className="w-full hover:cursor-pointer hover:bg-primary/80"
-      disabled={isLoading}
-    >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-      ) : (
-        "Go Premium"
-      )}
-    </Button>
+    <div className="flex justify-center">
+      <Button
+        onClick={createCheckoutSession}
+        className="w-full hover:cursor-pointer hover:bg-primary/80 shadow-md max-w-lg"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        ) : (
+          "Go Premium"
+        )}
+      </Button>
+    </div>
   );
 };
 

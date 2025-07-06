@@ -51,6 +51,7 @@ import ManualAddressForm from "@/components/profile/manualAddressForm";
 import GoogleLocationSearch from "@/components/googleLocationSearch";
 import ListingCard from "@/components/listingCard";
 import GoPremiumButton from "@/components/goPremiumButton";
+import SellerAccountStatus from "@/components/profile/sellerAccountStatus";
 
 const SAMPLE_REVIEWS = [
   {
@@ -79,7 +80,7 @@ const SAMPLE_REVIEWS = [
 export default function Profile() {
   const { authUser, authLoading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("listings");
   const [userListings, setUserListings] = useState([]);
   const { userDoc } = useUserDoc(authUser?.uid);
   const [editingAddress, setEditingAddress] = useState(false);
@@ -296,43 +297,6 @@ export default function Profile() {
     toast.success("Address updated!");
   };
 
-  const getStripeActionButtonText = () => {
-    if (!stripeStatus) return "Loading...";
-
-    switch (stripeStatus.actionRequired) {
-      case "create_account":
-        return "Set Up Seller Account";
-      case "complete_onboarding":
-        return "Complete Setup";
-      case "complete_requirements":
-        return "Complete Requirements";
-      case "manage_account":
-        return "Manage Account";
-      case "wait_verification":
-        return "Under Review";
-      default:
-        return "Contact Support";
-    }
-  };
-
-  const getStripeStatusColor = () => {
-    if (!stripeStatus) return "bg-gray-100 text-gray-700";
-
-    switch (stripeStatus.status) {
-      case "active":
-        return "bg-green-100 text-green-700";
-      case "pending":
-        return "bg-yellow-100 text-yellow-700";
-      case "requirements_due":
-      case "past_due":
-        return "bg-red-100 text-red-700";
-      case "incomplete":
-        return "bg-blue-100 text-blue-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
-
   let currency;
 
   switch (userDoc?.countryCode) {
@@ -442,7 +406,7 @@ export default function Profile() {
 
                     <Button
                       variant="outline"
-                      className="w-full hover:cursor-pointer"
+                      className="w-full hover:cursor-pointer shadow-md"
                       onClick={() => {
                         setActiveTab("account");
                         window.scrollTo(0, 0);
@@ -453,7 +417,7 @@ export default function Profile() {
 
                     <Button
                       variant="outline"
-                      className="w-full hover:cursor-pointer"
+                      className="w-full hover:cursor-pointer shadow-md"
                       onClick={openProfilePictureUploadWidget}
                       disabled={uploadingProfilePicture}
                     >
@@ -485,7 +449,7 @@ export default function Profile() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full text-xs hover:cursor-pointer"
+                    className="w-full hover:cursor-pointer shadow-md mt-2"
                     onClick={() =>
                       toast.info("Password reset feature coming soon!")
                     }
@@ -499,14 +463,14 @@ export default function Profile() {
             {/* Main content with tabs */}
             <div>
               <Tabs
-                defaultValue="profile"
+                defaultValue="listings"
                 value={activeTab}
                 onValueChange={setActiveTab}
               >
                 <div className="flex justify-center md:justify-between items-center mb-6 gap-3">
                   <TabsList>
                     <TabsTrigger
-                      value="profile"
+                      value="listings"
                       className="px-4 hover:cursor-pointer"
                     >
                       <Package size={16} className="mr-2 " />
@@ -529,14 +493,15 @@ export default function Profile() {
                   </TabsList>
 
                   <Button
-                    className="hidden md:block hover:cursor-pointer hover:bg-primary/80"
+                    className="hidden md:block hover:cursor-pointer hover:bg-primary/80 shadow-md"
                     onClick={() => router.push("/new-listing")}
                   >
                     Add New Listing
                   </Button>
                 </div>
 
-                <TabsContent value="profile" className="space-y-6">
+                {/* Listings */}
+                <TabsContent value="listings" className="space-y-6">
                   <h2 className="text-2xl font-bold">My Listings</h2>
 
                   {userListings.length === 0 ? (
@@ -568,6 +533,7 @@ export default function Profile() {
                   )}
                 </TabsContent>
 
+                {/* Reviews */}
                 <TabsContent value="reviews" className="space-y-6">
                   <h2 className="text-2xl font-bold">Reviews</h2>
 
@@ -636,9 +602,52 @@ export default function Profile() {
                   </div>
                 </TabsContent>
 
+                {/* Account Settings */}
                 <TabsContent value="account" className="space-y-6">
                   <h2 className="text-2xl font-bold">Account Settings</h2>
 
+                  {/* Seller Account */}
+                  {userDoc?.isPremium ? (
+                    <SellerAccountStatus userDoc={userDoc} />
+                  ) : null}
+
+                  {/* Premium Account Subscription */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        Premium Account Subscription:{" "}
+                        {userDoc?.isPremium ? (
+                          <span className="text-primary">Active</span>
+                        ) : (
+                          <span className="text-destructive">Inactive</span>
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        Manage your premium account subscription
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="w-3/5 md:w-2/5 lg:w-1/4 2xl:w-1/5">
+                      {userDoc?.isPremium ? (
+                        <Button
+                          className="w-full hover:cursor-pointer hover:bg-primary/80 shadow-md"
+                          onClick={() =>
+                            router.push(
+                              `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${authUser?.email}`
+                            )
+                          }
+                        >
+                          Manage Subscription
+                        </Button>
+                      ) : (
+                        <GoPremiumButton
+                          authUser={authUser}
+                          currency={currency}
+                        />
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Personal Information */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">
@@ -701,41 +710,44 @@ export default function Profile() {
                     </CardContent>
                   </Card>
 
+                  {/* ID Verification */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">
-                        Premium Account Subscription:{" "}
-                        {userDoc?.isPremium ? (
-                          <span className="text-primary">Active</span>
-                        ) : (
-                          <span className="text-destructive">Inactive</span>
-                        )}
-                      </CardTitle>
+                      <CardTitle className="text-lg">ID Verification</CardTitle>
                       <CardDescription>
-                        Manage your premium account subscription
+                        Verify your identity to build trust with other users
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="w-3/5 md:w-2/5 lg:w-1/4 2xl:w-1/5">
-                      {userDoc?.isPremium ? (
-                        <Button
-                          className="w-full hover:cursor-pointer hover:bg-primary/80"
-                          onClick={() =>
-                            router.push(
-                              `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${authUser?.email}`
-                            )
-                          }
-                        >
-                          Manage Subscription
-                        </Button>
+                    <CardContent>
+                      {userStats.isIdVerified ? (
+                        <div className="flex items-center text-green-600">
+                          <ShieldCheck className="mr-2" size={20} />
+                          <div>
+                            <p className="font-medium">ID Verified</p>
+                            <p className="text-sm text-muted-foreground">
+                              Your identity has been verified
+                            </p>
+                          </div>
+                        </div>
                       ) : (
-                        <GoPremiumButton
-                          authUser={authUser}
-                          currency={currency}
-                        />
+                        <div className="space-y-4">
+                          <p className="text-sm">
+                            Verify your identity to get a verification badge and
+                            build trust with other users on the platform.
+                          </p>
+                          <Button
+                            onClick={() =>
+                              toast.info("ID verification coming soon!")
+                            }
+                          >
+                            Start Verification
+                          </Button>
+                        </div>
                       )}
                     </CardContent>
                   </Card>
 
+                  {/* Address Information */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">
@@ -803,6 +815,7 @@ export default function Profile() {
                     </CardContent>
                   </Card>
 
+                  {/* Password */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Password</CardTitle>
@@ -841,170 +854,15 @@ export default function Profile() {
                       </div>
 
                       <Button
-                        className="mt-2 hover:cursor-pointer hover:bg-primary/80"
+                        className="mt-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
                         onClick={() =>
-                          toast.success("Password updated successfully!")
+                          toast.success("Password update coming soon!")
                         }
                       >
                         Update Password
                       </Button>
                     </CardContent>
                   </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">ID Verification</CardTitle>
-                      <CardDescription>
-                        Verify your identity to build trust with other users
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {userStats.isIdVerified ? (
-                        <div className="flex items-center text-green-600">
-                          <ShieldCheck className="mr-2" size={20} />
-                          <div>
-                            <p className="font-medium">ID Verified</p>
-                            <p className="text-sm text-muted-foreground">
-                              Your identity has been verified
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <p className="text-sm">
-                            Verify your identity to get a verification badge and
-                            build trust with other users on the platform.
-                          </p>
-                          <Button
-                            onClick={() =>
-                              toast.info("ID verification coming soon!")
-                            }
-                          >
-                            Start Verification
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {userDoc?.isPremium ? (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg">
-                          Seller Account
-                        </CardTitle>
-                        <CardDescription>
-                          Manage your seller account to receive payments from
-                          sales
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {loadingStripeStatus ? (
-                          <div className="flex items-center justify-center py-4">
-                            <div className="animate-pulse text-sm">
-                              Checking account status...
-                            </div>
-                          </div>
-                        ) : stripeStatus ? (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium">
-                                Status
-                              </span>
-                              <span
-                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStripeStatusColor()}`}
-                              >
-                                {stripeStatus.status
-                                  .replace("_", " ")
-                                  .toUpperCase()}
-                              </span>
-                            </div>
-
-                            <div className="p-3 bg-muted/40 rounded-md">
-                              <p className="text-sm">{stripeStatus.message}</p>
-
-                              {stripeStatus.canReceivePayments && (
-                                <div className="flex items-center text-green-600 mt-2">
-                                  <Check size={16} className="mr-1" />
-                                  <span className="text-sm">
-                                    Ready to receive payments
-                                  </span>
-                                </div>
-                              )}
-
-                              {stripeStatus.details?.requirementsCounts && (
-                                <div className="mt-2 text-xs text-muted-foreground">
-                                  {stripeStatus.details.requirementsCounts
-                                    .currentlyDue > 0 && (
-                                    <p>
-                                      •{" "}
-                                      {
-                                        stripeStatus.details.requirementsCounts
-                                          .currentlyDue
-                                      }{" "}
-                                      requirement(s) due now
-                                    </p>
-                                  )}
-                                  {stripeStatus.details.requirementsCounts
-                                    .pastDue > 0 && (
-                                    <p className="text-red-600">
-                                      •{" "}
-                                      {
-                                        stripeStatus.details.requirementsCounts
-                                          .pastDue
-                                      }{" "}
-                                      past due requirement(s)
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-
-                            <Button
-                              className="w-full hover:cursor-pointer hover:bg-primary/80"
-                              onClick={handleStripeAction}
-                              disabled={
-                                creatingStripeAccount ||
-                                stripeStatus.actionRequired ===
-                                  "wait_verification"
-                              }
-                            >
-                              {creatingStripeAccount ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Loading...
-                                </>
-                              ) : (
-                                getStripeActionButtonText()
-                              )}
-                            </Button>
-
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              // onClick={checkStripeAccountStatus}
-                              disabled={loadingStripeStatus}
-                            >
-                              Refresh Status
-                            </Button>
-                          </>
-                        ) : (
-                          <div className="text-center py-4">
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Unable to load account status
-                            </p>
-                            <Button
-                              variant="outline"
-                              // onClick={checkStripeAccountStatus}
-                            >
-                              Try Again
-                            </Button>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ) : null}
 
                   <Card className="border-destructive/50">
                     <CardHeader>

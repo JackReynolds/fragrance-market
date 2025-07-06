@@ -223,12 +223,12 @@ const MarketplaceContent = () => {
               </div>
 
               {/* Results grid */}
-              <div className="flex justify-center">
+              <div className="flex justify-center align-center items-center">
                 <Hits
                   hitComponent={ListingCard}
                   classNames={{
                     root: "w-full",
-                    list: "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6",
+                    list: "grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6",
                     item: "min-w-[200px]",
                   }}
                 />

@@ -6,6 +6,7 @@ import LatestListings from "@/components/ui/latestListings";
 import HowItWorks from "@/components/ui/howItWorks";
 import Testimonials from "@/components/ui/testimonials";
 import FAQ from "@/components/ui/faq";
+import PremiumBenefits from "@/components/premiumBenefits";
 
 const Home = () => {
   return (
@@ -14,6 +15,7 @@ const Home = () => {
         <Hero />
         <LatestListings />
         <HowItWorks />
+        <PremiumBenefits />
         <Testimonials />
         <FAQ />
       </main>

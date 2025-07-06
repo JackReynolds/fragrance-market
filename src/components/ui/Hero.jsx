@@ -38,7 +38,7 @@ const Hero = () => {
             <Button
               asChild
               variant="secondary"
-              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 w-full sm:w-auto text-sm sm:text-base"
+              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 w-full sm:w-auto text-sm sm:text-base shadow-md"
             >
               <Link href="/marketplace">Browse Fragrances</Link>
             </Button>
@@ -46,7 +46,7 @@ const Hero = () => {
             <Button
               asChild
               variant="default"
-              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 hover:bg-primary/80 w-full sm:w-auto text-sm sm:text-base"
+              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 hover:bg-primary/80 w-full sm:w-auto text-sm sm:text-base shadow-md"
             >
               <Link href="/new-listing">Swap or Sell</Link>
             </Button>

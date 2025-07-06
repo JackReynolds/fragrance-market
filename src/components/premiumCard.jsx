@@ -52,21 +52,25 @@ const PremiumCard = () => {
           <ul className="space-y-3 mb-6">
             <li className="flex items-center">
               <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-              <span>Unlimited fragrance uploads</span>
-            </li>
-            <li className="flex items-center">
-              <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
               <span>Browse all listings</span>
             </li>
             <li className="flex items-center">
               <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
               <span>
-                <strong>Unlimited swaps</strong>
+                <strong>Unlimited</strong> fragrance uploads
               </span>
             </li>
             <li className="flex items-center">
               <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-              <span>Priority Search Ranking</span>
+              <span>
+                <strong>Unlimited</strong> swaps
+              </span>
+            </li>
+            <li className="flex items-center">
+              <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+              <span>
+                <strong>Priority</strong> Search Ranking
+              </span>
             </li>
             <li className="flex items-center">
               <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />

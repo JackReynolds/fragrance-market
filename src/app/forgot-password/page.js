@@ -219,7 +219,7 @@ const ForgotPassword = () => {
 
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <Link
                     href="/sign-up"
                     className="text-primary underline hover:text-primary/90 font-medium"

@@ -21,6 +21,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 import formatCurrency from "@/utils/formatCurrency";
+import ListingTypeBadge from "@/components/ui/listingTypeBadge";
 
 // Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
 const ListingCard = ({
@@ -50,9 +51,9 @@ const ListingCard = ({
 
   return (
     <TooltipProvider>
-      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group max-w-86">
+      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group min-w-72 max-w-80 ">
         {/* Image Section - Changed to shorter aspect ratio */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden max-h-82">
+        <div className="relative aspect-[4/5] w-full overflow-hidden max-h-72">
           <Image
             src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
             alt={data.title}
@@ -63,24 +64,9 @@ const ListingCard = ({
           />
 
           {/* Listing Type Badge */}
-          {data.type && (
-            <div className="absolute top-3 left-3">
-              <span
-                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm backdrop-blur-sm ${
-                  data.type === "sell"
-                    ? "bg-gradient-to-r from-yellow-400 to-yellow-500 text-black"
-                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
-                }`}
-              >
-                {data.type === "sell" ? (
-                  <ShoppingBag className="mr-1 h-3 w-3" />
-                ) : (
-                  <Repeat className="mr-1 h-3 w-3" />
-                )}
-                {data.type === "sell" ? "Sale" : "Swap"}
-              </span>
-            </div>
-          )}
+          <div className="absolute top-3 left-3">
+            <ListingTypeBadge type={data.type} />
+          </div>
 
           {/* Amount Left Badge */}
           <div className="absolute top-3 right-3">

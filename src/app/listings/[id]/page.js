@@ -6,8 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button.jsx";
 import {
   Card,
@@ -45,6 +43,14 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import SwapOfferModal from "@/components/listing/swapOfferModal.jsx";
 import { useUserDoc } from "@/hooks/useUserDoc.js";
 import formatCurrency from "@/utils/formatCurrency";
+import ListingTypeBadge from "@/components/ui/listingTypeBadge";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 const ListingDetailPage = () => {
   const [listing, setListing] = useState(null);
@@ -345,47 +351,41 @@ const ListingDetailPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
             {/* Main content area */}
             <div className="space-y-8">
-              {/* Image gallery */}
+              {/* Image Carousel */}
               <div className="space-y-4 flex justify-center">
-                <div className="relative h-72 md:h-120 aspect-[4/3] overflow-hidden rounded-lg bg-muted">
-                  {listing.imageURLs && listing.imageURLs.length > 0 ? (
-                    <Image
-                      src={listing.imageURLs[activeImageIndex]}
-                      alt={listing.title}
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
-                      No image available
-                    </div>
+                <Carousel className="w-full max-w-2xl">
+                  <CarouselContent>
+                    {listing.imageURLs && listing.imageURLs.length > 0 ? (
+                      listing.imageURLs.map((image, index) => (
+                        <CarouselItem key={index}>
+                          <div className="relative h-72 md:h-120 aspect-[4/3] overflow-hidden rounded-lg bg-muted">
+                            <Image
+                              src={image}
+                              alt={`${listing.title} - Image ${index + 1}`}
+                              fill
+                              className="object-contain"
+                              priority={index === 0}
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem>
+                        <div className="relative h-72 md:h-120 aspect-[4/3] overflow-hidden rounded-lg bg-muted flex items-center justify-center">
+                          <div className="text-muted-foreground">
+                            No image available
+                          </div>
+                        </div>
+                      </CarouselItem>
+                    )}
+                  </CarouselContent>
+                  {listing.imageURLs && listing.imageURLs.length > 1 && (
+                    <>
+                      <CarouselPrevious />
+                      <CarouselNext />
+                    </>
                   )}
-                </div>
-
-                {/* Thumbnail strip */}
-                {listing.imageURLs && listing.imageURLs.length > 1 && (
-                  <div className="flex space-x-2 overflow-x-auto pb-2">
-                    {listing.imageURLs.map((image, index) => (
-                      <button
-                        key={index}
-                        className={`relative h-16 w-16 md:h-20 md:w-20 flex-shrink-0 overflow-hidden rounded-md ${
-                          activeImageIndex === index
-                            ? "ring-2 ring-primary"
-                            : "ring-1 ring-muted"
-                        }`}
-                        onClick={() => setActiveImageIndex(index)}
-                      >
-                        <Image
-                          src={image}
-                          alt={`Thumbnail ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                </Carousel>
               </div>
 
               {/* Listing info */}
@@ -472,9 +472,7 @@ const ListingDetailPage = () => {
                       {formatCurrency(listing.price || 0, listing.currency)}
                     </div>
                   ) : (
-                    <div className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                      For Swap
-                    </div>
+                    <ListingTypeBadge type={listing.type} />
                   )}
 
                   <div className="text-sm text-muted-foreground">
@@ -582,7 +580,7 @@ const ListingDetailPage = () => {
                     </Button>
                   ) : (
                     <Button
-                      className="flex-1 py-2 hover:cursor-pointer hover:bg-primary/80"
+                      className="flex-1 py-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
                       size="lg"
                       onClick={handleOfferSwap}
                       disabled={isCheckingListings}
@@ -599,13 +597,6 @@ const ListingDetailPage = () => {
                       )}
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    className="flex-1 py-2 hover:cursor-pointer"
-                    size="lg"
-                  >
-                    <MessageCircle className="mr-2 h-4 w-4" /> Contact Seller
-                  </Button>
                 </div>
               )}
             </div>
