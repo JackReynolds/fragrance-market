@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { initializeApp, applicationDefault, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-const serviceAccount = require("./path/to/serviceAccountKey.json");
-
-initializeApp({
-  credential: cert(serviceAccount),
-});
-
-const db = getFirestore();
+import { db } from "@/lib/firebaseAdmin";
 
 // Define status codes as constants
 const STATUS_CODES = {
@@ -36,7 +28,7 @@ export async function POST(request) {
 
     // Initialize the Stripe instance with the secret key
 
-    const userRef = admin.firestore().collection("users").doc(uid);
+    const userRef = db.collection("users").doc(uid);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
