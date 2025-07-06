@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
@@ -334,6 +332,19 @@ export default function Profile() {
         return "bg-gray-100 text-gray-700";
     }
   };
+
+  let currency;
+
+  switch (userDoc?.countryCode) {
+    case "US":
+      currency = "USD";
+      break;
+    case "GB":
+      currency = "GBP";
+      break;
+    default:
+      currency = "EUR";
+  }
 
   // Loading state
   if (authLoading || (!authUser && !userDoc)) {
@@ -717,7 +728,10 @@ export default function Profile() {
                           Manage Subscription
                         </Button>
                       ) : (
-                        <GoPremiumButton />
+                        <GoPremiumButton
+                          authUser={authUser}
+                          currency={currency}
+                        />
                       )}
                     </CardContent>
                   </Card>
@@ -873,118 +887,124 @@ export default function Profile() {
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Seller Account</CardTitle>
-                      <CardDescription>
-                        Manage your seller account to receive payments from
-                        sales
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {loadingStripeStatus ? (
-                        <div className="flex items-center justify-center py-4">
-                          <div className="animate-pulse text-sm">
-                            Checking account status...
+                  {userDoc?.isPremium ? (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">
+                          Seller Account
+                        </CardTitle>
+                        <CardDescription>
+                          Manage your seller account to receive payments from
+                          sales
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {loadingStripeStatus ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-pulse text-sm">
+                              Checking account status...
+                            </div>
                           </div>
-                        </div>
-                      ) : stripeStatus ? (
-                        <>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Status</span>
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStripeStatusColor()}`}
+                        ) : stripeStatus ? (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">
+                                Status
+                              </span>
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStripeStatusColor()}`}
+                              >
+                                {stripeStatus.status
+                                  .replace("_", " ")
+                                  .toUpperCase()}
+                              </span>
+                            </div>
+
+                            <div className="p-3 bg-muted/40 rounded-md">
+                              <p className="text-sm">{stripeStatus.message}</p>
+
+                              {stripeStatus.canReceivePayments && (
+                                <div className="flex items-center text-green-600 mt-2">
+                                  <Check size={16} className="mr-1" />
+                                  <span className="text-sm">
+                                    Ready to receive payments
+                                  </span>
+                                </div>
+                              )}
+
+                              {stripeStatus.details?.requirementsCounts && (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  {stripeStatus.details.requirementsCounts
+                                    .currentlyDue > 0 && (
+                                    <p>
+                                      •{" "}
+                                      {
+                                        stripeStatus.details.requirementsCounts
+                                          .currentlyDue
+                                      }{" "}
+                                      requirement(s) due now
+                                    </p>
+                                  )}
+                                  {stripeStatus.details.requirementsCounts
+                                    .pastDue > 0 && (
+                                    <p className="text-red-600">
+                                      •{" "}
+                                      {
+                                        stripeStatus.details.requirementsCounts
+                                          .pastDue
+                                      }{" "}
+                                      past due requirement(s)
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <Button
+                              className="w-full hover:cursor-pointer hover:bg-primary/80"
+                              onClick={handleStripeAction}
+                              disabled={
+                                creatingStripeAccount ||
+                                stripeStatus.actionRequired ===
+                                  "wait_verification"
+                              }
                             >
-                              {stripeStatus.status
-                                .replace("_", " ")
-                                .toUpperCase()}
-                            </span>
+                              {creatingStripeAccount ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Loading...
+                                </>
+                              ) : (
+                                getStripeActionButtonText()
+                              )}
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              // onClick={checkStripeAccountStatus}
+                              disabled={loadingStripeStatus}
+                            >
+                              Refresh Status
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Unable to load account status
+                            </p>
+                            <Button
+                              variant="outline"
+                              // onClick={checkStripeAccountStatus}
+                            >
+                              Try Again
+                            </Button>
                           </div>
-
-                          <div className="p-3 bg-muted/40 rounded-md">
-                            <p className="text-sm">{stripeStatus.message}</p>
-
-                            {stripeStatus.canReceivePayments && (
-                              <div className="flex items-center text-green-600 mt-2">
-                                <Check size={16} className="mr-1" />
-                                <span className="text-sm">
-                                  Ready to receive payments
-                                </span>
-                              </div>
-                            )}
-
-                            {stripeStatus.details?.requirementsCounts && (
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                {stripeStatus.details.requirementsCounts
-                                  .currentlyDue > 0 && (
-                                  <p>
-                                    •{" "}
-                                    {
-                                      stripeStatus.details.requirementsCounts
-                                        .currentlyDue
-                                    }{" "}
-                                    requirement(s) due now
-                                  </p>
-                                )}
-                                {stripeStatus.details.requirementsCounts
-                                  .pastDue > 0 && (
-                                  <p className="text-red-600">
-                                    •{" "}
-                                    {
-                                      stripeStatus.details.requirementsCounts
-                                        .pastDue
-                                    }{" "}
-                                    past due requirement(s)
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <Button
-                            className="w-full hover:cursor-pointer hover:bg-primary/80"
-                            onClick={handleStripeAction}
-                            disabled={
-                              creatingStripeAccount ||
-                              stripeStatus.actionRequired ===
-                                "wait_verification"
-                            }
-                          >
-                            {creatingStripeAccount ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Loading...
-                              </>
-                            ) : (
-                              getStripeActionButtonText()
-                            )}
-                          </Button>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            // onClick={checkStripeAccountStatus}
-                            disabled={loadingStripeStatus}
-                          >
-                            Refresh Status
-                          </Button>
-                        </>
-                      ) : (
-                        <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Unable to load account status
-                          </p>
-                          <Button
-                            variant="outline"
-                            // onClick={checkStripeAccountStatus}
-                          >
-                            Try Again
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : null}
 
                   <Card className="border-destructive/50">
                     <CardHeader>

@@ -400,7 +400,7 @@ const ActionHandler = () => {
             <Button
               onClick={handleResetPassword}
               disabled={isLoading}
-              className="w-full"
+              className="w-full hover:cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -427,7 +427,10 @@ const ActionHandler = () => {
             <CardDescription>{message}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button onClick={() => router.push("/sign-in")} className="w-full">
+            <Button
+              onClick={() => router.push("/sign-in")}
+              className="w-full hover:cursor-pointer"
+            >
               Back to Sign In
             </Button>
             <Alert>
@@ -462,7 +465,10 @@ const ActionHandler = () => {
               <CardDescription>{message}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => router.push("/")} className="w-full">
+              <Button
+                onClick={() => router.push("/")}
+                className="w-full hover:cursor-pointer"
+              >
                 Return to Home
               </Button>
             </CardContent>

@@ -12,8 +12,6 @@ const GoPremiumButton = ({ authUser, currency }) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  console.log(currency);
-
   const createCheckoutSession = async () => {
     setIsLoading(true);
     try {
