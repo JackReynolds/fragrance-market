@@ -11,9 +11,8 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Truck, Loader2 } from "lucide-react";
+import { Truck, Loader2, MapPin, Package } from "lucide-react";
 import { toast } from "sonner";
 
 const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
@@ -39,6 +38,21 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     swapRequest?.shipmentStatus?.[otherUserInfo.uid] || false
   );
 
+  // 🔥 ADD: Local state for tracking numbers
+  const [currentUserTrackingNumber, setCurrentUserTrackingNumber] = useState(
+    swapRequest?.trackingNumbers?.[currentUserInfo.uid] || null
+  );
+  const [otherUserTrackingNumber, setOtherUserTrackingNumber] = useState(
+    swapRequest?.trackingNumbers?.[otherUserInfo.uid] || null
+  );
+
+  // Local state for addresses
+  const [recipientAddress, setRecipientAddress] = useState(
+    isRequestedFromUser
+      ? swapRequest.offeredBy?.formattedAddress
+      : swapRequest.requestedFrom?.formattedAddress
+  );
+
   // Real-time listener for swap request changes
   useEffect(() => {
     if (!swapRequest?.id) return;
@@ -48,17 +62,39 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
         const shipmentStatus = data.shipmentStatus || {};
+        const trackingNumbers = data.trackingNumbers || {}; // 🔥 ADD: Get tracking numbers
 
         console.log("Shipment status update:", shipmentStatus); // Debug
+        console.log("Tracking numbers update:", trackingNumbers); // Debug
 
         // Update both users' shipment status
         setIsCurrentUserShipped(!!shipmentStatus[currentUserInfo.uid]);
         setIsOtherUserShipped(!!shipmentStatus[otherUserInfo.uid]);
+
+        // 🔥 ADD: Update tracking numbers
+        setCurrentUserTrackingNumber(
+          trackingNumbers[currentUserInfo.uid] || null
+        );
+        setOtherUserTrackingNumber(trackingNumbers[otherUserInfo.uid] || null);
+
+        // Update recipient address in real-time
+        const updatedRecipientAddress = isRequestedFromUser
+          ? data.offeredBy?.formattedAddress
+          : data.requestedFrom?.formattedAddress;
+
+        if (updatedRecipientAddress) {
+          setRecipientAddress(updatedRecipientAddress);
+        }
       }
     });
 
     return () => unsubscribe();
-  }, [swapRequest?.id, currentUserInfo.uid, otherUserInfo.uid]);
+  }, [
+    swapRequest?.id,
+    currentUserInfo.uid,
+    otherUserInfo.uid,
+    isRequestedFromUser,
+  ]);
 
   const handleConfirmShipment = async () => {
     if (isConfirmingShipment) return;
@@ -67,21 +103,18 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       setIsConfirmingShipment(true);
 
       // Call the cloud function
-      const response = await fetch(
-        "https://handleconfirmshipment-handleconfirmshipment-qwe4clieqa-nw.a.run.app",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            swapRequestId: swapRequest.id,
-            userUid: authUser.uid,
-            trackingNumber: trackingNumber.trim() || null,
-            messageId: message.id,
-          }),
-        }
-      );
+      const response = await fetch("/api/firebase/handle-confirm-shipment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          swapRequestId: swapRequest.id,
+          userUid: authUser.uid,
+          trackingNumber: trackingNumber.trim() || null,
+          messageId: message.id,
+        }),
+      });
 
       const result = await response.json();
 
@@ -91,6 +124,11 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
 
       // Update local state based on server response
       setIsCurrentUserShipped(true);
+
+      // 🔥 ADD: Update local tracking number if provided
+      if (trackingNumber.trim()) {
+        setCurrentUserTrackingNumber(trackingNumber.trim());
+      }
 
       if (result.data.swapCompleted) {
         toast.success("Swap completed! Both parties have shipped.");
@@ -112,95 +150,132 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     }
   };
 
-  // Get the correct address to display
-  const recipientAddress = isRequestedFromUser
-    ? swapRequest.offeredBy?.formattedAddress
-    : swapRequest.requestedFrom?.formattedAddress;
-
   return (
-    <Card className="my-4">
-      <CardContent className="p-4">
-        {/* Section to show the required recipient address */}
-        <div className="mb-4">
-          <h4 className="font-semibold mb-3">Send your fragrance to:</h4>
-          <p className="text-sm text-muted-foreground">
-            {recipientAddress || "Address not provided"}
-          </p>
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl rounded-lg p-3 sm:p-4 border bg-card shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-4">
+        <Truck className="h-5 w-5 text-primary" />
+        <h4 className="font-semibold text-primary text-sm sm:text-base">
+          Pending Shipment
+        </h4>
+      </div>
+
+      {/* Shipping Address Section */}
+      <div className="mb-4 p-3 bg-muted/40 rounded-md">
+        <div className="flex items-center gap-2 mb-2">
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <h5 className="font-medium text-sm sm:text-base">Ship to:</h5>
         </div>
+        <p className="text-xs sm:text-sm text-muted-foreground break-words ml-6">
+          {recipientAddress || "Address not provided"}
+        </p>
+      </div>
 
-        <h4 className="font-semibold mb-3">Shipment Status</h4>
+      {/* Shipment Status Section */}
+      <div className="mb-4">
+        <h5 className="font-medium text-sm sm:text-base mb-3">
+          Shipment Status
+        </h5>
 
-        <div className="flex justify-between gap-3 mb-4">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">Your shipment:</p>
+        {/* Status Cards - Stack on mobile, side-by-side on desktop */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          {/* Current User Status */}
+          <div className="flex-1 p-3 border rounded-lg">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+              Your shipment:
+            </p>
             <Badge
               variant={isCurrentUserShipped ? "default" : "outline"}
-              className="flex items-center gap-1"
+              className="flex items-center gap-2 w-full sm:w-auto justify-center py-1 mb-2"
             >
               <Truck className="h-3.5 w-3.5" />
-              <span>
+              <span className="text-xs sm:text-sm">
                 {isCurrentUserShipped ? "Shipped" : "Not shipped yet"}
               </span>
             </Badge>
+
+            {/* 🔥 ADD: Show tracking number if available */}
+            {isCurrentUserShipped && currentUserTrackingNumber && (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-muted/30 rounded-md">
+                <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Tracking:</p>
+                  <p className="text-xs sm:text-sm font-mono break-all">
+                    {currentUserTrackingNumber}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
+
+          {/* Other User Status */}
+          <div className="flex-1 p-3 border rounded-lg">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
               {otherUserInfo.username}&apos;s shipment:
             </p>
             <Badge
               variant={isOtherUserShipped ? "default" : "outline"}
-              className="flex items-center gap-1"
+              className="flex items-center gap-2 w-full sm:w-auto justify-center py-1 mb-2"
             >
               <Truck className="h-3.5 w-3.5" />
-              <span>{isOtherUserShipped ? "Shipped" : "Not shipped yet"}</span>
+              <span className="text-xs sm:text-sm">
+                {isOtherUserShipped ? "Shipped" : "Not shipped yet"}
+              </span>
             </Badge>
+
+            {/* 🔥 ADD: Show tracking number if available */}
+            {isOtherUserShipped && otherUserTrackingNumber && (
+              <div className="flex items-center gap-2 mt-2 p-2 bg-muted/30 rounded-md">
+                <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-muted-foreground">Tracking:</p>
+                  <p className="text-xs sm:text-sm font-mono break-all">
+                    {otherUserTrackingNumber}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
-        {!isCurrentUserShipped && (
-          <>
-            <Input
-              className="mb-3"
-              placeholder="Tracking number (optional)"
-              value={trackingNumber}
-              onChange={(e) => setTrackingNumber(e.target.value)}
-            />
-            <Button
-              variant="default"
-              className="w-full flex items-center gap-2 hover:cursor-pointer hover:bg-primary/80"
-              onClick={handleConfirmShipment}
-              disabled={isConfirmingShipment}
-            >
-              {isConfirmingShipment ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Truck className="h-4 w-4" />
-              )}
-              <span>
-                {isConfirmingShipment ? "Confirming..." : "Confirm Shipment"}
-              </span>
-            </Button>
-          </>
-        )}
+      {/* Action Section */}
+      {!isCurrentUserShipped && (
+        <div className="space-y-3">
+          <Input
+            className="w-full text-base sm:text-sm" // Prevent zoom on iOS
+            placeholder="Tracking number (optional)"
+            value={trackingNumber}
+            onChange={(e) => setTrackingNumber(e.target.value)}
+          />
+          <Button
+            variant="default"
+            className="w-full flex items-center justify-center gap-2 hover:cursor-pointer hover:bg-primary/80 shadow-md h-11 sm:h-10"
+            onClick={handleConfirmShipment}
+            disabled={isConfirmingShipment}
+          >
+            {isConfirmingShipment ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Truck className="h-4 w-4" />
+            )}
+            <span className="text-sm sm:text-base">
+              {isConfirmingShipment ? "Confirming..." : "Confirm Shipment"}
+            </span>
+          </Button>
+        </div>
+      )}
 
-        {isCurrentUserShipped && !isOtherUserShipped && (
-          <div className="text-center p-3 bg-green-50 rounded-md">
-            <p className="text-sm text-green-700">
-              ✅ You&apos;ve confirmed shipment. Waiting for{" "}
-              {otherUserInfo.username} to ship.
-            </p>
-          </div>
-        )}
-
-        {isCurrentUserShipped && isOtherUserShipped && (
-          <div className="text-center p-3 bg-blue-50 rounded-md">
-            <p className="text-sm text-blue-700">
-              🎉 Both parties have shipped! Swap will be marked as completed.
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {/* Status Messages */}
+      {isCurrentUserShipped && !isOtherUserShipped && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+          <p className="text-sm text-green-700 text-center">
+            ✅ You&apos;ve confirmed shipment. Waiting for{" "}
+            {otherUserInfo.username} to ship.
+          </p>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -26,16 +26,19 @@ import SwapRequestMessageCard from "./swapRequestMessageCard";
 import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
 import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
 import SwapCompletedMessageCard from "./swapCompletedMessageCard";
+
 export default function ChatWindow({
   swapRequest,
   authUser,
   onBackClick,
   userDoc,
+  isMobile = false,
 }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const router = useRouter();
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
@@ -65,38 +68,8 @@ export default function ChatWindow({
       ? `Your ${swapRequest.offeredListing.title} for ${swapRequest.requestedListing.title}`
       : `${swapRequest.offeredListing.title} for your ${swapRequest.requestedListing.title}`;
 
-  // Fetch messages
-  // useEffect(() => {
-  //   const fetchMessages = async () => {
-  //     try {
-  //       const messagesRef = collection(
-  //         db,
-  //         "swap_requests",
-  //         swapRequest.id,
-  //         "messages"
-  //       );
-  //       const q = query(messagesRef, orderBy("createdAt", "asc"));
-  //       const querySnapshot = await getDocs(q);
-
-  //       const messagesList = [];
-  //       querySnapshot.forEach((doc) => {
-  //         messagesList.push({ id: doc.id, ...doc.data() });
-  //       });
-
-  //       setMessages(messagesList);
-  //     } catch (error) {
-  //       console.error("Error fetching messages:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchMessages();
-  // }, [swapRequest.id]);
-
   useEffect(() => {
     if (swapRequest) {
-      // Initial message load with pagination
       const messagesRef = collection(
         db,
         "swap_requests",
@@ -113,23 +86,19 @@ export default function ChatWindow({
         const messagesData = [];
         const newUnreadMessages = [];
 
-        // Process all messages, identify new unread ones
         querySnapshot.forEach((doc) => {
           const data = { id: doc.id, ...doc.data() };
           messagesData.push(data);
 
-          // Check if this is a new message not from current user and not yet read
           if (
             data.senderUid !== authUser.uid &&
             (!data.readBy || !data.readBy.includes(authUser.uid)) &&
             data.createdAt
           ) {
-            // Ensure it has a timestamp (not a local optimistic update)
             newUnreadMessages.push(doc.id);
           }
         });
 
-        // Mark new messages as read immediately
         if (newUnreadMessages.length > 0) {
           const batch = writeBatch(db);
           newUnreadMessages.forEach((msgId) => {
@@ -155,17 +124,26 @@ export default function ChatWindow({
     }
   }, [swapRequest, authUser?.uid]);
 
+  // Improved scroll to bottom function
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
+    }
+  };
+
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
   }, [messages]);
 
-  // Send message (placeholder for now)
+  // Send message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    // Placeholder for sending message
     const message = {
       text: newMessage.trim(),
       senderUid: authUser.uid,
@@ -174,21 +152,20 @@ export default function ChatWindow({
       readBy: [authUser.uid],
     };
 
-    // Clear input
     setNewMessage("");
 
-    // Optimistically add to UI
-    const optimisticId = Math.random().toString(36).substring(2, 15);
-    setMessages([
-      ...messages,
-      { ...message, id: optimisticId, createdAt: new Date() },
-    ]);
+    try {
+      await addDoc(
+        collection(db, "swap_requests", swapRequest.id, "messages"),
+        message
+      );
 
-    // Add logic to save to Firestore here
-    await addDoc(
-      collection(db, "swap_requests", swapRequest.id, "messages"),
-      message
-    );
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
   };
 
   // Function to render message based upon message type
@@ -231,13 +208,12 @@ export default function ChatWindow({
     }
   };
 
-  // marks messages as read
+  // Mark messages as read
   useEffect(() => {
     if (!swapRequest?.id || !authUser?.uid) return;
 
     const markMessagesAsRead = async () => {
       try {
-        // Get all messages in this conversation
         const messagesRef = collection(
           db,
           "swap_requests",
@@ -247,7 +223,6 @@ export default function ChatWindow({
         const messagesQuery = query(messagesRef);
         const querySnapshot = await getDocs(messagesQuery);
 
-        // Filter messages not read by current user (excluding those sent by the user)
         const unreadMessages = querySnapshot.docs.filter((doc) => {
           const data = doc.data();
           return (
@@ -258,7 +233,6 @@ export default function ChatWindow({
 
         if (unreadMessages.length === 0) return;
 
-        // Just mark messages as read, let the cloud function handle the unreadMessagesCount counter
         const batch = writeBatch(db);
         unreadMessages.forEach((messageDoc) => {
           const messageRef = doc(
@@ -274,7 +248,6 @@ export default function ChatWindow({
         });
 
         await batch.commit();
-        console.log(`Marked ${unreadMessages.length} messages as read`);
       } catch (error) {
         console.error("Error marking messages as read:", error);
       }
@@ -287,7 +260,6 @@ export default function ChatWindow({
   useEffect(() => {
     if (!swapRequest?.id || !authUser?.uid) return;
 
-    // Create a presence indicator
     const presenceRef = doc(
       db,
       "swap_requests",
@@ -300,7 +272,6 @@ export default function ChatWindow({
       lastActive: serverTimestamp(),
     });
 
-    // Set up cleanup when leaving chat
     return () => {
       setDoc(presenceRef, {
         active: false,
@@ -308,44 +279,6 @@ export default function ChatWindow({
       });
     };
   }, [swapRequest?.id, authUser?.uid]);
-
-  const loadMoreMessages = async () => {
-    if (!hasMoreMessages) return;
-
-    try {
-      let q = query(
-        collection(db, "swap_requests", swapRequest.id, "messages"),
-        orderBy("createdAt", "desc"),
-        limit(messagesPerPage)
-      );
-
-      if (lastVisibleMessage) {
-        q = query(q, startAfter(lastVisibleMessage));
-      }
-
-      const querySnapshot = await getDocs(q);
-      const newMessages = [];
-
-      querySnapshot.forEach((doc) => {
-        newMessages.push({ id: doc.id, ...doc.data() });
-      });
-
-      if (newMessages.length < messagesPerPage) {
-        setHasMoreMessages(false);
-      }
-
-      if (querySnapshot.docs.length > 0) {
-        setLastVisibleMessage(
-          querySnapshot.docs[querySnapshot.docs.length - 1]
-        );
-      }
-
-      // Add new messages to state (maintaining order)
-      setMessages((prev) => [...prev, ...newMessages.reverse()]);
-    } catch (error) {
-      console.error("Error loading more messages:", error);
-    }
-  };
 
   const sortedMessages = [...messages].sort((a, b) => {
     const dateA =
@@ -356,13 +289,17 @@ export default function ChatWindow({
       b.createdAt instanceof Date
         ? b.createdAt
         : b.createdAt?.toDate?.() || new Date(0);
-    return dateA - dateB; // Sort in ascending order (oldest first)
+    return dateA - dateB;
   });
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={`flex flex-col h-full ${isMobile ? "h-screen" : ""}`}>
       {/* Chat Header */}
-      <div className="p-3 border-b flex items-center gap-3">
+      <div
+        className={`flex-shrink-0 border-b flex items-center gap-3 ${
+          isMobile ? "p-2 md:p-4 bg-white sticky top-0 z-10" : "p-3"
+        }`}
+      >
         {onBackClick && (
           <button
             onClick={onBackClick}
@@ -372,7 +309,7 @@ export default function ChatWindow({
           </button>
         )}
 
-        <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+        <div className="relative w-6 h-6 md:w-10 md:h-10 rounded-full overflow-hidden flex-shrink-0">
           <Image
             src={otherParty.profilePic}
             alt={otherParty.username}
@@ -385,13 +322,29 @@ export default function ChatWindow({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{otherParty.name}</p>
-          <p className="text-xs text-muted-foreground truncate">{chatTitle}</p>
+          <p className="text-sm md:text-base font-medium truncate">
+            {otherParty.username}
+          </p>
+          <p
+            className={`text-muted-foreground truncate ${
+              isMobile ? "text-xs" : "text-xs"
+            }`}
+          >
+            {chatTitle}
+          </p>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+      <div
+        ref={messagesContainerRef}
+        className={`flex-1 overflow-y-auto flex flex-col gap-3 ${
+          isMobile ? "p-3" : "p-4"
+        }`}
+        style={{
+          height: isMobile ? "calc(100vh - 120px)" : "auto", // Account for header + input
+        }}
+      >
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
             <p>Loading messages...</p>
@@ -428,19 +381,25 @@ export default function ChatWindow({
       </div>
 
       {/* Message Input */}
-      <div className="p-3 border-t">
+      <div
+        className={`flex-shrink-0 border-t ${
+          isMobile ? "p-3 bg-white sticky bottom-0" : "p-3"
+        }`}
+      >
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 min-w-0 bg-muted/30 border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+            className={`flex-1 min-w-0 bg-muted/30 border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary ${
+              isMobile ? "text-base" : "" // Prevent zoom on iOS
+            }`}
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="bg-primary flex justify-center items-center text-white p-2 rounded-full disabled:opacity-50"
+            className="bg-primary flex justify-center items-center text-white p-2 rounded-full disabled:opacity-50 flex-shrink-0"
           >
             <ArrowUp className="h-5 w-6" />
           </button>

@@ -109,7 +109,13 @@ export default function SwapRequestsList({
                   key={request.id}
                   onClick={() => onSelectRequest(request)}
                   className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${
-                    isSelected ? "bg-muted" : ""
+                    isSelected
+                      ? "bg-muted"
+                      : request.status === "swap_request"
+                      ? "bg-amber-100"
+                      : request.status === "swap_completed"
+                      ? "bg-green-100"
+                      : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">

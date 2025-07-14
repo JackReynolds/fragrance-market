@@ -13,6 +13,7 @@ import { toast } from "sonner";
 const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   const [isRejecting, setIsRejecting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
   const isOfferedByUser = message?.offeredBy?.uid === authUser.uid;
@@ -28,7 +29,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     });
   };
 
-  // Helpder function to update the swap_request message document with type = swap_accepted
+  // Helper function to update the swap_request message document with type = swap_accepted
   const updateSwapRequestMessage = async () => {
     try {
       setIsAccepting(true);
@@ -106,9 +107,12 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   };
 
   return (
-    <div className="max-w-[90%] w-[400px] rounded-lg p-4 border bg-card shadow-sm">
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl rounded-lg p-3 sm:p-4 border bg-card shadow-sm">
+      {/* Header */}
       <div className="flex justify-between items-center mb-3">
-        <h4 className="font-semibold text-primary">Swap Request</h4>
+        <h4 className="font-semibold text-primary text-sm sm:text-base">
+          Swap Request
+        </h4>
         <span className="text-xs text-muted-foreground">
           {message.createdAt
             ? format(
@@ -124,15 +128,15 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
       {/* Swap details with images and info */}
       <div className="flex flex-col w-full items-start justify-start gap-3 mb-4">
         {/* Offered item */}
-        <div className="flex-1 w-full">
-          <p className="text-xs text-muted-foreground mb-1">
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground mb-2">
             {isOfferedByUser
               ? "You're offering:"
               : `${message.offeredBy.username} is offering:`}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div
-              className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
+              className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
               onClick={() => {
                 router.push(`/listings/${message.offeredListing.id}`);
               }}
@@ -145,9 +149,9 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               />
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p
-                className="font-medium text-sm truncate hover:cursor-pointer hover:underline hover:font-semibold"
+                className="font-medium text-sm sm:text-base truncate hover:cursor-pointer hover:underline hover:font-semibold"
                 onClick={() => {
                   router.push(`/listings/${message.offeredListing.id}`);
                 }}
@@ -157,28 +161,34 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               <p className="text-xs text-muted-foreground">
                 {message.offeredListing.brand}
               </p>
-              <p className="text-xs">{message.offeredListing.fragrance}</p>
-              <p className="text-xs">
+              <p className="text-xs sm:text-sm">
+                {message.offeredListing.fragrance}
+              </p>
+              <p className="text-xs sm:text-sm">
                 {message.offeredListing.amountLeft}% full
               </p>
             </div>
           </div>
         </div>
 
-        {/* Arrow */}
-        {/* <div className="px-2">
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        </div> */}
+        {/* Visual separator */}
+        <div className="w-full flex items-center gap-2 my-1">
+          <div className="flex-1 h-px bg-border"></div>
+          <span className="text-xs text-muted-foreground bg-background px-2">
+            for
+          </span>
+          <div className="flex-1 h-px bg-border"></div>
+        </div>
 
         {/* Requested item */}
-        <div className="flex-1 w-full">
-          <p className="text-xs text-muted-foreground mb-1">
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground mb-2">
             {isRequestedFromUser
-              ? "For your fragrance:"
-              : `For ${message.requestedFrom.username}'s:`}
+              ? "Your fragrance:"
+              : `${message.requestedFrom.username}'s fragrance:`}
           </p>
-          <div className="flex items-center gap-2">
-            <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border">
               <Image
                 src={message.requestedListing.imageURL}
                 alt={message.requestedListing.title}
@@ -186,15 +196,17 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
                 className="object-cover"
               />
             </div>
-            <div className="min-w-0">
-              <p className="font-medium text-sm truncate">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm sm:text-base truncate">
                 {message.requestedListing.title}
               </p>
               <p className="text-xs text-muted-foreground">
                 {message.requestedListing.brand}
               </p>
-              <p className="text-xs">{message.requestedListing.fragrance}</p>
-              <p className="text-xs">
+              <p className="text-xs sm:text-sm">
+                {message.requestedListing.fragrance}
+              </p>
+              <p className="text-xs sm:text-sm">
                 {message.requestedListing.amountLeft}% full
               </p>
             </div>
@@ -202,26 +214,26 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
         </div>
       </div>
 
-      {/* Check if swap_request is accepted - if so, show the swap_accepted message and remove the action buttons */}
+      {/* Status message for accepted swaps */}
       {swapRequest.status !== "swap_request" && (
-        <div className="flex flex-col w-full items-start justify-start gap-3 mb-4">
-          <p className="text-xs text-green-600 mb-1">
+        <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
+          <p className="text-sm text-green-700">
             {isRequestedFromUser
-              ? "You've accepted the swap request!"
-              : `${message.requestedFrom.username} has accepted the swap request`}
+              ? "✅ You've accepted this swap request!"
+              : `✅ ${message.requestedFrom.username} has accepted this swap request`}
           </p>
         </div>
       )}
 
       {/* Action buttons */}
       {swapRequest.status === "swap_request" && (
-        <div className="mt-4 flex gap-2 justify-end">
+        <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-2 sm:justify-end">
           {isRequestedFromUser ? (
             <>
               <Button
                 size="sm"
                 variant="destructive"
-                className="hover:cursor-pointer hover:bg-destructive/80"
+                className="w-full sm:w-auto hover:cursor-pointer hover:bg-destructive/80 order-2 sm:order-1"
                 onClick={() => handleRejectOrCancelSwap("reject")}
                 disabled={isRejecting}
               >
@@ -229,7 +241,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               </Button>
               <Button
                 size="sm"
-                className="hover:cursor-pointer hover:bg-primary/80"
+                className="w-full sm:w-auto hover:cursor-pointer hover:bg-primary/80 order-1 sm:order-2"
                 onClick={() => handleAcceptSwap()}
                 disabled={isAccepting}
               >
@@ -240,7 +252,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
             <Button
               size="sm"
               variant="destructive"
-              className="hover:cursor-pointer hover:bg-destructive/80"
+              className="w-full sm:w-auto hover:cursor-pointer hover:bg-destructive/80"
               onClick={() => handleRejectOrCancelSwap("cancel")}
               disabled={isRejecting}
             >

@@ -56,22 +56,19 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
       const userRole = isRequestedFromUser ? "requestedFrom" : "offeredBy";
 
       // Call the cloud function
-      const response = await fetch(
-        "https://handleconfirmaddress-handleconfirmaddress-qwe4clieqa-nw.a.run.app",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            swapRequestId: swapRequest.id,
-            userUid: authUser.uid,
-            address: currentUserAddress,
-            userRole,
-            messageId: message.id,
-          }),
-        }
-      );
+      const response = await fetch("/api/firebase/handle-confirm-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          swapRequestId: swapRequest.id,
+          userUid: authUser.uid,
+          address: currentUserAddress,
+          userRole,
+          messageId: message.id,
+        }),
+      });
 
       const result = await response.json();
 
@@ -154,10 +151,13 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   ]);
 
   return (
-    <div className="max-w-[90%] w-[400px] rounded-lg p-4 border bg-card shadow-sm">
+    <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl rounded-lg p-3 sm:p-4 border bg-card shadow-sm">
+      {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
-          <h4 className="font-semibold text-primary">Swap Accepted</h4>
+          <h4 className="font-semibold text-primary text-sm sm:text-base">
+            Swap Accepted
+          </h4>
           <CheckCircle size={16} className="text-green-600" />
         </div>
         <span className="text-xs text-muted-foreground">
@@ -175,15 +175,15 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
       {/* Swap details with images and info */}
       <div className="flex flex-col w-full items-start justify-start gap-3 mb-4">
         {/* Offered item */}
-        <div className="flex-1 w-full">
-          <p className="text-xs text-muted-foreground mb-1">
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground mb-2">
             {isOfferedByUser
               ? "You're offering:"
               : `${message.offeredBy.username} is offering:`}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div
-              className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
+              className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
               onClick={() => {
                 router.push(`/listings/${message.offeredListing.id}`);
               }}
@@ -195,8 +195,8 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
                 className="object-cover"
               />
             </div>
-            <div className="min-w-0">
-              <p className="font-medium text-sm truncate">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm sm:text-base truncate">
                 {message.offeredListing.title}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -206,15 +206,24 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           </div>
         </div>
 
+        {/* Visual separator */}
+        <div className="w-full flex items-center gap-2 my-1">
+          <div className="flex-1 h-px bg-border"></div>
+          <span className="text-xs text-muted-foreground bg-background px-2">
+            for
+          </span>
+          <div className="flex-1 h-px bg-border"></div>
+        </div>
+
         {/* Requested item */}
-        <div className="flex-1 w-full">
-          <p className="text-xs text-muted-foreground mb-1">
+        <div className="w-full">
+          <p className="text-xs text-muted-foreground mb-2">
             {isRequestedFromUser
-              ? "For your fragrance:"
-              : `For ${message.requestedFrom.username}'s:`}
+              ? "Your fragrance:"
+              : `${message.requestedFrom.username}'s fragrance:`}
           </p>
-          <div className="flex items-center gap-2">
-            <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 border">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border">
               <Image
                 src={message.requestedListing.imageURL}
                 alt={message.requestedListing.title}
@@ -222,8 +231,8 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
                 className="object-cover"
               />
             </div>
-            <div className="min-w-0">
-              <p className="font-medium text-sm truncate">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-sm sm:text-base truncate">
                 {message.requestedListing.title}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -237,40 +246,43 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
       {/* Address confirmation section */}
       <div className="border-t pt-3 mt-3">
         <div className="mb-4">
-          <h5 className="font-medium text-sm mb-2">Shipping Information</h5>
+          <h5 className="font-medium text-sm sm:text-base mb-3">
+            Shipping Information
+          </h5>
 
           {/* Current user address confirmation */}
-          <div className="mb-4 p-3 bg-muted/40 rounded-md">
-            <p className="text-sm font-medium mb-1">Your Shipping Address:</p>
+          <div className="mb-3 p-3 bg-muted/40 rounded-md">
+            <p className="text-sm font-medium mb-2">Your Shipping Address:</p>
 
             {!showAddressForm ? (
               <>
-                <p className="text-sm mb-2">
+                <p className="text-xs sm:text-sm mb-3 text-muted-foreground break-words">
                   {currentUserAddress || "No address provided"}
                 </p>
 
                 {!currentUserAddressConfirmed ? (
-                  <div className="flex gap-2 mt-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     {currentUserAddress ? (
                       <Button
                         size="sm"
                         onClick={() => updateAddressConfirmation(true)}
-                        className="hover:cursor-pointer hover:bg-primary/80"
+                        className="w-full sm:w-auto hover:cursor-pointer hover:bg-primary/80"
+                        disabled={isConfirmingAddress}
                       >
                         {isConfirmingAddress ? (
-                          <Loader2 className="animate-spin" />
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
                         ) : (
-                          <>
-                            <Check size={14} /> Confirm Address
-                          </>
+                          <Check size={14} className="mr-2" />
                         )}
+                        {isConfirmingAddress
+                          ? "Confirming..."
+                          : "Confirm Address"}
                       </Button>
                     ) : (
                       <Button
                         size="sm"
-                        variant="primary"
                         onClick={() => setShowAddressForm(true)}
-                        className="hover:cursor-pointer w-full"
+                        className="w-full sm:w-auto hover:cursor-pointer"
                       >
                         Add Address
                       </Button>
@@ -281,15 +293,16 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
                         size="sm"
                         variant="outline"
                         onClick={() => setShowAddressForm(true)}
-                        className="hover:cursor-pointer"
+                        className="w-full sm:w-auto hover:cursor-pointer"
                       >
-                        <X size={14} /> Update Address
+                        <X size={14} className="mr-2" />
+                        Update Address
                       </Button>
                     )}
                   </div>
                 ) : (
                   <div className="flex items-center text-green-600 mt-1">
-                    <Check size={16} className="mr-1" />
+                    <Check size={16} className="mr-2" />
                     <span className="text-sm">Address Confirmed</span>
                   </div>
                 )}
@@ -315,19 +328,23 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
           {/* Other user address confirmation status */}
           <div className="p-3 bg-muted/40 rounded-md">
-            <p className="text-sm font-medium mb-1">
-              {otherUserInfo.username}&apos;s Shipping Address:{" "}
-              {otherUserAddressConfirmed ? otherUserAddress : null}
+            <p className="text-sm font-medium mb-2">
+              {otherUserInfo.username}&apos;s Shipping Address:
             </p>
+            {otherUserAddressConfirmed && otherUserAddress && (
+              <p className="text-xs sm:text-sm mb-2 text-muted-foreground break-words">
+                {otherUserAddress}
+              </p>
+            )}
 
             {otherUserAddressConfirmed ? (
               <div className="flex items-center text-green-600 mt-1">
-                <Check size={16} className="mr-1" />
+                <Check size={16} className="mr-2" />
                 <span className="text-sm">Shipping Address Confirmed</span>
               </div>
             ) : (
               <div className="flex items-center text-amber-600 mt-1">
-                <X size={16} className="mr-1" />
+                <X size={16} className="mr-2" />
                 <span className="text-sm">
                   Waiting for Shipping Address Confirmation
                 </span>
@@ -338,24 +355,38 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
         {/* Confirmation status for both parties */}
         <div className="border-t pt-3">
-          <h5 className="font-medium text-sm mb-2">Confirmation Status:</h5>
-          <div className="flex justify-between">
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-xs">{currentUserInfo.username} (You)</span>
-              {currentUserAddressConfirmed ? (
-                <Check size={20} className="text-green-600" />
-              ) : (
-                <X size={20} className="text-amber-600" />
-              )}
+          <h5 className="font-medium text-sm sm:text-base mb-3">
+            Confirmation Status:
+          </h5>
+          <div className="flex justify-between items-center">
+            <div className="flex flex-col items-center gap-2 flex-1">
+              <span className="text-xs sm:text-sm text-center">
+                {currentUserInfo.username} (You)
+              </span>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                {currentUserAddressConfirmed ? (
+                  <Check size={20} className="text-green-600" />
+                ) : (
+                  <X size={20} className="text-amber-600" />
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-xs">{otherUserInfo.username}</span>
-              {otherUserAddressConfirmed ? (
-                <Check size={20} className="text-green-600" />
-              ) : (
-                <X size={20} className="text-amber-600" />
-              )}
+            <div className="flex-shrink-0 mx-4">
+              <div className="w-8 h-px bg-border"></div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2 flex-1">
+              <span className="text-xs sm:text-sm text-center">
+                {otherUserInfo.username}
+              </span>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                {otherUserAddressConfirmed ? (
+                  <Check size={20} className="text-green-600" />
+                ) : (
+                  <X size={20} className="text-amber-600" />
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -3,15 +3,7 @@
 "use client";
 // src/components/listing/SwapOfferModal.jsx
 import React, { useState, useEffect } from "react";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  and,
-  serverTimestamp,
-} from "firebase/firestore";
+import { collection, query, where, getDocs, and } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import { toast } from "sonner";
 import {
@@ -26,12 +18,12 @@ import { Button } from "@/components/ui/button.jsx";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { Loader2, AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const SwapOfferModal = ({
   isOpen,
   onClose,
   currentUser,
-  userDoc,
   targetListing,
   targetOwner,
 }) => {
@@ -41,8 +33,10 @@ const SwapOfferModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingRequests, setExistingRequests] = useState({});
 
-  console.log("targetListing", targetListing);
-  console.log("targetOwner", targetOwner);
+  const { authUser } = useAuth();
+
+  // console.log("targetListing", targetListing);
+  // console.log("targetOwner", targetOwner);
 
   // Fetch user's swap listings and check for existing requests
   useEffect(() => {
@@ -109,100 +103,95 @@ const SwapOfferModal = ({
   }, [isOpen, currentUser?.uid, targetListing.id, targetOwner.id]);
 
   // Core info for the swap request and swap_request initial message
-  const swapRequestCoreInfo = {
-    // The user making the offer
-    offeredBy: {
-      uid: currentUser.uid,
-      username: userDoc.username || "Unknown",
-      email: userDoc.email,
-      isIdVerified: userDoc.isIdVerified,
-      isPremium: userDoc.isPremium,
-      profilePictureURL: userDoc.profilePictureURL || "",
-      rating: userDoc.rating || 0,
-    },
-    // The listing being offered for swap
-    offeredListing: {
-      id: selectedListing?.id,
-      title: selectedListing?.title,
-      brand: selectedListing?.brand,
-      imageURL: selectedListing?.imageURLs?.[0] || "",
-      fragrance: selectedListing?.fragrance,
-      amountLeft: selectedListing?.amountLeft,
-    },
-    // The owner of the target listing
-    requestedFrom: {
-      uid: targetOwner.uid,
-      username: targetOwner.username,
-      email: targetOwner.email,
-      isIdVerified: targetOwner.isIdVerified,
-      isPremium: targetOwner.isPremium,
-      profilePictureURL: targetOwner.profilePictureURL || "",
-      rating: targetOwner.rating || 0,
-    },
-    // The listing being requested
-    requestedListing: {
-      id: targetListing?.id,
-      title: targetListing?.title,
-      brand: targetListing?.brand,
-      imageURL: targetListing?.imageURLs?.[0] || "",
-      fragrance: targetListing?.fragrance,
-      amountLeft: targetListing?.amountLeft,
-    },
-  };
+  // const swapRequestCoreInfo = {
+  //   // The user making the offer
+  //   offeredBy: {
+  //     uid: currentUser.uid,
+  //     username: userDoc.username || "Unknown",
+  //     email: userDoc.email,
+  //     isIdVerified: userDoc.isIdVerified,
+  //     isPremium: userDoc.isPremium,
+  //     profilePictureURL: userDoc.profilePictureURL || "",
+  //     rating: userDoc.rating || 0,
+  //   },
+  //   // The listing being offered for swap
+  //   offeredListing: {
+  //     id: selectedListing?.id,
+  //     title: selectedListing?.title,
+  //     brand: selectedListing?.brand,
+  //     imageURL: selectedListing?.imageURLs?.[0] || "",
+  //     fragrance: selectedListing?.fragrance,
+  //     amountLeft: selectedListing?.amountLeft,
+  //   },
+  //   // The owner of the target listing
+  //   requestedFrom: {
+  //     uid: targetOwner.uid,
+  //     username: targetOwner.username,
+  //     email: targetOwner.email,
+  //     isIdVerified: targetOwner.isIdVerified,
+  //     isPremium: targetOwner.isPremium,
+  //     profilePictureURL: targetOwner.profilePictureURL || "",
+  //     rating: targetOwner.rating || 0,
+  //   },
+  //   // The listing being requested
+  //   requestedListing: {
+  //     id: targetListing?.id,
+  //     title: targetListing?.title,
+  //     brand: targetListing?.brand,
+  //     imageURL: targetListing?.imageURLs?.[0] || "",
+  //     fragrance: targetListing?.fragrance,
+  //     amountLeft: targetListing?.amountLeft,
+  //   },
+  // };
 
   // Check if a listing already has a pending request
   const hasExistingRequest = (listingId) => {
     return !!existingRequests[listingId];
   };
 
-  // Helpder function to create a new swap_request
-  const createSwapRequest = async () => {
-    try {
-      // Create a new swap request
-      const swapRequest = {
-        ...swapRequestCoreInfo,
-        status: "swap_request",
-        participants: [currentUser.uid, targetOwner.uid],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
+  // // Helpder function to create a new swap_request
+  // const createSwapRequest = async () => {
+  //   try {
+  //     // Create a new swap request
+  //     const swapRequest = {
+  //       ...swapRequestCoreInfo,
+  //       status: "swap_request",
+  //       participants: [currentUser.uid, targetOwner.uid],
+  //       createdAt: serverTimestamp(),
+  //       updatedAt: serverTimestamp(),
+  //     };
 
-      const docRef = await addDoc(collection(db, "swap_requests"), swapRequest);
-      return docRef.id;
-    } catch (error) {
-      console.error("Error creating swap request:", error);
-      toast.error("Failed to send swap offer");
-    }
-  };
+  //     const docRef = await addDoc(collection(db, "swap_requests"), swapRequest);
+  //     return docRef.id;
+  //   } catch (error) {
+  //     console.error("Error creating swap request:", error);
+  //     toast.error("Failed to send swap offer");
+  //   }
+  // };
 
   // Helper function to create initial swap chat message
-  const createInitialChatMessage = async (swapRequestDocumentId) => {
-    try {
-      const swapRequestMessageData = {
-        ...swapRequestCoreInfo,
-        type: "swap_request",
-        readBy: [currentUser.uid],
-        senderUid: currentUser.uid,
-        receiverUid: targetOwner.uid,
-        createdAt: serverTimestamp(),
-      };
+  // const createInitialChatMessage = async (swapRequestDocumentId) => {
+  //   try {
+  //     await fetch("/api/firebase/create-swap-request", {
+  //       method: "POST",
+  //       body: JSON.stringify({
+  //         swapRequest: swapRequestCoreInfo,
+  //         currentUser,
+  //         targetOwner,
+  //       }),
+  //     });
 
-      await addDoc(
-        collection(db, "swap_requests", swapRequestDocumentId, "messages"),
-        swapRequestMessageData
-      );
-
-      console.log("Initial chat message created successfully");
-    } catch (error) {
-      console.error("Error creating initial chat message:", error);
-      toast.error("Failed to create initial chat message");
-    }
-  };
+  //     console.log("Initial chat message created successfully");
+  //   } catch (error) {
+  //     console.error("Error creating initial chat message:", error);
+  //     toast.error("Failed to create initial chat message");
+  //   }
+  // };
 
   // Helper function to send email to target owner
-  const createSwapRequestEmail = async () => {
-    console.log("Sending email to target owner");
-  };
+  // const createSwapRequestEmail = async () => {
+  //   console.log("Sending email to target owner");
+  // };
 
   // Handle "Send offer" button click
   const handleSubmitOffer = async () => {
@@ -211,33 +200,32 @@ const SwapOfferModal = ({
       return;
     }
 
-    // Double check for existing request
-    if (hasExistingRequest(selectedListing.id)) {
-      toast.error("You already have a swap request for this fragrance");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      // Create initial swap request document
-      const swapDocumentId = await createSwapRequest();
+      const response = await fetch("/api/firebase/create-swap-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await authUser.getIdToken()}`,
+        },
+        body: JSON.stringify({
+          offeredListingId: selectedListing.id,
+          requestedListingId: targetListing.id,
+          requestedFromUid: targetOwner.uid,
+        }),
+      });
 
-      if (!swapDocumentId) {
-        throw new Error("Failed to create swap request");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to send swap offer");
       }
 
-      // Create initial chat message
-      await createInitialChatMessage(swapDocumentId);
-
-      // Send email (to be implemented)
-      await createSwapRequestEmail();
-
+      const result = await response.json();
       toast.success("Swap offer sent successfully!");
       onClose();
     } catch (error) {
-      console.error("Error in swap offer process:", error);
-      setIsSubmitting(false);
-      toast.error("Failed to complete swap request");
+      console.error("Error sending swap offer:", error);
+      toast.error(error.message || "Failed to send swap offer");
     } finally {
       setIsSubmitting(false);
     }

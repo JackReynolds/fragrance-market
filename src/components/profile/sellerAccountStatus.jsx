@@ -12,10 +12,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const SellerAccountStatus = ({ userDoc }) => {
+  const { authUser } = useAuth();
   const [loadingStripeStatus, setLoadingStripeStatus] = useState(true);
   const [stripeAccountStatus, setStripeAccountStatus] = useState(null);
+  const [creatingStripeAccount, setCreatingStripeAccount] = useState(false);
 
   const STATUS_CODES = {
     TRANSFERS_ENABLED: 1,
@@ -25,36 +29,63 @@ const SellerAccountStatus = ({ userDoc }) => {
     NO_STRIPE_ACCOUNT: 5,
   };
 
+  const generateStatusMessage = (statusCode) => {
+    switch (statusCode) {
+      case 1:
+        return "Onboarding complete and Stripe details up to date";
+      case 2:
+        return "Stripe requirements due. Complete these to avoid disruptions in transfers.";
+      case 3:
+        return "Onboarding not complete. Complete the process to enable payments.";
+      case 4:
+        return "Transfers are disabled. This could be due to overdue requirements or other issues.";
+      default:
+        return "Please contact support for assistance.";
+    }
+  };
+
   useEffect(() => {
+    if (!authUser) {
+      setLoadingStripeStatus(false);
+      return;
+    }
+
     if (userDoc?.stripeAccountStatus) {
       setStripeAccountStatus({
         status: userDoc.stripeAccountStatus.statusCode,
-        message: generateStatusMessage(userDoc.stripeAccountStatus),
+        message: generateStatusMessage(userDoc.stripeAccountStatus.statusCode),
         actionURL: null,
       });
+      setLoadingStripeStatus(false);
     } else if (userDoc?.stripeAccountId) {
-      // Fallback: only call API if we have no cached status
+      // If we have a stripeAccountId but no cached status, fetch it
+      fetchStripeStatus();
+    } else {
+      // No Stripe account at all
       setStripeAccountStatus({
         status: STATUS_CODES.NO_STRIPE_ACCOUNT,
         message: "No Stripe account found",
         actionURL: null,
       });
+      setLoadingStripeStatus(false);
     }
-  }, [userDoc]);
+  }, [userDoc, authUser]);
 
   const fetchStripeStatus = async () => {
-    setIsLoading(true);
+    if (!authUser) return;
+
+    setLoadingStripeStatus(true);
     try {
-      const response = await fetch(
-        "https://checkstripeaccountstatus-checkstripeaccountstatus-iz3msmwhcq-nw.a.run.app",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uid: authUser.uid }),
-        }
-      );
-      if (!response.ok)
+      const response = await fetch("/api/stripe/check-stripe-account-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: authUser.uid }),
+      });
+
+      if (!response.ok) {
         throw new Error("Failed to fetch Stripe account status");
+      }
+
       const data = await response.json();
       setStripeAccountStatus({
         status: data.status,
@@ -64,35 +95,86 @@ const SellerAccountStatus = ({ userDoc }) => {
     } catch (error) {
       console.error("Error fetching Stripe account status:", error);
       toast.error("Failed to fetch Stripe account status.");
+      // Set a fallback state so loading stops
+      setStripeAccountStatus({
+        status: STATUS_CODES.NO_STRIPE_ACCOUNT,
+        message: "Unable to load account status",
+        actionURL: null,
+      });
     } finally {
-      setIsLoading(false);
+      setLoadingStripeStatus(false);
     }
   };
 
   const handleStripeOnboarding = async () => {
     if (!authUser) return;
-    const body = JSON.stringify({
-      uid: authUser.uid,
-      accountType: "express",
-      email: authUser.email,
-    });
+
+    setCreatingStripeAccount(true);
     try {
-      setIsLoading(true);
       const response = await fetch(
         "/api/stripe/create-stripe-account-and-link",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body,
+          body: JSON.stringify({
+            uid: authUser.uid,
+            accountType: "express",
+            email: authUser.email,
+          }),
         }
       );
+
       const data = await response.json();
-      window.open(data.actionURL, "_blank");
-      setIsLoading(false);
+      if (data.actionURL) {
+        window.open(data.actionURL, "_blank");
+      }
     } catch (error) {
-      console.log(error);
-      toast.error(error.message);
-      setIsLoading(false);
+      console.error("Error creating Stripe account:", error);
+      toast.error("Failed to create Stripe account");
+    } finally {
+      setCreatingStripeAccount(false);
+    }
+  };
+
+  const getStripeStatusColor = () => {
+    switch (stripeAccountStatus?.status) {
+      case STATUS_CODES.TRANSFERS_ENABLED:
+        return "bg-green-100 text-green-800";
+      case STATUS_CODES.REQUIREMENTS_DUE:
+        return "bg-yellow-100 text-yellow-800";
+      case STATUS_CODES.ONBOARDING_NOT_COMPLETE:
+        return "bg-blue-100 text-blue-800";
+      case STATUS_CODES.TRANSFERS_DISABLED:
+        return "bg-red-100 text-red-800";
+      case STATUS_CODES.NO_STRIPE_ACCOUNT:
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStripeActionButtonText = () => {
+    switch (stripeAccountStatus?.status) {
+      case STATUS_CODES.TRANSFERS_ENABLED:
+        return "Manage Stripe Account";
+      case STATUS_CODES.REQUIREMENTS_DUE:
+        return "Complete Requirements";
+      case STATUS_CODES.ONBOARDING_NOT_COMPLETE:
+        return "Complete Onboarding";
+      case STATUS_CODES.TRANSFERS_DISABLED:
+        return "Resolve Issues";
+      case STATUS_CODES.NO_STRIPE_ACCOUNT:
+        return "Create Stripe Account";
+      default:
+        return "Manage Stripe Account";
+    }
+  };
+
+  const handleStripeAction = () => {
+    if (stripeAccountStatus?.status === STATUS_CODES.NO_STRIPE_ACCOUNT) {
+      handleStripeOnboarding();
+    } else if (stripeAccountStatus?.actionURL) {
+      window.open(stripeAccountStatus.actionURL, "_blank");
     }
   };
 
@@ -135,51 +217,18 @@ const SellerAccountStatus = ({ userDoc }) => {
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStripeStatusColor()}`}
               >
-                {stripeAccountStatus.status.replace("_", " ").toUpperCase()}
+                {renderStripeStatus()}
               </span>
             </div>
 
             <div className="p-3 bg-muted/40 rounded-md">
               <p className="text-sm">{stripeAccountStatus.message}</p>
-
-              {stripeAccountStatus.canReceivePayments && (
-                <div className="flex items-center text-green-600 mt-2">
-                  <Check size={16} className="mr-1" />
-                  <span className="text-sm">Ready to receive payments</span>
-                </div>
-              )}
-
-              {stripeAccountStatus.details?.requirementsCounts && (
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {stripeAccountStatus.details.requirementsCounts.currentlyDue >
-                    0 && (
-                    <p>
-                      •{" "}
-                      {
-                        stripeAccountStatus.details.requirementsCounts
-                          .currentlyDue
-                      }{" "}
-                      requirement(s) due now
-                    </p>
-                  )}
-                  {stripeAccountStatus.details.requirementsCounts.pastDue >
-                    0 && (
-                    <p className="text-red-600">
-                      • {stripeAccountStatus.details.requirementsCounts.pastDue}{" "}
-                      past due requirement(s)
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
 
             <Button
-              className="w-full hover:cursor-pointer hover:bg-primary/80"
+              className="hover:cursor-pointer hover:bg-primary/80 shadow-md"
               onClick={handleStripeAction}
-              disabled={
-                creatingStripeAccount ||
-                stripeAccountStatus.actionRequired === "wait_verification"
-              }
+              disabled={creatingStripeAccount}
             >
               {creatingStripeAccount ? (
                 <>
@@ -194,8 +243,8 @@ const SellerAccountStatus = ({ userDoc }) => {
             <Button
               variant="outline"
               size="sm"
-              className="hover:cursor-pointer shadow-md mt-2"
-              // onClick={checkStripeAccountStatus}
+              className="hover:cursor-pointer shadow-md mt-2 block"
+              onClick={fetchStripeStatus}
               disabled={loadingStripeStatus}
             >
               Refresh Status
@@ -208,8 +257,8 @@ const SellerAccountStatus = ({ userDoc }) => {
             </p>
             <Button
               variant="outline"
-              // onClick={checkStripeAccountStatus}
-              className=" hover:cursor-pointer shadow-md mt-2"
+              onClick={fetchStripeStatus}
+              className="hover:cursor-pointer shadow-md mt-2"
             >
               Try Again
             </Button>
