@@ -258,11 +258,6 @@ const ListingDetailPage = () => {
 
   // Handle buy now button click
   const handleBuyNow = async () => {
-    if (!userDoc?.email) {
-      toast.error("Please complete your profile with an email address");
-      return;
-    }
-
     try {
       setIsLoadingBuyNow(true);
       // Create checkout session
