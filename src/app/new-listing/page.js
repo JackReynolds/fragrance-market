@@ -354,7 +354,7 @@ const NewListing = () => {
         ownerIsPremium: userDoc?.isPremium,
         country: userDoc?.country,
         countryCode: userDoc?.countryCode,
-        ownerIsIdVerified: userDoc?.isIdVerified,
+        ownerIdVerified: userDoc?.idVerified,
         ownerUsername: authUser.displayName || "Anonymous User",
         status: "active",
       };

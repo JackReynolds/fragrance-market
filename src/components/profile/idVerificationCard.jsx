@@ -23,17 +23,22 @@ const IDVerificationCard = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">ID Verification</CardTitle>
-          <CardDescription>
-            Verify your identity to get a verification badge and build trust
-            with other users on the platform.
-          </CardDescription>
-          <CardDescription>
-            * ID verification is required to sell fragrances.
-          </CardDescription>
-          <p className="text-sm">
-            ID Verification is handled by the industry-leading provider,{" "}
-            <strong>Veriff.</strong>
-          </p>
+
+          {userDoc?.idVerified ? null : (
+            <>
+              <CardDescription>
+                Verify your identity to get a verification badge and build trust
+                with other users on the platform.
+              </CardDescription>
+              <CardDescription>
+                * ID verification is required to sell fragrances.
+              </CardDescription>
+              <p className="text-sm">
+                ID Verification is handled by the industry-leading provider,{" "}
+                <strong>Veriff.</strong>
+              </p>
+            </>
+          )}
         </CardHeader>
         <CardContent>
           {userDoc.veriff?.decision === "approved" ? (
@@ -42,7 +47,7 @@ const IDVerificationCard = () => {
               <div>
                 <p className="font-medium">ID Verified</p>
                 <p className="text-sm text-muted-foreground">
-                  Your identity has been verified
+                  Your identity has been verified.
                 </p>
               </div>
             </div>

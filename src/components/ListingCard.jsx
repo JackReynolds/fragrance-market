@@ -9,14 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  ShoppingBag,
-  Repeat,
-  ShieldCheck,
-  Crown,
-  User,
-  MapPin,
-} from "lucide-react";
+import { ShieldCheck, Crown, User } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
@@ -24,13 +17,7 @@ import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
 
 // Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
-const ListingCard = ({
-  listing,
-  hit,
-  isFavorite = false,
-  toggleFavorite = null,
-  showUserInfo = true,
-}) => {
+const ListingCard = ({ listing, hit, showUserInfo = true }) => {
   const router = useRouter();
 
   // Use either listing or hit (for Algolia compatibility)
@@ -48,6 +35,8 @@ const ListingCard = ({
   const handleCardClick = (e) => {
     router.push(`/listings/${id}`);
   };
+
+  console.log("data", data);
 
   return (
     <TooltipProvider>
@@ -142,7 +131,7 @@ const ListingCard = ({
                       </TooltipContent>
                     </Tooltip>
                   )}
-                  {data.ownerIsIdVerified && (
+                  {data.ownerIdVerified && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-7 h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">

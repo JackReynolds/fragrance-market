@@ -176,6 +176,11 @@ async function handleVerificationResult(payload) {
       attempts: newVerificationAttempts,
     });
 
+    // 🆕 ADD THIS: Sync verification status to all user's listings
+    if (decision === "approved") {
+      await updateUserListingsVerificationStatus(userUid, true);
+    }
+
     // Send email notification based on decision
     const emailDecisions = ["approved", "declined", "resubmission_requested"];
     if (emailDecisions.includes(decision)) {
@@ -257,5 +262,43 @@ async function sendVerificationEmail(userUid, decision, userData) {
       decision,
     });
     throw error;
+  }
+}
+
+// Add this function to your webhook file
+async function updateUserListingsVerificationStatus(userUid, idVerified) {
+  try {
+    console.log(
+      `🔄 Syncing verification status for user ${userUid}'s listings...`
+    );
+
+    // Get all listings for this user
+    const listingsRef = db.collection("listings");
+    const userListingsQuery = listingsRef.where("ownerUid", "==", userUid);
+    const listingsSnapshot = await userListingsQuery.get();
+
+    if (listingsSnapshot.empty) {
+      console.log(`No listings found for user ${userUid}`);
+      return;
+    }
+
+    // Use batch write for atomic updates
+    const batch = db.batch();
+
+    listingsSnapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, {
+        ownerIdVerified: idVerified,
+        lastSyncedAt: FieldValue.serverTimestamp(),
+      });
+    });
+
+    await batch.commit();
+
+    console.log(
+      `Updated ${listingsSnapshot.docs.length} listings for user ${userUid}`
+    );
+  } catch (error) {
+    console.error(`Error updating listings for user ${userUid}:`, error);
+    // Don't throw - this shouldn't fail the main webhook
   }
 }

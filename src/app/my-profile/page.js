@@ -237,8 +237,6 @@ export default function Profile() {
     itemsSold: 15,
     rating: 4.8,
     status: "Premium",
-    isEmailVerified: authUser?.emailVerified,
-    isIdVerified: true,
   };
 
   // Display star rating
@@ -395,11 +393,11 @@ export default function Profile() {
 
                       <div className="space-y-2">
                         <VerificationBadge
-                          isVerified={userStats.isEmailVerified}
+                          isVerified={authUser?.emailVerified}
                           label="Email"
                         />
                         <VerificationBadge
-                          isVerified={userStats.isIdVerified}
+                          isVerified={userDoc?.idVerified}
                           label="ID"
                         />
                       </div>
@@ -678,7 +676,7 @@ export default function Profile() {
                           defaultValue={authUser?.email}
                           disabled
                         />
-                        {!userStats.isEmailVerified && (
+                        {!authUser?.emailVerified && (
                           <Button
                             variant="outline"
                             size="sm"
