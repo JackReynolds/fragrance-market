@@ -3,98 +3,82 @@ import { db } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
 import axios from "axios";
 
-// Define the Veriff secret key as a Firebase secret
-const veriffTestSecretKey = process.env.VERIFF_TEST_SECRET_KEY;
-const veriffSecretKey = process.env.VERIFF_SECRET_KEY;
+//const veriffTestSecretKey = process.env.VERIFF_TEST_SECRET_KEY;
+const veriffAPIKey = process.env.VERIFF_API_KEY;
 
 export async function POST(request) {
-  // Check request method
-  if (request.method !== "POST") {
-    return NextResponse.json({ error: "Method Not Allowed" }, { status: 405 });
-  }
-
-  const { userUid, firstName, lastName } = request.body;
+  let userUid = "";
 
   try {
-    // 1) Fetch the user doc
-    const userDocRef = db.collection("users").doc(userUid);
-    const userDocSnap = await userDocRef.get();
-    if (!userDocSnap.exists) {
+    // 1. Parse request body
+    const { userUid } = await request.json();
+
+    console.log("userUid", userUid);
+
+    // 2. Input validation
+    if (!userUid) {
       return NextResponse.json(
-        { error: "User not found in Firestore" },
-        { status: 404 }
-      );
-    }
-
-    const userData = userDocSnap.data();
-    const decision = userData?.veriff?.decision || "";
-    // const verificationAttempts = userData.verificationAttempts || 0;
-
-    // 2) Perform server-side checks
-    // a) Check max attempts
-    // if (verificationAttempts >= 3) {
-    //   return res
-    //     .status(403)
-    //     .json({ error: "Maximum verification attempts reached." });
-    // }
-
-    // Approved => No new session needed
-    if (decision === "approved") {
-      return NextResponse.json(
-        { error: "User is already verified. No new session needed." },
+        { error: "Missing required fields: userUid" },
         { status: 400 }
       );
     }
 
-    // Pending => Possibly the user is in the middle of a session. If you want to block:
-    // if (verificationStatus === "pending") {
-    //   return res
-    //     .status(400)
-    //     .json({ error: "User verification is still pending." });
-    // }
-
-    // resubmission_requested => The user can keep using the SAME session URL
-    //   i.e. We only create new sessions if they're "declined", "expired_or_abandoned", or ""
-    if (decision === "resubmission_requested") {
-      // Return existing session url
-      if (
-        userData.veriff &&
-        userData.veriff?.sessionUrl &&
-        userData.veriff?.sessionId
-      ) {
-        return NextResponse.json(
-          { verificationUrl: userData.veriff?.sessionUrl },
-          { status: 200 }
-        );
-      } else {
-        // If for some reason your user doc doesn't have the old session,
-        // you might fallback to creating a new session below
-        console.warn("No existing session URL found, creating new session...");
-      }
+    if (typeof userUid !== "string") {
+      return NextResponse.json(
+        { error: "Invalid field types" },
+        { status: 400 }
+      );
     }
 
-    // declined or expired_or_abandoned => allow new session
-    // or if verificationStatus === "" => user hasn't tried yet => also create new
+    // 1) Fetch the user doc
+    const userDocRef = db.collection("users").doc(userUid);
+    const userDocSnap = await userDocRef.get();
 
-    // 3) If you reach here, create a new Veriff session
-    const secretKey = veriffSecretKey;
+    if (!userDocSnap.exists) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
+    const userData = userDocSnap.data();
+    const decision = userData?.veriff?.decision || "";
+
+    // 6. Business logic checks
+    if (decision === "approved") {
+      return NextResponse.json(
+        { error: "User is already verified" },
+        { status: 400 }
+      );
+    }
+
+    // Return existing session for resubmission cases
+    if (decision === "resubmission_requested") {
+      const existingUrl = userData.veriff?.sessionUrl;
+      const existingId = userData.veriff?.sessionId;
+
+      if (existingUrl && existingId) {
+        return NextResponse.json(
+          { verificationUrl: existingUrl },
+          { status: 200 }
+        );
+      }
+      console.warn(
+        `No existing session URL found for user ${userUid}, creating new session`
+      );
+    }
+
+    // 7. Create new Veriff session
     const veriffResponse = await axios.post(
       "https://stationapi.veriff.com/v1/sessions",
       {
         verification: {
           vendorData: userUid,
-          person: {
-            firstName: firstName,
-            lastName: lastName,
-          },
         },
       },
       {
         headers: {
           "Content-Type": "application/json",
-          "X-AUTH-CLIENT": secretKey,
+          "X-AUTH-CLIENT": veriffAPIKey,
         },
+        timeout: 10000,
       }
     );
 
@@ -109,19 +93,36 @@ export async function POST(request) {
         status: "created",
         createdAt: FieldValue.serverTimestamp(),
       },
-      // We consider the user "pending" again since they've started a fresh session
-      // verificationStatus: "pending",
     });
 
     // 5) Send the session URL back to the client
     return NextResponse.json({ verificationUrl }, { status: 200 });
   } catch (error) {
-    console.error(
-      "Error creating Veriff session:",
-      error.response?.data || error.message
-    );
+    console.error("Error creating Veriff session:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      userUid: userUid || "unknown",
+    });
+
+    // Handle specific Axios errors
+    if (error.response) {
+      return NextResponse.json(
+        { error: "Verification service error" },
+        { status: 502 }
+      );
+    }
+
+    // Handle timeout or network errors
+    if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+      return NextResponse.json(
+        { error: "Service temporarily unavailable" },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

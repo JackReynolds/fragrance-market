@@ -52,6 +52,7 @@ import GoogleLocationSearch from "@/components/googleLocationSearch";
 import ListingCard from "@/components/listingCard";
 import GoPremiumButton from "@/components/goPremiumButton";
 import SellerAccountStatus from "@/components/profile/sellerAccountStatus";
+import IDVerificationCard from "@/components/profile/idVerificationCard";
 
 const SAMPLE_REVIEWS = [
   {
@@ -82,7 +83,7 @@ export default function Profile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("listings");
   const [userListings, setUserListings] = useState([]);
-  const { userDoc } = useUserDoc(authUser?.uid);
+  const { userDoc } = useUserDoc();
   const [editingAddress, setEditingAddress] = useState(false);
   const [formattedAddress, setFormattedAddress] = useState(
     userDoc?.formattedAddress || ""
@@ -629,7 +630,8 @@ export default function Profile() {
                     <CardContent className="w-3/5 md:w-2/5 lg:w-1/4 2xl:w-1/5">
                       {userDoc?.isPremium ? (
                         <Button
-                          className="w-full hover:cursor-pointer hover:bg-primary/80 shadow-md"
+                          className="w-full hover:cursor-pointer shadow-md"
+                          variant="outline"
                           onClick={() =>
                             router.push(
                               `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${authUser?.email}`
@@ -710,42 +712,7 @@ export default function Profile() {
                     </CardContent>
                   </Card>
 
-                  {/* ID Verification */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">ID Verification</CardTitle>
-                      <CardDescription>
-                        Verify your identity to build trust with other users
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {userStats.isIdVerified ? (
-                        <div className="flex items-center text-green-600">
-                          <ShieldCheck className="mr-2" size={20} />
-                          <div>
-                            <p className="font-medium">ID Verified</p>
-                            <p className="text-sm text-muted-foreground">
-                              Your identity has been verified
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <p className="text-sm">
-                            Verify your identity to get a verification badge and
-                            build trust with other users on the platform.
-                          </p>
-                          <Button
-                            onClick={() =>
-                              toast.info("ID verification coming soon!")
-                            }
-                          >
-                            Start Verification
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <IDVerificationCard />
 
                   {/* Address Information */}
                   <Card>
