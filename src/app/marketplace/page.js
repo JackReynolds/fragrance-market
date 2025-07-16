@@ -57,10 +57,10 @@ const MarketplaceContent = () => {
             background:
               "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
           }}
-          className="py-8 md:py-12"
+          className="py-6 md:py-12"
         >
-          <div className="mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl text-gray-100 font-bold text-center mb-6">
+          <div className="mx-auto px-3 sm:px-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl text-gray-100 font-bold text-center mb-4 sm:mb-6">
               Discover Fragrances
             </h1>
             <div className="max-w-2xl mx-auto">
@@ -73,12 +73,12 @@ const MarketplaceContent = () => {
           </div>
         </div>
 
-        <div className="mx-auto px-4 py-8">
+        <div className="mx-auto px-3 sm:px-4 py-4 sm:py-8">
           {/* Mobile filter button */}
-          <div className="flex justify-between items-center mb-6 md:hidden">
+          <div className="flex justify-between items-center mb-4 sm:mb-6 md:hidden">
             <Stats
               classNames={{
-                root: "text-sm text-muted-foreground",
+                root: "text-xs sm:text-sm text-muted-foreground",
               }}
             />
             <Button
@@ -91,12 +91,14 @@ const MarketplaceContent = () => {
             </Button>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-6">
             {/* Filters sidebar */}
             <aside
               className={`
               ${
-                showFilters ? "fixed inset-0 z-50 bg-background p-6" : "hidden"
+                showFilters
+                  ? "fixed inset-0 z-50 bg-background p-4 sm:p-6"
+                  : "hidden"
               } 
               md:block md:relative md:w-64 md:flex-shrink-0
             `}
@@ -114,22 +116,33 @@ const MarketplaceContent = () => {
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Listing Type Filter */}
                 <div>
-                  <h3 className="font-medium mb-3">Listing Type</h3>
+                  <h3 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">
+                    Listing Type
+                  </h3>
                   <Tabs
                     value={listingTypeFilter}
                     onValueChange={(val) => setListingTypeFilter(val)}
                   >
                     <TabsList className="w-full">
-                      <TabsTrigger value="all" className="flex-1">
+                      <TabsTrigger
+                        value="all"
+                        className="flex-1 text-xs sm:text-sm"
+                      >
                         All
                       </TabsTrigger>
-                      <TabsTrigger value="sell" className="flex-1">
+                      <TabsTrigger
+                        value="sell"
+                        className="flex-1 text-xs sm:text-sm"
+                      >
                         For Sale
                       </TabsTrigger>
-                      <TabsTrigger value="swap" className="flex-1">
+                      <TabsTrigger
+                        value="swap"
+                        className="flex-1 text-xs sm:text-sm"
+                      >
                         For Swap
                       </TabsTrigger>
                     </TabsList>
@@ -140,7 +153,9 @@ const MarketplaceContent = () => {
 
                 {/* Brand Filter */}
                 <div>
-                  <h3 className="font-medium mb-3">Brands</h3>
+                  <h3 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">
+                    Brands
+                  </h3>
                   <RefinementList
                     attribute="brand"
                     limit={5}
@@ -150,9 +165,9 @@ const MarketplaceContent = () => {
                       item: "flex items-center align-center space-x-2 mb-2",
                       checkbox:
                         "mr-2 rounded border-gray-300 text-primary focus:ring-primary",
-                      label: "text-sm cursor-pointer",
+                      label: "text-xs sm:text-sm cursor-pointer",
                       count:
-                        "ml-2 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full",
+                        "ml-2 text-[10px] sm:text-xs text-muted-foreground bg-muted px-1.5 sm:px-2 py-0.5 rounded-full",
                     }}
                   />
                 </div>
@@ -161,7 +176,9 @@ const MarketplaceContent = () => {
 
                 {/* Country Filter */}
                 <div>
-                  <h3 className="font-medium mb-3">Country</h3>
+                  <h3 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">
+                    Country
+                  </h3>
                   <RefinementList
                     attribute="country"
                     limit={5}
@@ -171,10 +188,9 @@ const MarketplaceContent = () => {
                       item: "flex items-center align-center space-x-2 mb-2",
                       checkbox:
                         "mr-2 rounded border-gray-300 text-primary focus:ring-primary",
-                      label: "text-sm cursor-pointer",
-
+                      label: "text-xs sm:text-sm cursor-pointer",
                       count:
-                        "ml-2 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full",
+                        "ml-2 text-[10px] sm:text-xs text-muted-foreground bg-muted px-1.5 sm:px-2 py-0.5 rounded-full",
                     }}
                   />
                 </div>
@@ -193,9 +209,9 @@ const MarketplaceContent = () => {
             </aside>
 
             {/* Main content */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {/* Sort and stats */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
                 <div className="hidden md:block">
                   <Stats
                     classNames={{
@@ -222,29 +238,29 @@ const MarketplaceContent = () => {
                 />
               </div>
 
-              {/* Results grid */}
-              <div className="flex justify-center align-center items-center">
+              {/* Results grid - Optimized for mobile 2-column */}
+              <div className="w-full">
                 <Hits
                   hitComponent={ListingCard}
                   classNames={{
                     root: "w-full",
-                    list: "grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6",
-                    item: "min-w-[200px]",
+                    list: "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4",
+                    item: "max-w-72", // Removed min-width constraint
                   }}
                 />
               </div>
 
               {/* Pagination */}
-              <div className="mt-12 flex justify-center">
+              <div className="mt-8 sm:mt-12 flex justify-center">
                 <Pagination
                   classNames={{
                     root: "",
                     list: "flex space-x-1",
-                    item: "inline-flex items-center justify-center rounded min-w-[32px] h-8 bg-transparent",
+                    item: "inline-flex items-center justify-center rounded min-w-[28px] sm:min-w-[32px] h-7 sm:h-8 bg-transparent text-xs sm:text-sm",
                     selectedItem:
                       "bg-primary text-primary-foreground font-medium",
                     disabledItem: "text-muted-foreground opacity-50",
-                    link: "flex h-full w-full items-center justify-center rounded px-2",
+                    link: "flex h-full w-full items-center justify-center rounded px-1 sm:px-2",
                   }}
                 />
               </div>

@@ -36,94 +36,100 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
     router.push(`/listings/${id}`);
   };
 
-  console.log("data", data);
-
   return (
     <TooltipProvider>
-      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group min-w-72 max-w-80 ">
-        {/* Image Section - Changed to shorter aspect ratio */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden max-h-72">
+      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full">
+        {/* Image Section - Responsive aspect ratio */}
+        <div className="relative aspect-[4/5] w-full overflow-hidden">
           <Image
             src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
             alt={data.title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-fit transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             onClick={handleCardClick}
           />
 
-          {/* Listing Type Badge */}
-          <div className="absolute top-3 left-3">
-            <ListingTypeBadge type={data.type} />
+          {/* Listing Type Badge - Responsive sizing */}
+          <div className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3">
+            <div className="scale-75 sm:scale-100 origin-top-left">
+              <ListingTypeBadge type={data.type} />
+            </div>
           </div>
 
-          {/* Amount Left Badge */}
-          <div className="absolute top-3 right-3">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200/70 text-black backdrop-blur-sm">
+          {/* Amount Left Badge - Responsive sizing */}
+          <div className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3">
+            <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-200/70 text-black backdrop-blur-sm">
               {data.amountLeft}% full
             </span>
           </div>
         </div>
 
-        {/* Content Section */}
-        <CardContent className="p-4 space-y-3" onClick={handleCardClick}>
+        {/* Content Section - Responsive padding */}
+        <CardContent
+          className="p-2 sm:p-4 space-y-1.5 sm:space-y-3"
+          onClick={handleCardClick}
+        >
           {/* Brand Row */}
           <div>
-            <p className="text-xs md:text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide line-clamp-1">
               {data.brand}
             </p>
           </div>
 
-          {/* Title */}
-          <h3 className="font-semibold text-sm md:text-base leading-tight line-clamp-2 mb-5">
+          {/* Title - Responsive sizing */}
+          <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-2 sm:mb-3">
             {data.title}
           </h3>
 
-          {/* Price Row */}
+          {/* Price Row - Responsive sizing */}
           {data.price && data.type === "sell" && (
             <div>
-              <p className="text-lg md:text-xl font-bold text-emerald-600">
+              <p className="text-sm sm:text-lg md:text-xl font-bold text-emerald-600">
                 {formatCurrency(data.price, data.currency || "EUR")}
               </p>
             </div>
           )}
 
-          {/* User Info Section */}
+          {/* User Info Section - Responsive spacing */}
           {showUserInfo && (
-            <div className="space-y-2 pt-2 border-t border-gray-100">
-              {/* User Row */}
-              <div className="flex items-center justify-between mt-2 mb-4">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  {/* Profile Picture */}
+            <div className="space-y-1 sm:space-y-2 pt-1 sm:pt-2 border-t border-gray-100">
+              {/* User Row - Compact on mobile */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+                  {/* Profile Picture - Responsive sizing */}
                   <div className="flex-shrink-0">
                     {data.ownerProfilePictureURL ? (
                       <Image
                         src={data.ownerProfilePictureURL}
                         alt={data.ownerUsername}
-                        width={24}
-                        height={24}
-                        className="rounded-full object-cover"
+                        width={16}
+                        height={16}
+                        className="w-4 h-4 sm:w-6 sm:h-6 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
-                        <User size={14} className="text-muted-foreground" />
+                      <div className="w-4 h-4 sm:w-6 sm:h-6 bg-muted rounded-full flex items-center justify-center">
+                        <User
+                          size={10}
+                          className="sm:w-3.5 sm:h-3.5 text-muted-foreground"
+                        />
                       </div>
                     )}
                   </div>
 
-                  {/* Username */}
-                  <p className="text-sm font-medium text-gray-700 truncate">
+                  {/* Username - Responsive sizing */}
+                  <p className="text-[10px] sm:text-sm font-medium text-gray-700 truncate">
                     {data.ownerUsername}
                   </p>
                 </div>
 
-                {/* Badges with Tooltips */}
-                <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Badges with Tooltips - Responsive sizing */}
+                <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                   {data.ownerIsPremium && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="w-7 h-7 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center cursor-help">
-                          <Crown className="w-4 h-4 text-yellow-900" />
+                        <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center cursor-help">
+                          <Crown className="w-2 h-2 sm:w-4 sm:h-4 text-yellow-900" />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -134,8 +140,8 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                   {data.ownerIdVerified && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className="w-7 h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">
-                          <ShieldCheck className="w-4 h-4 text-white" />
+                        <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">
+                          <ShieldCheck className="w-2 h-2 sm:w-4 sm:h-4 text-white" />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -146,9 +152,9 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                 </div>
               </div>
 
-              {/* Location Row */}
-              <div className="flex items-center gap-2 text-sm text-gray-700">
-                <span>
+              {/* Location Row - Responsive sizing */}
+              <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-gray-700">
+                <span className="text-xs sm:text-sm">
                   {data?.countryCode && getCountryFlagEmoji(data.countryCode)}
                 </span>
                 <span className="truncate">
