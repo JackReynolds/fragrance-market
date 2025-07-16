@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   MessageCircleIcon,
@@ -35,6 +35,30 @@ const Navigation = () => {
   const router = useRouter();
   const { userDoc } = useUserDoc();
 
+  // State for window width with default value
+  const [windowWidth, setWindowWidth] = useState(768); // Default to desktop size
+
+  // useEffect to handle window width
+  useEffect(() => {
+    // Check if window exists (client-side only)
+    if (typeof window !== "undefined") {
+      // Set initial width
+      setWindowWidth(window.innerWidth);
+
+      // Optional: Add resize listener for responsive behavior
+      const handleResize = () => {
+        setWindowWidth(window.innerWidth);
+      };
+
+      window.addEventListener("resize", handleResize);
+
+      // Cleanup
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }
+  }, []);
+
   // assume userDoc.unreadCount is kept up-to-date by your Cloud Function
   const unreadCount = userDoc?.unreadMessagesCount || 0;
   const hasUnreadMessages = userDoc?.unreadMessagesCount > 0;
@@ -44,12 +68,8 @@ const Navigation = () => {
     toast.success("Signed out successfully");
   };
 
-  // get window width
-  const windowWidth = window.innerWidth;
-
   // Navigation links configuration
   const navigationLinks = [
-    // { href: "/", label: "Home", icon: <Home className="h-4 w-4 mr-2" /> },
     {
       href: "/marketplace",
       label: "Marketplace",
