@@ -31,13 +31,17 @@ const PremiumMembershipWideCard = () => {
             crownHeight="7"
           />
           <div className="ml-4">
-            <h3 className="font-bold text-lg">Premium Membership</h3>
-            <p className="text-sm text-muted-foreground">Billed monthly</p>
+            <h3 className="font-bold text-base md:text-lg">
+              Premium Membership
+            </h3>
+            <p className="text-sm md:text-base text-muted-foreground">
+              Billed monthly
+            </p>
           </div>
         </div>
 
         <div className="mb-6">
-          <p className="text-4xl font-bold mb-2">
+          <p className="text-2xl md:text-4xl font-bold mb-2">
             {currency === "USD"
               ? "$6.99"
               : currency === "GBP"
@@ -47,12 +51,14 @@ const PremiumMembershipWideCard = () => {
               /month
             </span>
           </p>
-          <p className="text-muted-foreground">Secure payment through Stripe</p>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Secure payment through Stripe
+          </p>
         </div>
 
         <GoPremiumButton />
 
-        <p className="text-xs text-center text-muted-foreground mt-2">
+        <p className="text-xs md:text-sm text-center text-muted-foreground mt-2">
           Cancel anytime. No long-term commitment required.
         </p>
       </div>

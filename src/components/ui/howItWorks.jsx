@@ -26,11 +26,13 @@ const steps = [
 
 const HowItWorks = () => {
   return (
-    <section className="py-16">
+    <section className="py-8 md:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">How It Works</h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight">
+            How It Works
+          </h2>
+          <p className="mt-4 text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Our platform makes buying, selling, and swapping fragrances simple
             and secure.
           </p>
@@ -45,8 +47,12 @@ const HowItWorks = () => {
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <step.icon className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="mb-2 text-xl font-medium">{step.title}</h3>
-              <p className="text-muted-foreground">{step.description}</p>
+              <h3 className="mb-2 text-lg md:text-xl font-medium">
+                {step.title}
+              </h3>
+              <p className="text-sm md:text-base text-muted-foreground">
+                {step.description}
+              </p>
             </div>
           ))}
         </div>

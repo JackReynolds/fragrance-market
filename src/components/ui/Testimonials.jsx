@@ -28,13 +28,13 @@ const testimonials = [
 
 const Testimonials = () => {
   return (
-    <section className="py-16 bg-secondary/30">
+    <section className="py-8 md:py-16 bg-secondary/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight">
             What Our Community Says
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-4 text-sm md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Join thousands of fragrance enthusiasts who have found their perfect
             scents.
           </p>
@@ -63,7 +63,9 @@ const Testimonials = () => {
                   <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
                 </svg>
               </div>
-              <p className="mb-4 flex-grow">{testimonial.quote}</p>
+              <p className="text-sm md:text-base mb-4 flex-grow">
+                {testimonial.quote}
+              </p>
               <div className="flex items-center">
                 <div className="relative h-10 w-10 rounded-full overflow-hidden mr-3 bg-primary/10">
                   <Image
@@ -74,8 +76,10 @@ const Testimonials = () => {
                   />
                 </div>
                 <div>
-                  <p className="font-medium">{testimonial.author}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm md:text-base font-medium">
+                    {testimonial.author}
+                  </p>
+                  <p className="text-sm md:text-base text-muted-foreground">
                     {testimonial.role}
                   </p>
                 </div>

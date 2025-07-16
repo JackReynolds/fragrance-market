@@ -37,14 +37,14 @@ const LatestListings = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-secondary/30">
+    <section className="py-8 md:py-16 bg-secondary/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between mb-10 md:flex-row">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">
+            <h2 className="text-xl md:text-3xl font-bold tracking-tight text-center">
               Latest Fragrances
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p className="text-sm md:text-base mt-2 text-muted-foreground">
               Explore our newest fragrance listings
             </p>
           </div>

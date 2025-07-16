@@ -62,7 +62,7 @@ const DebouncedSearchBox = ({
           value={inputValue}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full py-3 pl-10 pr-10 bg-white border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="text-sm md:text-base w-full py-3 pl-10 pr-10 bg-white border rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
           <Search className="h-5 w-5 text-muted-foreground" />

@@ -60,7 +60,7 @@ const MarketplaceContent = () => {
           className="py-6 md:py-12"
         >
           <div className="mx-auto px-3 sm:px-4">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl text-gray-100 font-bold text-center mb-4 sm:mb-6">
+            <h1 className=" text-xl sm:text-3xl md:text-4xl text-gray-100 font-bold text-center mb-4 sm:mb-6">
               Discover Fragrances
             </h1>
             <div className="max-w-2xl mx-auto">

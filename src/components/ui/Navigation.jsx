@@ -44,6 +44,9 @@ const Navigation = () => {
     toast.success("Signed out successfully");
   };
 
+  // get window width
+  const windowWidth = window.innerWidth;
+
   // Navigation links configuration
   const navigationLinks = [
     // { href: "/", label: "Home", icon: <Home className="h-4 w-4 mr-2" /> },
@@ -75,11 +78,13 @@ const Navigation = () => {
           <Image
             src="/the-fragrance-market-logo.png"
             alt="The Fragrance Market"
-            width={60}
-            height={60}
+            width={windowWidth < 768 ? 40 : 60}
+            height={windowWidth < 768 ? 40 : 60}
           />
 
-          <p className="text-lg font-semibold">The Fragrance Market</p>
+          <p className="text-sm md:text-lg font-semibold">
+            The Fragrance Market
+          </p>
         </div>
 
         {/* Center section - Main Navigation (desktop) */}

@@ -15,7 +15,7 @@ const PremiumBenefits = () => {
       <div className="px-4 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-6">
+            <h2 className="text-xl md:text-3xl font-bold mb-6">
               Premium Benefits
             </h2>
             <div className="space-y-6">
@@ -24,8 +24,10 @@ const PremiumBenefits = () => {
                   <Repeat className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">Unlimited Swaps</h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-bold text-base md:text-lg mb-1">
+                    Unlimited Swaps
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground">
                     No monthly limits. Swap as many fragrances as you want,
                     whenever you want.
                   </p>
@@ -37,10 +39,10 @@ const PremiumBenefits = () => {
                   <ShoppingBag className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">
+                  <h3 className="font-bold text-base md:text-lg mb-1">
                     Sell Your Collection
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm md:text-base text-muted-foreground">
                     List fragrances for sale with secure payments through our
                     platform.
                   </p>
@@ -57,8 +59,10 @@ const PremiumBenefits = () => {
                   />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">Premium Badge</h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-bold text-base md:text-lg mb-1">
+                    Premium Badge
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground">
                     Stand out with a premium badge on your profile and listings.
                   </p>
                 </div>
@@ -69,10 +73,10 @@ const PremiumBenefits = () => {
                   <ArrowUp className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">
+                  <h3 className="font-bold text-base md:text-lg mb-1">
                     Priority Search Ranking
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-sm md:text-base text-muted-foreground">
                     Your listings will appear higher in search results.
                   </p>
                 </div>
@@ -83,8 +87,10 @@ const PremiumBenefits = () => {
                   <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">Discord Community</h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-bold text-base md:text-lg mb-1">
+                    Discord Community
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground">
                     Join our exclusive community of fragrance enthusiasts to
                     discuss trends and find rare items.
                   </p>
@@ -96,8 +102,10 @@ const PremiumBenefits = () => {
                   <Medal className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-1">Priority Support</h3>
-                  <p className="text-muted-foreground">
+                  <h3 className="font-bold text-base md:text-lg mb-1">
+                    Priority Support
+                  </h3>
+                  <p className="text-sm md:text-base text-muted-foreground">
                     Get fast responses to your questions and priority assistance
                     with any issues.
                   </p>
