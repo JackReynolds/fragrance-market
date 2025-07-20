@@ -4,12 +4,6 @@ import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 
-// payouts_enabled
-// requirements.currently_due
-// requirements.disabled_reason
-// requirements.eventually_due
-// requirements.past_due
-
 const sendGridApiKey = process.env.SENDGRID_API_KEY;
 
 // Email to item lender - stating that requirements are due

@@ -14,7 +14,6 @@ import SwapRequestsList from "@/components/inbox/swapRequestsList";
 import ChatWindow from "@/components/inbox/chatWindow";
 import { Loader2 } from "lucide-react";
 import { useUserDoc } from "@/hooks/useUserDoc";
-import Navigation from "@/components/ui/navigation";
 
 export default function InboxPage() {
   const { authUser } = useAuth();
@@ -22,8 +21,23 @@ export default function InboxPage() {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [showChat, setShowChat] = useState(false); // For mobile navigation
+  const [showChat, setShowChat] = useState(false);
   const { userDoc } = useUserDoc();
+
+  // Hide footer on this page
+  useEffect(() => {
+    const footer = document.querySelector("footer");
+    if (footer) {
+      footer.style.display = "none";
+    }
+
+    return () => {
+      const footer = document.querySelector("footer");
+      if (footer) {
+        footer.style.display = "block";
+      }
+    };
+  }, []);
 
   // Detect mobile screen
   useEffect(() => {
@@ -58,13 +72,18 @@ export default function InboxPage() {
 
       setSwapRequests(requests);
 
-      if (
-        selectedRequest &&
-        !requests.find((r) => r.id === selectedRequest.id)
-      ) {
-        setSelectedRequest(requests.length > 0 ? requests[0] : null);
-        if (isMobile) {
-          setShowChat(false);
+      if (selectedRequest) {
+        const stillExists = requests.find((r) => r.id === selectedRequest.id);
+        if (!stillExists) {
+          setSelectedRequest(null);
+          if (isMobile) {
+            setShowChat(false);
+          }
+          if (requests.length > 0) {
+            setTimeout(() => {
+              setSelectedRequest(requests[0]);
+            }, 100);
+          }
         }
       }
     });
@@ -87,7 +106,7 @@ export default function InboxPage() {
 
   if (!authUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <p>Please sign in to view your messages</p>
       </div>
     );
@@ -95,24 +114,24 @@ export default function InboxPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Main content - takes remaining height */}
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
+      {/* Main content - takes full remaining height */}
       <div className="flex-1 overflow-hidden">
         {/* Mobile: Show either list or chat */}
         {isMobile ? (
           <>
             {!showChat ? (
-              // Mobile: Show list
+              // Mobile: Show list (full height)
               <div className="h-full flex flex-col">
-                <div className="flex-shrink-0border-b">
-                  {/* <h1 className="text-2xl font-bold">Messages</h1> */}
+                <div className="flex-shrink-0 p-4 border-b bg-white">
+                  <h1 className="text-xl font-bold">Messages</h1>
                 </div>
                 <div className="flex-1 overflow-hidden">
                   <SwapRequestsList
@@ -124,7 +143,7 @@ export default function InboxPage() {
                 </div>
               </div>
             ) : (
-              // Mobile: Show chat (full screen)
+              // Mobile: Show chat (full height)
               <div className="h-full">
                 {selectedRequest && (
                   <ChatWindow
@@ -139,37 +158,41 @@ export default function InboxPage() {
             )}
           </>
         ) : (
-          // Desktop: Show both
-          <div className="h-full px-4 py-6">
-            <h1 className="text-2xl font-bold mb-6">Messages</h1>
-            <div className="flex gap-4 h-[calc(100%-4rem)]">
-              {/* Swap Requests List */}
-              <div className="w-1/3 max-w-[350px] border rounded-lg h-full overflow-hidden">
-                <SwapRequestsList
-                  requests={swapRequests}
-                  selectedId={selectedRequest?.id}
-                  onSelectRequest={handleSelectRequest}
-                  currentUserId={authUser.uid}
-                />
-              </div>
-
-              {/* Chat Window */}
-              <div className="flex-1 border rounded-lg h-full overflow-hidden">
-                {selectedRequest ? (
-                  <ChatWindow
-                    swapRequest={selectedRequest}
-                    authUser={authUser}
-                    onBackClick={null}
-                    userDoc={userDoc}
-                    isMobile={false}
+          // Desktop: Show both (full height)
+          <div className="h-full flex flex-col">
+            <div className="flex-shrink-0 px-4 pt-4 pb-2 bg-white">
+              <h1 className="text-2xl font-bold">Messages</h1>
+            </div>
+            <div className="flex-1 overflow-hidden px-4 pb-4">
+              <div className="flex gap-4 h-full">
+                {/* Swap Requests List */}
+                <div className="w-1/3 max-w-[350px] border rounded-lg h-full overflow-hidden">
+                  <SwapRequestsList
+                    requests={swapRequests}
+                    selectedId={selectedRequest?.id}
+                    onSelectRequest={handleSelectRequest}
+                    currentUserId={authUser.uid}
                   />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">
-                      Select a conversation to start chatting
-                    </p>
-                  </div>
-                )}
+                </div>
+
+                {/* Chat Window */}
+                <div className="flex-1 border rounded-lg h-full overflow-hidden">
+                  {selectedRequest ? (
+                    <ChatWindow
+                      swapRequest={selectedRequest}
+                      authUser={authUser}
+                      onBackClick={null}
+                      userDoc={userDoc}
+                      isMobile={false}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-muted-foreground">
+                        Select a conversation to start chatting
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

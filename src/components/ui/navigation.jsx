@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "firebase/auth";
-import { auth, db } from "../../firebase.config";
+import { auth } from "../../firebase.config";
 import { toast } from "sonner";
 import {
   Sheet,

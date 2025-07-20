@@ -72,14 +72,11 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   const deleteSwapRequestAndMessages = async () => {
     console.log(swapRequest.id);
     try {
-      const response = await fetch(
-        `https://deleteswaprequest-deleteswaprequest-qwe4clieqa-nw.a.run.app`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ swapRequestId: swapRequest.id }),
-        }
-      );
+      const response = await fetch(`/api/firebase/delete-swap-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ swapRequestId: swapRequest.id }),
+      });
       if (!response.ok) {
         throw new Error("Failed to delete swap request");
       }

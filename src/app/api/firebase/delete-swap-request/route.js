@@ -38,14 +38,15 @@ export async function POST(request) {
   }
 
   try {
+    // Delete swap-request document
+    await db.collection("swap_requests").doc(swapRequestId).delete();
+
     // Delete messages collection
     await deleteCollection(db, `swap_requests/${swapRequestId}/messages`, 50);
 
     // Delete presence collection if present
     await deleteCollection(db, `swap_requests/${swapRequestId}/presence`);
 
-    // Delete rental-request document
-    await db.collection("swap_requests").doc(swapRequestId).delete();
     return NextResponse.json({ message: "Swap request deleted." });
   } catch (error) {
     console.log(error);

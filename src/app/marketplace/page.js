@@ -129,19 +129,19 @@ const MarketplaceContent = () => {
                     <TabsList className="w-full">
                       <TabsTrigger
                         value="all"
-                        className="flex-1 text-xs sm:text-sm"
+                        className="flex-1 text-xs sm:text-sm hover:cursor-pointer"
                       >
                         All
                       </TabsTrigger>
                       <TabsTrigger
                         value="sell"
-                        className="flex-1 text-xs sm:text-sm"
+                        className="flex-1 text-xs sm:text-sm hover:cursor-pointer"
                       >
                         For Sale
                       </TabsTrigger>
                       <TabsTrigger
                         value="swap"
-                        className="flex-1 text-xs sm:text-sm"
+                        className="flex-1 text-xs sm:text-sm hover:cursor-pointer"
                       >
                         For Swap
                       </TabsTrigger>

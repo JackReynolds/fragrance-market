@@ -139,6 +139,14 @@ export async function POST(request) {
           readBy: [userUid],
         });
 
+        // Increment swap count for both users
+        transaction.update(db.doc(`users/${userUid}`), {
+          swapCount: FieldValue.increment(1),
+        });
+        transaction.update(db.doc(`users/${otherUserUid}`), {
+          swapCount: FieldValue.increment(1),
+        });
+
         swapCompleted = true;
         console.log(
           `Swap ${swapRequestId} completed - both users have shipped`

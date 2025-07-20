@@ -15,7 +15,6 @@ import {
   arrayUnion,
   setDoc,
   limit,
-  startAfter,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
@@ -37,12 +36,10 @@ export default function ChatWindow({
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [swapRequestExists, setSwapRequestExists] = useState(true);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const router = useRouter();
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const [lastVisibleMessage, setLastVisibleMessage] = useState(null);
-  const messagesPerPage = 25;
 
   // Get the other person in the conversation
   const otherParty =
@@ -68,21 +65,32 @@ export default function ChatWindow({
       ? `Your ${swapRequest.offeredListing.title} for ${swapRequest.requestedListing.title}`
       : `${swapRequest.offeredListing.title} for your ${swapRequest.requestedListing.title}`;
 
+  // Listen for swap request existence
   useEffect(() => {
-    if (swapRequest) {
+    if (!swapRequest?.id) return;
+
+    const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
+    const unsubscribe = onSnapshot(swapRequestRef, (docSnapshot) => {
+      setSwapRequestExists(docSnapshot.exists());
+    });
+
+    return () => unsubscribe();
+  }, [swapRequest?.id]);
+
+  // Messages listener
+  useEffect(() => {
+    if (swapRequest && swapRequestExists) {
       const messagesRef = collection(
         db,
         "swap_requests",
         swapRequest.id,
         "messages"
       );
-      const q = query(
-        messagesRef,
-        orderBy("createdAt", "desc"),
-        limit(messagesPerPage)
-      );
+      const q = query(messagesRef, orderBy("createdAt", "desc"), limit(25));
 
       const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+        if (!swapRequestExists) return;
+
         const messagesData = [];
         const newUnreadMessages = [];
 
@@ -121,10 +129,13 @@ export default function ChatWindow({
       });
 
       return () => unsubscribe();
+    } else {
+      setMessages([]);
+      setLoading(false);
     }
-  }, [swapRequest, authUser?.uid]);
+  }, [swapRequest, authUser?.uid, swapRequestExists]);
 
-  // Improved scroll to bottom function
+  // Scroll to bottom function
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
@@ -142,7 +153,7 @@ export default function ChatWindow({
   // Send message
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !swapRequestExists) return;
 
     const message = {
       text: newMessage.trim(),
@@ -165,8 +176,49 @@ export default function ChatWindow({
       }, 100);
     } catch (error) {
       console.error("Error sending message:", error);
+      if (error.code === "not-found") {
+        setSwapRequestExists(false);
+      }
     }
   };
+
+  // Active presence tracker with existence check
+  useEffect(() => {
+    if (!swapRequest?.id || !authUser?.uid || !swapRequestExists) return;
+
+    const presenceRef = doc(
+      db,
+      "swap_requests",
+      swapRequest.id,
+      "presence",
+      authUser.uid
+    );
+
+    const setPresence = async () => {
+      try {
+        await setDoc(presenceRef, {
+          active: true,
+          lastActive: serverTimestamp(),
+        });
+      } catch (error) {
+        console.log("Error setting presence:", error);
+        setSwapRequestExists(false);
+      }
+    };
+
+    setPresence();
+
+    return () => {
+      if (swapRequestExists) {
+        setDoc(presenceRef, {
+          active: false,
+          lastActive: serverTimestamp(),
+        }).catch((error) => {
+          console.log("Error cleaning up presence:", error);
+        });
+      }
+    };
+  }, [swapRequest?.id, authUser?.uid, swapRequestExists]);
 
   // Function to render message based upon message type
   const renderMessage = (message) => {
@@ -210,7 +262,7 @@ export default function ChatWindow({
 
   // Mark messages as read
   useEffect(() => {
-    if (!swapRequest?.id || !authUser?.uid) return;
+    if (!swapRequest?.id || !authUser?.uid || !swapRequestExists) return;
 
     const markMessagesAsRead = async () => {
       try {
@@ -254,31 +306,7 @@ export default function ChatWindow({
     };
 
     markMessagesAsRead();
-  }, [swapRequest?.id, authUser?.uid]);
-
-  // Active presence tracker
-  useEffect(() => {
-    if (!swapRequest?.id || !authUser?.uid) return;
-
-    const presenceRef = doc(
-      db,
-      "swap_requests",
-      swapRequest.id,
-      "presence",
-      authUser.uid
-    );
-    setDoc(presenceRef, {
-      active: true,
-      lastActive: serverTimestamp(),
-    });
-
-    return () => {
-      setDoc(presenceRef, {
-        active: false,
-        lastActive: serverTimestamp(),
-      });
-    };
-  }, [swapRequest?.id, authUser?.uid]);
+  }, [swapRequest?.id, authUser?.uid, swapRequestExists]);
 
   const sortedMessages = [...messages].sort((a, b) => {
     const dateA =
@@ -292,14 +320,42 @@ export default function ChatWindow({
     return dateA - dateB;
   });
 
+  // Handle deleted swap request
+  if (!swapRequestExists) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="flex-shrink-0 border-b flex items-center gap-3 p-4">
+          {onBackClick && (
+            <button
+              onClick={onBackClick}
+              className="p-1 rounded-full hover:bg-muted"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+          )}
+          <div className="flex-1">
+            <p className="font-medium">Conversation Ended</p>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-2">
+              This conversation is no longer available
+            </p>
+            <p className="text-sm text-muted-foreground">
+              The swap request has been deleted
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex flex-col h-full ${isMobile ? "h-screen" : ""}`}>
-      {/* Chat Header */}
-      <div
-        className={`flex-shrink-0 border-b flex items-center gap-3 ${
-          isMobile ? "p-2 md:p-4 bg-white sticky top-0 z-10" : "p-3"
-        }`}
-      >
+    <div className="h-full flex flex-col">
+      {/* Chat Header - Fixed at top */}
+      <div className="flex-shrink-0 border-b flex items-center gap-3 p-4 bg-white">
         {onBackClick && (
           <button
             onClick={onBackClick}
@@ -309,7 +365,7 @@ export default function ChatWindow({
           </button>
         )}
 
-        <div className="relative w-6 h-6 md:w-10 md:h-10 rounded-full overflow-hidden flex-shrink-0">
+        <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden flex-shrink-0">
           <Image
             src={otherParty.profilePic}
             alt={otherParty.username}
@@ -325,25 +381,14 @@ export default function ChatWindow({
           <p className="text-sm md:text-base font-medium truncate">
             {otherParty.username}
           </p>
-          <p
-            className={`text-muted-foreground truncate ${
-              isMobile ? "text-xs" : "text-xs"
-            }`}
-          >
-            {chatTitle}
-          </p>
+          <p className="text-xs text-muted-foreground truncate">{chatTitle}</p>
         </div>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Area - Flexible height, scrollable */}
       <div
         ref={messagesContainerRef}
-        className={`flex-1 overflow-y-auto flex flex-col gap-3 ${
-          isMobile ? "p-3" : "p-4"
-        }`}
-        style={{
-          height: isMobile ? "calc(100vh - 120px)" : "auto", // Account for header + input
-        }}
+        className="flex-1 overflow-y-auto flex flex-col gap-3 p-4 min-h-0"
       >
         {loading ? (
           <div className="flex-1 flex items-center justify-center">
@@ -380,25 +425,28 @@ export default function ChatWindow({
         )}
       </div>
 
-      {/* Message Input */}
-      <div
-        className={`flex-shrink-0 border-t ${
-          isMobile ? "p-3 bg-white sticky bottom-0" : "p-3"
-        }`}
-      >
+      {/* Message Input - Fixed at bottom */}
+      <div className="flex-shrink-0 border-t p-4 bg-white">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
+            placeholder={
+              swapRequestExists ? "Type your message..." : "Conversation ended"
+            }
+            disabled={!swapRequestExists}
             className={`flex-1 min-w-0 bg-muted/30 border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-primary ${
-              isMobile ? "text-base" : "" // Prevent zoom on iOS
-            }`}
+              isMobile ? "text-base" : ""
+            } ${!swapRequestExists ? "opacity-50 cursor-not-allowed" : ""}`}
           />
           <button
             type="submit"
-            disabled={!newMessage.trim()}
+            disabled={
+              !newMessage.trim() ||
+              !swapRequestExists ||
+              swapRequest.status === "swap_completed"
+            }
             className="bg-primary flex justify-center items-center text-white p-2 rounded-full disabled:opacity-50 flex-shrink-0"
           >
             <ArrowUp className="h-5 w-6" />
