@@ -11,7 +11,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -20,6 +20,7 @@ const SellerAccountStatus = ({ userDoc }) => {
   const [loadingStripeStatus, setLoadingStripeStatus] = useState(true);
   const [stripeAccountStatus, setStripeAccountStatus] = useState(null);
   const [creatingStripeAccount, setCreatingStripeAccount] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false); // New loading state
 
   const STATUS_CODES = {
     TRANSFERS_ENABLED: 1,
@@ -54,17 +55,15 @@ const SellerAccountStatus = ({ userDoc }) => {
       setStripeAccountStatus({
         status: userDoc.stripeAccountStatus.statusCode,
         message: generateStatusMessage(userDoc.stripeAccountStatus.statusCode),
-        actionURL: null,
+        // ✅ Remove actionURL from here - we'll generate on-demand
       });
       setLoadingStripeStatus(false);
-    } else if (userDoc?.stripeAccountId) {
+    } else if (!userDoc?.stripeAccountId) {
       // No Stripe account at all
       setStripeAccountStatus({
         status: STATUS_CODES.NO_STRIPE_ACCOUNT,
         message: "No Stripe account found",
-        actionURL: null,
       });
-
       setLoadingStripeStatus(false);
     } else {
       // If we have a stripeAccountId but no cached status, fetch it
@@ -91,16 +90,14 @@ const SellerAccountStatus = ({ userDoc }) => {
       setStripeAccountStatus({
         status: data.status,
         message: data.message,
-        actionURL: data.actionURL,
+        // ✅ Remove actionURL from here too
       });
     } catch (error) {
       console.error("Error fetching Stripe account status:", error);
       toast.error("Failed to fetch Stripe account status.");
-      // Set a fallback state so loading stops
       setStripeAccountStatus({
         status: STATUS_CODES.NO_STRIPE_ACCOUNT,
         message: "Unable to load account status",
-        actionURL: null,
       });
     } finally {
       setLoadingStripeStatus(false);
@@ -134,6 +131,51 @@ const SellerAccountStatus = ({ userDoc }) => {
       toast.error("Failed to create Stripe account");
     } finally {
       setCreatingStripeAccount(false);
+    }
+  };
+
+  // ✅ New function to generate links on-demand
+  const generateStripeLink = async () => {
+    if (!userDoc?.stripeAccountId) {
+      toast.error("No Stripe account found");
+      return;
+    }
+
+    setGeneratingLink(true);
+    try {
+      // Determine link type based on status
+      let linkType = "login"; // Default to login
+
+      if (
+        stripeAccountStatus?.status === STATUS_CODES.REQUIREMENTS_DUE ||
+        stripeAccountStatus?.status === STATUS_CODES.ONBOARDING_NOT_COMPLETE ||
+        stripeAccountStatus?.status === STATUS_CODES.TRANSFERS_DISABLED
+      ) {
+        linkType = "update"; // Will create onboarding link if requirements due
+      }
+
+      const response = await fetch("/api/stripe/create-stripe-login-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stripeAccountId: userDoc.stripeAccountId,
+          linkType: linkType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate Stripe link");
+      }
+
+      const data = await response.json();
+      if (data.actionURL) {
+        window.open(data.actionURL, "_blank");
+      }
+    } catch (error) {
+      console.error("Error generating Stripe link:", error);
+      toast.error("Failed to generate Stripe link");
+    } finally {
+      setGeneratingLink(false);
     }
   };
 
@@ -171,11 +213,12 @@ const SellerAccountStatus = ({ userDoc }) => {
     }
   };
 
+  // ✅ Updated to use appropriate handler
   const handleStripeAction = () => {
     if (stripeAccountStatus?.status === STATUS_CODES.NO_STRIPE_ACCOUNT) {
       handleStripeOnboarding();
-    } else if (stripeAccountStatus?.actionURL) {
-      window.open(stripeAccountStatus.actionURL, "_blank");
+    } else {
+      generateStripeLink(); // Use our new on-demand link generator
     }
   };
 
@@ -229,12 +272,17 @@ const SellerAccountStatus = ({ userDoc }) => {
             <Button
               className="hover:cursor-pointer hover:bg-primary/80 shadow-md"
               onClick={handleStripeAction}
-              disabled={creatingStripeAccount}
+              disabled={creatingStripeAccount || generatingLink} // ✅ Add generatingLink to disabled state
             >
               {creatingStripeAccount ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
+                  Creating Account...
+                </>
+              ) : generatingLink ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating Link...
                 </>
               ) : (
                 getStripeActionButtonText()
