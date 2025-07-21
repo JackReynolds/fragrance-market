@@ -58,16 +58,17 @@ const SellerAccountStatus = ({ userDoc }) => {
       });
       setLoadingStripeStatus(false);
     } else if (userDoc?.stripeAccountId) {
-      // If we have a stripeAccountId but no cached status, fetch it
-      fetchStripeStatus();
-    } else {
       // No Stripe account at all
       setStripeAccountStatus({
         status: STATUS_CODES.NO_STRIPE_ACCOUNT,
         message: "No Stripe account found",
         actionURL: null,
       });
+
       setLoadingStripeStatus(false);
+    } else {
+      // If we have a stripeAccountId but no cached status, fetch it
+      fetchStripeStatus();
     }
   }, [userDoc, authUser]);
 
