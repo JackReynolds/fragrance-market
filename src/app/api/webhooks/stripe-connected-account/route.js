@@ -94,7 +94,7 @@ export async function POST(request) {
     event = stripe.webhooks.constructEvent(
       body, // Use the text body
       sig,
-      process.env.STRIPE_CONNECT_TEST_WEBHOOK_ENDPOINT_SECRET
+      process.env.STRIPE_CONNECT_TEST_WEBHOOK_SECRET
     );
     console.log("Webhook signature verified, event type:", event.type);
   } catch (err) {
@@ -189,7 +189,7 @@ export async function POST(request) {
       );
     }
   } else {
-    console.log("Unhandled event type:", event.type);
+    console.log("ℹUnhandled event type:", event.type);
   }
 
   // Respond with 200 status to acknowledge receipt of the webhook
