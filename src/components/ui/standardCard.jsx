@@ -46,7 +46,7 @@ const StandardCard = () => {
           </li>
           <li className="flex items-center">
             <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-            <span>Upload up to 5 fragrances</span>
+            <span>Upload up to 3 fragrances</span>
           </li>
           <li className="flex items-center">
             <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />

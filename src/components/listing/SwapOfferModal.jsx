@@ -1,7 +1,6 @@
 /* eslint-disable react/prop-types */
 
 "use client";
-// src/components/listing/SwapOfferModal.jsx
 import React, { useState, useEffect } from "react";
 import { collection, query, where, getDocs, and } from "firebase/firestore";
 import { db } from "@/firebase.config";
@@ -31,12 +30,9 @@ const SwapOfferModal = ({
   const [isLoading, setIsLoading] = useState(true);
   const [selectedListing, setSelectedListing] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingRequests, setExistingRequests] = useState({});
+  const [existingRequest, setExistingRequest] = useState(null); // ✅ Changed from object to single request
 
   const { authUser } = useAuth();
-
-  // console.log("targetListing", targetListing);
-  // console.log("targetOwner", targetOwner);
 
   // Fetch user's swap listings and check for existing requests
   useEffect(() => {
@@ -77,18 +73,17 @@ const SwapOfferModal = ({
         );
 
         const requestsSnapshot = await getDocs(requestsQuery);
-        const existingRequestsMap = {};
 
-        requestsSnapshot.forEach((doc) => {
-          const request = doc.data();
-          // Use the offered listing ID as the key
-          existingRequestsMap[request.offeredListing.id] = {
-            id: doc.id,
-            ...request,
-          };
-        });
-
-        setExistingRequests(existingRequestsMap);
+        // ✅ If ANY request exists, store it (there should only be one anyway)
+        if (!requestsSnapshot.empty) {
+          const requestDoc = requestsSnapshot.docs[0];
+          setExistingRequest({
+            id: requestDoc.id,
+            ...requestDoc.data(),
+          });
+        } else {
+          setExistingRequest(null);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load your listings");
@@ -99,99 +94,9 @@ const SwapOfferModal = ({
 
     if (isOpen) {
       fetchUserListings();
+      setSelectedListing(null); // Reset selection when modal opens
     }
-  }, [isOpen, currentUser?.uid, targetListing.id, targetOwner.id]);
-
-  // Core info for the swap request and swap_request initial message
-  // const swapRequestCoreInfo = {
-  //   // The user making the offer
-  //   offeredBy: {
-  //     uid: currentUser.uid,
-  //     username: userDoc.username || "Unknown",
-  //     email: userDoc.email,
-  //     isIdVerified: userDoc.isIdVerified,
-  //     isPremium: userDoc.isPremium,
-  //     profilePictureURL: userDoc.profilePictureURL || "",
-  //     rating: userDoc.rating || 0,
-  //   },
-  //   // The listing being offered for swap
-  //   offeredListing: {
-  //     id: selectedListing?.id,
-  //     title: selectedListing?.title,
-  //     brand: selectedListing?.brand,
-  //     imageURL: selectedListing?.imageURLs?.[0] || "",
-  //     fragrance: selectedListing?.fragrance,
-  //     amountLeft: selectedListing?.amountLeft,
-  //   },
-  //   // The owner of the target listing
-  //   requestedFrom: {
-  //     uid: targetOwner.uid,
-  //     username: targetOwner.username,
-  //     email: targetOwner.email,
-  //     isIdVerified: targetOwner.isIdVerified,
-  //     isPremium: targetOwner.isPremium,
-  //     profilePictureURL: targetOwner.profilePictureURL || "",
-  //     rating: targetOwner.rating || 0,
-  //   },
-  //   // The listing being requested
-  //   requestedListing: {
-  //     id: targetListing?.id,
-  //     title: targetListing?.title,
-  //     brand: targetListing?.brand,
-  //     imageURL: targetListing?.imageURLs?.[0] || "",
-  //     fragrance: targetListing?.fragrance,
-  //     amountLeft: targetListing?.amountLeft,
-  //   },
-  // };
-
-  // Check if a listing already has a pending request
-  const hasExistingRequest = (listingId) => {
-    return !!existingRequests[listingId];
-  };
-
-  // // Helpder function to create a new swap_request
-  // const createSwapRequest = async () => {
-  //   try {
-  //     // Create a new swap request
-  //     const swapRequest = {
-  //       ...swapRequestCoreInfo,
-  //       status: "swap_request",
-  //       participants: [currentUser.uid, targetOwner.uid],
-  //       createdAt: serverTimestamp(),
-  //       updatedAt: serverTimestamp(),
-  //     };
-
-  //     const docRef = await addDoc(collection(db, "swap_requests"), swapRequest);
-  //     return docRef.id;
-  //   } catch (error) {
-  //     console.error("Error creating swap request:", error);
-  //     toast.error("Failed to send swap offer");
-  //   }
-  // };
-
-  // Helper function to create initial swap chat message
-  // const createInitialChatMessage = async (swapRequestDocumentId) => {
-  //   try {
-  //     await fetch("/api/firebase/create-swap-request", {
-  //       method: "POST",
-  //       body: JSON.stringify({
-  //         swapRequest: swapRequestCoreInfo,
-  //         currentUser,
-  //         targetOwner,
-  //       }),
-  //     });
-
-  //     console.log("Initial chat message created successfully");
-  //   } catch (error) {
-  //     console.error("Error creating initial chat message:", error);
-  //     toast.error("Failed to create initial chat message");
-  //   }
-  // };
-
-  // Helper function to send email to target owner
-  // const createSwapRequestEmail = async () => {
-  //   console.log("Sending email to target owner");
-  // };
+  }, [isOpen, currentUser?.uid, targetListing.id, targetOwner.uid]);
 
   // Handle "Send offer" button click
   const handleSubmitOffer = async () => {
@@ -231,8 +136,84 @@ const SwapOfferModal = ({
     }
   };
 
-  // Check if any pending requests exist at all
-  const hasPendingRequests = Object.keys(existingRequests).length > 0;
+  // ✅ If there's an existing request, show different UI
+  if (existingRequest) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Swap Request Already Sent</DialogTitle>
+            <DialogDescription>
+              You already have an active swap request for &quot;
+              {targetListing?.title}&quot;
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800 mb-2">
+                  Current offer:
+                </p>
+                <div className="flex items-center gap-3 bg-white p-3 rounded border">
+                  <div className="w-12 h-12 relative">
+                    <Image
+                      src={
+                        existingRequest.offeredListing.imageURL ||
+                        "/placeholder-image.jpg"
+                      }
+                      alt={existingRequest.offeredListing.title}
+                      fill
+                      className="object-cover rounded"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">
+                      {existingRequest.offeredListing.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {existingRequest.offeredListing.brand} •{" "}
+                      {existingRequest.offeredListing.fragrance}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {existingRequest.offeredListing.amountLeft}% full
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              You can only have one active swap request per listing. You can:
+            </p>
+            <ul className="text-sm space-y-1 ml-4">
+              <li>• Wait for the current request to be accepted or declined</li>
+              <li>• Cancel your current request to send a new one</li>
+              <li>• Check your inbox to see the status</li>
+            </ul>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                onClose();
+                window.location.href = "/inbox";
+              }}
+              className="hover:cursor-pointer"
+            >
+              Go to Inbox
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -244,21 +225,6 @@ const SwapOfferModal = ({
             {targetListing?.title}&quot;
           </DialogDescription>
         </DialogHeader>
-
-        {/* Show warning if there are pending requests */}
-        {hasPendingRequests && (
-          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-amber-800">
-                You already have a swap request for this listing
-              </p>
-              <p className="text-xs text-amber-700 mt-1">
-                Fragrances with existing swap requests are marked below
-              </p>
-            </div>
-          </div>
-        )}
 
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
@@ -282,69 +248,44 @@ const SwapOfferModal = ({
               Choose a fragrance to offer:
             </p>
             <div className="grid grid-cols-1 gap-3">
-              {userListings.map((listing) => {
-                const isPending = hasExistingRequest(listing.id);
-
-                return (
-                  <Card
-                    key={listing.id}
-                    className={`transition-all ${
-                      isPending
-                        ? "opacity-75 cursor-not-allowed border-amber-200 bg-amber-50"
-                        : "cursor-pointer hover:shadow-md"
-                    } ${
-                      selectedListing?.id === listing.id && !isPending
-                        ? "ring-2 ring-primary"
-                        : ""
-                    }`}
-                    onClick={() => {
-                      if (!isPending) {
-                        setSelectedListing(listing);
-                      } else {
-                        toast.info(
-                          "You already have an existing swap request with this fragrance"
-                        );
-                      }
-                    }}
-                  >
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <div className="w-16 h-16 relative">
-                        <Image
-                          src={
-                            listing.imageURLs?.[0] || "/placeholder-image.jpg"
-                          }
-                          alt={listing.title}
-                          fill
-                          className="object-cover rounded-md"
-                        />
+              {userListings.map((listing) => (
+                <Card
+                  key={listing.id}
+                  className={`transition-all cursor-pointer hover:shadow-md ${
+                    selectedListing?.id === listing.id
+                      ? "ring-2 ring-primary"
+                      : ""
+                  }`}
+                  onClick={() => setSelectedListing(listing)}
+                >
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="w-16 h-16 relative">
+                      <Image
+                        src={listing.imageURLs?.[0] || "/placeholder-image.jpg"}
+                        alt={listing.title}
+                        fill
+                        className="object-cover rounded-md"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm truncate">
+                        {listing.title}
+                      </h3>
+                      <div className="flex flex-col mt-1">
+                        <p className="text-xs font-semibold text-muted-foreground truncate">
+                          {listing.brand}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {listing.fragrance}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {listing.amountLeft}% full
+                        </p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-sm truncate">
-                            {listing.title}
-                          </h3>
-                          {isPending && (
-                            <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded text-[10px] ml-1 flex-shrink-0">
-                              Pending
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-col mt-1">
-                          <p className="text-xs font-semibold text-muted-foreground truncate">
-                            {listing.brand}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {listing.fragrance}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {listing.amountLeft}% full
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         )}
