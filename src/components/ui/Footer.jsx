@@ -116,7 +116,7 @@ const Footer = () => {
 
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider mb-4 text-gray-100">
-              Company
+              The Fragrance Market
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
@@ -137,10 +137,10 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  href="/blog"
+                  href="/premium"
                   className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
-                  Blog
+                  Premium
                 </Link>
               </li>
               <li>

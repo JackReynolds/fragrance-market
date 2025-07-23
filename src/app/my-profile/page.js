@@ -32,7 +32,6 @@ import {
   MessageSquare,
   Loader2,
   User,
-  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -236,7 +235,7 @@ export default function Profile() {
   const userStats = {
     itemsSold: 15,
     rating: 4.8,
-    status: "Premium",
+    status: userDoc?.isPremium ? "Premium" : "Standard",
   };
 
   // Display star rating
@@ -386,6 +385,26 @@ export default function Profile() {
                         <span className="text-sm font-medium">Items Sold</span>
                         <span className="text-sm font-medium">
                           {userStats.itemsSold}
+                        </span>
+                      </div>
+
+                      {/* Swap Count */}
+                      <div className="flex items-center justify-between">
+                        <span className={`text-sm font-medium`}>
+                          Monthly Swap Count
+                        </span>
+                        <span
+                          className={`text-sm font-medium ${
+                            userDoc?.isPremium
+                              ? "text-green-600"
+                              : userDoc?.monthlySwapCount === 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {userDoc?.isPremium
+                            ? "Unlimited"
+                            : `${userDoc?.monthlySwapCount || 0}/1 `}
                         </span>
                       </div>
 

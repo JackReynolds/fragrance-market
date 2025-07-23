@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
+import CrownBadge from "./ui/crownBadge";
 
 // Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
 const ListingCard = ({ listing, hit, showUserInfo = true }) => {
@@ -129,7 +130,12 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center cursor-help">
-                          <Crown className="w-2 h-2 sm:w-4 sm:h-4 text-yellow-900" />
+                          <CrownBadge
+                            outerWidth="6"
+                            outerHeight="6"
+                            crownWidth="4"
+                            crownHeight="4"
+                          />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>

@@ -37,6 +37,8 @@ import {
   ShieldCheck,
   Loader2,
   Crown,
+  Lock,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -51,6 +53,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import CrownBadge from "@/components/ui/crownBadge";
+import SwapCountExceededButton from "@/components/ui/swapCountExceededButton";
 
 const ListingDetailPage = () => {
   const [listing, setListing] = useState(null);
@@ -193,7 +197,14 @@ const ListingDetailPage = () => {
       },
       // Premium badge is gold gradient
       premium: {
-        icon: <Crown size={16} className="mr-1" />,
+        icon: (
+          <CrownBadge
+            outerWidth="8"
+            outerHeight="8"
+            crownWidth="5"
+            crownHeight="5"
+          />
+        ),
         text: "Premium Member",
         className:
           "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 font-semibold",
@@ -204,10 +215,13 @@ const ListingDetailPage = () => {
 
     return (
       <div
-        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs md:text-sm font-medium ${badge.className}`}
+        className={`inline-flex items-center rounded-full py-0.5 text-xs md:text-sm font-medium`}
       >
         {badge.icon}
-        {badge.text}
+
+        <span className="text-xs md:text-sm font-medium ml-3">
+          {badge.text}
+        </span>
       </div>
     );
   };
@@ -554,10 +568,10 @@ const ListingDetailPage = () => {
 
               {/* Call to action */}
               {!isOwner && (
-                <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <div className="mt-8 space-y-4">
                   {listing.type === "sell" ? (
                     <Button
-                      className="flex-1 py-2 hover:cursor-pointer hover:bg-primary/80"
+                      className="w-full py-2 hover:cursor-pointer hover:bg-primary/80"
                       size="lg"
                       onClick={handleBuyNow}
                       disabled={isLoadingBuyNow}
@@ -574,23 +588,36 @@ const ListingDetailPage = () => {
                       )}
                     </Button>
                   ) : (
-                    <Button
-                      className="flex-1 py-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
-                      size="lg"
-                      onClick={handleOfferSwap}
-                      disabled={isCheckingListings}
-                    >
-                      {isCheckingListings ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Checking...
-                        </>
+                    <>
+                      {/* Check if user has exceeded swap count */}
+                      {userDoc &&
+                      !userDoc?.isPremium &&
+                      userDoc?.monthlySwapCount >= 1 ? (
+                        <SwapCountExceededButton
+                          userDoc={userDoc}
+                          authUser={authUser}
+                          className="w-full"
+                        />
                       ) : (
-                        <>
-                          <Share2 className="mr-2 h-4 w-4" /> Offer Swap
-                        </>
+                        <Button
+                          className="w-full py-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
+                          size="lg"
+                          onClick={handleOfferSwap}
+                          disabled={isCheckingListings}
+                        >
+                          {isCheckingListings ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <Share2 className="mr-2 h-4 w-4" /> Offer Swap
+                            </>
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                    </>
                   )}
                 </div>
               )}

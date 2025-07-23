@@ -2,7 +2,14 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "../../firebase.config";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore"; // Add for count check
 import { toast } from "sonner";
 // import { Navigation } from "@/components/ui/navigation.jsx";
 // import { Footer } from "@/components/ui/footer.jsx";
@@ -53,6 +60,15 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import profanityList from "@/data/profanityList";
 import { useUserDoc } from "@/hooks/useUserDoc";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog.jsx";
+import PremiumCard from "@/components/premiumCard";
 
 const NewListing = () => {
   const { authUser, authLoading } = useAuth();
@@ -63,8 +79,45 @@ const NewListing = () => {
   const [brandOpen, setBrandOpen] = useState(false);
   const [customBrand, setCustomBrand] = useState("");
   const [showCustomBrand, setShowCustomBrand] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [currentListingCount, setCurrentListingCount] = useState(0);
 
   const { userDoc } = useUserDoc();
+
+  // Check listing limit on page load
+  useEffect(() => {
+    const checkListingLimit = async () => {
+      if (!authUser?.uid || !userDoc) return;
+
+      // If user is premium, no limits
+      if (userDoc.isPremium) return;
+
+      try {
+        // Get current active listing count
+        const listingsRef = collection(db, "listings");
+        const q = query(
+          listingsRef,
+          where("ownerUid", "==", authUser.uid),
+          where("status", "==", "active")
+        );
+
+        const querySnapshot = await getDocs(q);
+        const count = querySnapshot.size;
+        setCurrentListingCount(count);
+
+        // Show modal if at limit
+        if (count >= 3) {
+          setShowLimitModal(true);
+        }
+      } catch (error) {
+        console.error("Error checking listing count:", error);
+      }
+    };
+
+    if (!authLoading && authUser && userDoc) {
+      checkListingLimit();
+    }
+  }, [authUser, authLoading, userDoc]);
 
   const brands = [
     "100 Bon",
@@ -887,7 +940,118 @@ const NewListing = () => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* <Navigation /> */}
+      {/* Listing Limit Modal */}
+      <Dialog
+        open={showLimitModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowLimitModal(false);
+            router.push("/");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Listing Limit Reached</DialogTitle>
+            <DialogDescription>
+              Standard accounts can have up to 3 active listings at a time.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Current Status */}
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                <p className="font-medium text-amber-800">
+                  You currently have {currentListingCount}/3 active listings
+                </p>
+              </div>
+              <p className="text-sm text-amber-700">
+                To create a new listing, you&apos;ll need to either remove an
+                existing one or upgrade to Premium.
+              </p>
+            </div>
+
+            {/* Options */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">
+                    Option 1: Manage Existing Listings
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Remove or complete swaps for current listings to free up
+                    space.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="w-full hover:cursor-pointer"
+                    onClick={() => {
+                      setShowLimitModal(false);
+                      router.push("/my-profile");
+                    }}
+                  >
+                    Manage My Listings
+                  </Button>
+                </div>
+
+                <div className="p-4 border rounded-lg bg-primary/5">
+                  <h4 className="font-medium mb-2">
+                    Option 2: Upgrade to Premium
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Get unlimited listings plus exclusive benefits.
+                  </p>
+
+                  <Button
+                    className="w-full hover:cursor-pointer"
+                    onClick={() => router.push("/premium")}
+                  >
+                    See Premium Benefits
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Premium Benefits Preview */}
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Premium Account Benefits:</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary" />
+                  <span>Unlimited listings</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary" />
+                  <span>Unlimited swaps</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary" />
+                  <span>Sell fragrances</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary" />
+                  <span>Priority search ranking</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="default"
+              className="hover:cursor-pointer"
+              onClick={() => {
+                setShowLimitModal(false);
+                router.push("/");
+              }}
+            >
+              Go to Homepage
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Full Width Header */}
       <div className="relative py-8 md:py-12">

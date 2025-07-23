@@ -34,9 +34,11 @@ import {
   MapPin,
   ShieldCheck,
   Crown,
+  MailCheck,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ListingCard from "@/components/listingCard";
+import CrownBadge from "@/components/ui/crownBadge";
 
 const PublicUserProfile = () => {
   const router = useRouter();
@@ -179,14 +181,14 @@ const PublicUserProfile = () => {
           "bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100 font-semibold",
       },
       email: {
-        icon: <Mail size={16} className="mr-1" />,
+        icon: <MailCheck size={24} className="mx-1 text-green-600" />,
         text: "Email Verified",
         className:
           "bg-gradient-to-r from-blue-500 to-blue-800 text-white font-semibold",
       },
       // Premium badge is gold gradient
       premium: {
-        icon: <Crown size={16} className="mr-1" />,
+        icon: <CrownBadge />,
         text: "Premium Member",
         className:
           "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 font-semibold",
@@ -197,10 +199,12 @@ const PublicUserProfile = () => {
 
     return (
       <div
-        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs md:text-sm font-medium ${badge.className}`}
+        className={`inline-flex items-center rounded-full py-0.5 text-xs md:text-sm font-medium `}
       >
         {badge.icon}
-        {badge.text}
+        <span className="text-xs md:text-sm font-medium ml-3">
+          {badge.text}
+        </span>
       </div>
     );
   };
