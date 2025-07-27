@@ -15,6 +15,7 @@ import {
   arrayUnion,
   setDoc,
   limit,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import Image from "next/image";
@@ -25,6 +26,7 @@ import SwapRequestMessageCard from "./swapRequestMessageCard";
 import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
 import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
 import SwapCompletedMessageCard from "./swapCompletedMessageCard";
+import SwapTimeline from "./SwapTimeline";
 
 export default function ChatWindow({
   swapRequest,
@@ -37,6 +39,7 @@ export default function ChatWindow({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [swapRequestExists, setSwapRequestExists] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false); // ✅ Add this
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const router = useRouter();
@@ -71,7 +74,13 @@ export default function ChatWindow({
 
     const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
     const unsubscribe = onSnapshot(swapRequestRef, (docSnapshot) => {
-      setSwapRequestExists(docSnapshot.exists());
+      const exists = docSnapshot.exists();
+      setSwapRequestExists(exists);
+
+      // ✅ If document is deleted, stop presence tracking
+      if (!exists) {
+        setIsDeleting(true);
+      }
     });
 
     return () => unsubscribe();
@@ -184,7 +193,14 @@ export default function ChatWindow({
 
   // Active presence tracker with existence check
   useEffect(() => {
-    if (!swapRequest?.id || !authUser?.uid || !swapRequestExists) return;
+    if (
+      !swapRequest?.id ||
+      !authUser?.uid ||
+      !swapRequestExists ||
+      isDeleting
+    ) {
+      return; // Don't start presence if deleting
+    }
 
     const presenceRef = doc(
       db,
@@ -209,16 +225,12 @@ export default function ChatWindow({
     setPresence();
 
     return () => {
-      if (swapRequestExists) {
-        setDoc(presenceRef, {
-          active: false,
-          lastActive: serverTimestamp(),
-        }).catch((error) => {
-          console.log("Error cleaning up presence:", error);
-        });
-      }
+      // ✅ Actually delete the presence document
+      deleteDoc(presenceRef).catch((error) => {
+        console.log("Error deleting presence:", error);
+      });
     };
-  }, [swapRequest?.id, authUser?.uid, swapRequestExists]);
+  }, [swapRequest?.id, authUser?.uid, swapRequestExists, isDeleting]); // ✅ Add isDeleting dependency
 
   // Function to render message based upon message type
   const renderMessage = (message) => {
@@ -384,6 +396,9 @@ export default function ChatWindow({
           <p className="text-xs text-muted-foreground truncate">{chatTitle}</p>
         </div>
       </div>
+
+      {/* Timeline */}
+      <SwapTimeline swapRequest={swapRequest} className="mx-2 mb-0" />
 
       {/* Messages Area - Flexible height, scrollable */}
       <div

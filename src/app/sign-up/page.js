@@ -23,71 +23,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
-
-// List of countries with names and ISO codes
-const countries = [
-  { name: "Australia", code: "AU" },
-  { name: "Austria", code: "AT" },
-  { name: "Belgium", code: "BE" },
-  { name: "Bulgaria", code: "BG" },
-  { name: "Brazil", code: "BR" },
-  { name: "Canada", code: "CA" },
-  { name: "China", code: "CN" },
-  { name: "Croatia", code: "HR" },
-  { name: "Czech Republic", code: "CZ" },
-  { name: "Cyprus", code: "CY" },
-  { name: "Denmark", code: "DK" },
-  { name: "Estonia", code: "EE" },
-  { name: "Finland", code: "FI" },
-  { name: "France", code: "FR" },
-  { name: "Germany", code: "DE" },
-  { name: "Greece", code: "GR" },
-  { name: "Hungary", code: "HU" },
-  { name: "Iceland", code: "IS" },
-  { name: "Ireland", code: "IE" },
-  { name: "Italy", code: "IT" },
-  { name: "Japan", code: "JP" },
-  { name: "Latvia", code: "LV" },
-  { name: "Liechtenstein", code: "LI" },
-  { name: "Lithuania", code: "LT" },
-  { name: "Luxembourg", code: "LU" },
-  { name: "Malta", code: "MT" },
-  { name: "Mexico", code: "MX" },
-  { name: "Netherlands", code: "NL" },
-  { name: "New Zealand", code: "NZ" },
-  { name: "Norway", code: "NO" },
-  { name: "Poland", code: "PL" },
-  { name: "Portugal", code: "PT" },
-  { name: "Romania", code: "RO" },
-  { name: "Russia", code: "RU" },
-  { name: "Slovakia", code: "SK" },
-  { name: "Slovenia", code: "SI" },
-  { name: "South Africa", code: "ZA" },
-  { name: "South Korea", code: "KR" },
-  { name: "Sweden", code: "SE" },
-  { name: "Switzerland", code: "CH" },
-  { name: "Turkey", code: "TR" },
-  { name: "Ukraine", code: "UA" },
-  { name: "United Kingdom", code: "GB" },
-  { name: "United States", code: "US" },
-  // Add more countries as needed
-];
+import CountrySelect from "@/components/countrySelect";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -103,7 +39,6 @@ export default function SignUp() {
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [open, setOpen] = useState(false);
 
   const auth = getAuth(app);
 
@@ -130,11 +65,11 @@ export default function SignUp() {
     }
   };
 
-  const handleCountrySelect = (country) => {
+  const handleCountryChange = (countryName, countryCode) => {
     setFormData((prev) => ({
       ...prev,
-      country: country.name,
-      countryCode: country.code,
+      country: countryName,
+      countryCode: countryCode,
     }));
 
     // Clear country error if it exists
@@ -144,8 +79,6 @@ export default function SignUp() {
         country: undefined,
       }));
     }
-
-    setOpen(false);
   };
 
   const validate = () => {
@@ -231,20 +164,17 @@ export default function SignUp() {
       await updateProfile(user, { displayName: formData.username });
 
       // Call Firebase function to create Firestore user document
-      const response = await fetch(
-        "https://createnewuseraccount-createnewuseraccount-qwe4clieqa-nw.a.run.app",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: formData.username,
-            email: formData.email,
-            uid: user.uid,
-            country: formData.country,
-            countryCode: formData.countryCode,
-          }),
-        }
-      );
+      const response = await fetch("/api/firebase/create-new-user-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          uid: user.uid,
+          country: formData.country,
+          countryCode: formData.countryCode,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -389,57 +319,13 @@ export default function SignUp() {
 
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
-                      <Popover open={open} onOpenChange={setOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={open}
-                            className={cn(
-                              "w-full justify-between",
-                              !formData.country && "text-muted-foreground",
-                              errors.country && "border-destructive"
-                            )}
-                          >
-                            {formData.country
-                              ? formData.country
-                              : "Select country..."}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
-                          <Command>
-                            <CommandInput placeholder="Search country..." />
-                            <CommandList>
-                              <CommandEmpty>No country found.</CommandEmpty>
-                              <CommandGroup>
-                                {countries.map((country) => (
-                                  <CommandItem
-                                    key={country.code}
-                                    value={country.name}
-                                    onSelect={() =>
-                                      handleCountrySelect(country)
-                                    }
-                                  >
-                                    <span className="mr-2">
-                                      {getCountryFlagEmoji(country.code)}
-                                    </span>
-                                    {country.name}
-                                    <Check
-                                      className={cn(
-                                        "ml-auto h-4 w-4",
-                                        formData.countryCode === country.code
-                                          ? "opacity-100"
-                                          : "opacity-0"
-                                      )}
-                                    />
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      <CountrySelect
+                        value={formData.country}
+                        countryCode={formData.countryCode}
+                        onChange={handleCountryChange}
+                        hasError={!!errors.country}
+                        placeholder="Select country..."
+                      />
                       {errors.country && (
                         <p className="text-sm text-destructive">
                           {errors.country}

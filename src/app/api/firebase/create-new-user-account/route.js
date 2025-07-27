@@ -28,7 +28,7 @@ export async function POST(request) {
       uid,
       swapCount: 0,
       isPremium: false,
-      idVerified: false,
+      isIdVerified: false,
       unreadMessagesCount: 0,
       createdAt: FieldValue.serverTimestamp(),
     });

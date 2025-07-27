@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import sgMail from "@sendgrid/mail";
 
 const apiKey = process.env.SENDGRID_API_KEY;
-const templateId = process.env.SENDGRID_SWAP_REQUEST_TEMPLATE_ID;
+const templateId = process.env.SENDGRID_SWAP_ACCEPTED_TEMPLATE_ID;
 const fromEmail = "info@thefragrancemarket.com";
 
 if (!apiKey || !templateId) {
@@ -11,24 +11,24 @@ if (!apiKey || !templateId) {
 
 sgMail.setApiKey(apiKey);
 
-const sendSwapRequestEmail = async (
-  requestedFromEmail,
-  requestedFromUsername,
-  requestedListingTitle,
+const sendSwapAcceptedEmail = async (
+  offeredByEmail,
   offeredByUsername,
-  offeredListingTitle
+  offeredListingTitle,
+  requestedFromUsername,
+  requestedListingTitle
 ) => {
   const message = {
-    to: requestedFromEmail,
+    to: offeredByEmail,
     from: { name: "The Fragrance Market", email: fromEmail },
     templateId,
     dynamicTemplateData: {
-      requestedFromUsername,
-      requestedListingTitle,
       offeredByUsername,
       offeredListingTitle,
+      requestedFromUsername,
+      requestedListingTitle,
     },
-    subject: "Swap Request | The Fragrance Market",
+    subject: "Swap Accepted | The Fragrance Market",
   };
 
   await sgMail.send(message);
@@ -37,19 +37,19 @@ const sendSwapRequestEmail = async (
 export async function POST(request) {
   try {
     const {
-      requestedFromEmail,
-      requestedFromUsername,
-      requestedListingTitle,
+      offeredByEmail,
       offeredByUsername,
       offeredListingTitle,
+      requestedFromUsername,
+      requestedListingTitle,
     } = await request.json();
 
     if (
-      !requestedFromEmail ||
-      !requestedFromUsername ||
-      !requestedListingTitle ||
+      !offeredByEmail ||
       !offeredByUsername ||
-      !offeredListingTitle
+      !offeredListingTitle ||
+      !requestedFromUsername ||
+      !requestedListingTitle
     ) {
       return NextResponse.json(
         { error: "Missing required parameters" },
@@ -57,22 +57,22 @@ export async function POST(request) {
       );
     }
 
-    await sendSwapRequestEmail(
-      requestedFromEmail,
-      requestedFromUsername,
-      requestedListingTitle,
+    await sendSwapAcceptedEmail(
+      offeredByEmail,
       offeredByUsername,
-      offeredListingTitle
+      offeredListingTitle,
+      requestedFromUsername,
+      requestedListingTitle
     );
 
     return NextResponse.json(
-      { message: "Swap request email sent successfully" },
+      { message: "Swap accepted email sent successfully" },
       { status: 200 }
     );
   } catch (error) {
     console.error("SendGrid error:", error.response?.body || error);
     return NextResponse.json(
-      { error: "Unable to send swap request email" },
+      { error: "Unable to send swap accepted email" },
       { status: 500 }
     );
   }

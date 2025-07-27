@@ -46,65 +46,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     otherUserInfo?.formattedAddress || ""
   );
 
-  // Function to update address confirmation in Firestore
-  const updateAddressConfirmation = async (confirmed) => {
-    if (!confirmed) return; // Only handle confirmation, not un-confirmation
-
-    try {
-      setIsConfirmingAddress(true);
-      // Determine user role
-      const userRole = isRequestedFromUser ? "requestedFrom" : "offeredBy";
-
-      // Call the cloud function
-      const response = await fetch("/api/firebase/handle-confirm-address", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          swapRequestId: swapRequest.id,
-          userUid: authUser.uid,
-          address: currentUserAddress,
-          userRole,
-          messageId: message.id,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to confirm address");
-      }
-
-      // Update local state based on server response
-      setCurrentUserAddressConfirmed(true);
-
-      if (result.data.bothConfirmed) {
-        if (result.data.pendingShipmentCreated) {
-          toast.success("Both addresses confirmed! Ready for shipment.");
-        } else {
-          toast.success("Address confirmed! Waiting for shipment phase.");
-        }
-      } else {
-        toast.success("Address confirmed! Waiting for other user.");
-      }
-    } catch (error) {
-      console.error("Error confirming address:", error);
-      toast.error(error.message || "Failed to confirm address");
-    } finally {
-      setIsConfirmingAddress(false);
-    }
-  };
-
-  // Handle address form submission
-  const handleSaveAddress = async (locationData) => {
-    setCurrentUserAddress(locationData.formattedAddress);
-    setShowAddressForm(false);
-
-    // The cloud function will save to user doc, so we don't need to do it here
-    await updateAddressConfirmation(true);
-  };
-
   // Add this after your existing useEffects
   useEffect(() => {
     if (!swapRequest?.id) return;
@@ -122,7 +63,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
         );
         setOtherUserAddressConfirmed(!!addressConfirmation[otherUserInfo.uid]);
 
-        // FIXED: Access addresses correctly from the swap request structure
+        // Access addresses correctly from the swap request structure
         const updatedCurrentUserAddress = isRequestedFromUser
           ? data.requestedFrom?.formattedAddress
           : data.offeredBy?.formattedAddress;
@@ -149,6 +90,139 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     otherUserInfo.uid,
     isRequestedFromUser,
   ]);
+
+  // Function to send address confirmed email
+  const sendAddressConfirmedEmail = async (confirmedAddress = null) => {
+    try {
+      const response = await fetch("/api/email/shipping-address-confirmed", {
+        method: "POST",
+        body: JSON.stringify({
+          swapRequestId: swapRequest.id,
+          swapRequestData: swapRequest,
+          confirmingUserUid: authUser.uid,
+          confirmedAddress, // Pass the address directly
+        }),
+      });
+
+      const result = await response.json();
+
+      // Check for error instead of success
+      if (result.error) {
+        throw new Error(
+          result.error || "Failed to send address confirmed email"
+        );
+      }
+    } catch (error) {
+      console.error("Error sending address confirmed email:", error);
+    }
+  };
+
+  // Function to save address to user document
+  const saveAddressToUserDocument = async (
+    formattedAddress,
+    addressComponents = null
+  ) => {
+    try {
+      const response = await fetch("/api/firebase/handle-save-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userUid: authUser.uid,
+          formattedAddress,
+          addressComponents,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to save address");
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error saving address to user document:", error);
+      throw error;
+    }
+  };
+
+  // Function to update address confirmation in Firestore
+  const handleConfirmAddress = async (confirmed, addressOverride = null) => {
+    if (!confirmed) return;
+
+    try {
+      setIsConfirmingAddress(true);
+      const userRole = isRequestedFromUser ? "requestedFrom" : "offeredBy";
+      const addressToUse = addressOverride || currentUserAddress;
+
+      // First, save the address to the user's document
+      await saveAddressToUserDocument(addressToUse);
+
+      // Then, handle the swap confirmation
+      const response = await fetch("/api/firebase/handle-confirm-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          swapRequestId: swapRequest.id,
+          userUid: authUser.uid,
+          address: addressToUse,
+          userRole,
+          messageId: message.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to confirm address");
+      }
+
+      setCurrentUserAddressConfirmed(true);
+      sendAddressConfirmedEmail(addressToUse);
+
+      if (result.data.bothConfirmed) {
+        if (result.data.pendingShipmentCreated) {
+          toast.success("Both addresses confirmed! Ready for shipment.");
+        } else {
+          toast.success("Address confirmed! Waiting for shipment phase.");
+        }
+      } else {
+        toast.success("Address confirmed! Waiting for other user.");
+      }
+    } catch (error) {
+      console.error("Error confirming address:", error);
+      toast.error(error.message || "Failed to confirm address");
+    } finally {
+      setIsConfirmingAddress(false);
+    }
+  };
+
+  // Handle address form submission
+  const handleSaveAddress = async (locationData) => {
+    try {
+      // Save to user document first
+      await saveAddressToUserDocument(
+        locationData.formattedAddress,
+        locationData.addressComponents
+      );
+
+      // Update local state
+      setCurrentUserAddress(locationData.formattedAddress);
+      setShowAddressForm(false);
+
+      // Then confirm the address for the swap
+      await handleConfirmAddress(true, locationData.formattedAddress);
+
+      toast.success("Address saved and confirmed!");
+    } catch (error) {
+      console.error("Error in handleSaveAddress:", error);
+      toast.error("Failed to save address. Please try again.");
+    }
+  };
 
   return (
     <div className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl rounded-lg p-3 sm:p-4 border bg-card shadow-sm">
@@ -265,7 +339,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
                     {currentUserAddress ? (
                       <Button
                         size="sm"
-                        onClick={() => updateAddressConfirmation(true)}
+                        onClick={() => handleConfirmAddress(true)}
                         className="w-full sm:w-auto hover:cursor-pointer hover:bg-primary/80"
                         disabled={isConfirmingAddress}
                       >

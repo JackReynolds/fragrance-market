@@ -54,11 +54,38 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     }
   };
 
+  // Helper function to send swap accepted email (don't throw errors)
+  const sendSwapAcceptedEmail = async () => {
+    try {
+      const response = await fetch("/api/email/swap-accepted", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          offeredByEmail: message.offeredBy.email,
+          offeredByUsername: message.offeredBy.username,
+          offeredListingTitle: message.offeredListing.title,
+          requestedFromUsername: message.requestedFrom.username,
+          requestedListingTitle: message.requestedListing.title,
+        }),
+      });
+
+      if (!response.ok) {
+        console.log("Email failed to send, but swap was accepted");
+      }
+    } catch (error) {
+      console.error("Error sending swap accepted email:", error);
+      toast.error("Error sending swap accepted email");
+    }
+  };
+
   const handleAcceptSwap = async () => {
     try {
       setIsAccepting(true);
       await changeSwapRequestStatus();
       await updateSwapRequestMessage();
+
+      sendSwapAcceptedEmail();
+
       toast.success("Swap request accepted");
     } catch (error) {
       console.error("Error accepting swap:", error);

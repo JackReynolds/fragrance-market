@@ -18,7 +18,7 @@ export async function POST(request) {
     const decodedToken = await getAuth().verifyIdToken(token);
     const currentUserUid = decodedToken.uid;
 
-    // 1️⃣ Validate: Check if both listings exist and are active
+    // 1. Validate: Check if both listings exist and are active
     const [offeredListingDoc, requestedListingDoc] = await Promise.all([
       db.collection("listings").doc(offeredListingId).get(),
       db.collection("listings").doc(requestedListingId).get(),
@@ -69,7 +69,7 @@ export async function POST(request) {
       );
     }
 
-    // 2️⃣ Check for existing swap requests
+    // 2. Check for existing swap requests
     const existingRequest = await db
       .collection("swap_requests")
       .where("offeredBy.uid", "==", currentUserUid)
@@ -85,7 +85,7 @@ export async function POST(request) {
       );
     }
 
-    // 3️⃣ Get user profiles
+    // 3 Get user profiles
     const [currentUserDoc, targetUserDoc] = await Promise.all([
       db.collection("users").doc(currentUserUid).get(),
       db.collection("users").doc(requestedFromUid).get(),
@@ -101,7 +101,7 @@ export async function POST(request) {
     const currentUser = currentUserDoc.data();
     const targetUser = targetUserDoc.data();
 
-    // 4️⃣ Create swap request document
+    // 4. Create swap request document
     const swapRequestData = {
       offeredBy: {
         uid: currentUserUid,
@@ -143,7 +143,7 @@ export async function POST(request) {
       updatedAt: FieldValue.serverTimestamp(),
     };
 
-    // 5️⃣ Create swap request and initial message atomically
+    // 5. Create swap request and initial message atomically
     const batch = db.batch();
 
     const swapRequestRef = db.collection("swap_requests").doc();

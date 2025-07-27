@@ -1,6 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { initializeApp } = require("firebase-admin/app");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
 initializeApp();
 
@@ -11,7 +11,7 @@ exports.deleteSwapRequest = onRequest(
   async (req, res) => {
     let swapRequestId = req.body.swapRequestId;
 
-    async function deleteCollection(db, collectionPath, batchSize) {
+    async function deleteCollection(db, collectionPath, batchSize = 50) {
       const collectionRef = db.collection(collectionPath);
       const query = collectionRef.orderBy("__name__").limit(batchSize);
 
@@ -25,38 +25,137 @@ exports.deleteSwapRequest = onRequest(
 
       const batchSize = snapshot.size;
       if (batchSize === 0) {
-        // When there are no documents left, we are done
         resolve();
         return;
       }
 
-      // Delete documents in a batch
       const batch = db.batch();
       snapshot.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
       await batch.commit();
 
-      // Recurse on the next process tick, to avoid
-      // exploding the stack.
       process.nextTick(() => {
         deleteQueryBatch(db, query, resolve);
       });
     }
 
+    // ✅ NEW: Function to check if count should be decremented
+    async function shouldDecrementCount(swapRequestId, requestedFromUid) {
+      try {
+        // Get the initial swap request message
+        const messagesRef = db.collection(
+          `swap_requests/${swapRequestId}/messages`
+        );
+        const swapRequestMessages = await messagesRef
+          .where("type", "==", "swap_request")
+          .limit(1)
+          .get();
+
+        if (swapRequestMessages.empty) {
+          console.log("No swap request message found");
+          return true; // Decrement if no message (safety fallback)
+        }
+
+        const swapRequestMessage = swapRequestMessages.docs[0].data();
+        const readBy = swapRequestMessage.readBy || [];
+
+        // If target user hasn't read the initial message, decrement count
+        const hasTargetUserRead = readBy.includes(requestedFromUid);
+
+        console.log(
+          `Target user ${requestedFromUid} has read message: ${hasTargetUserRead}`
+        );
+        return !hasTargetUserRead; // Decrement if NOT read
+      } catch (error) {
+        console.error("Error checking read status:", error);
+        return false; // Don't decrement on error (safe default)
+      }
+    }
+
+    // ✅ NEW: Function to safely decrement count
+    async function decrementMonthlySwapCount(userUid) {
+      try {
+        const userRef = db.collection("users").doc(userUid);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists()) {
+          console.log(`User ${userUid} not found`);
+          return;
+        }
+
+        const userData = userDoc.data();
+        const currentCount = userData.monthlySwapCount || 0;
+
+        // ✅ SAFETY: Only decrement if count > 0
+        if (currentCount > 0) {
+          await userRef.update({
+            monthlySwapCount: FieldValue.increment(-1),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+          console.log(
+            `Decremented monthly swap count for user ${userUid}: ${currentCount} -> ${
+              currentCount - 1
+            }`
+          );
+        } else {
+          console.log(
+            `User ${userUid} already has 0 monthly swaps, not decrementing`
+          );
+        }
+      } catch (error) {
+        console.error(`Error decrementing count for user ${userUid}:`, error);
+      }
+    }
+
     try {
+      // ✅ NEW: Get swap request data before deletion
+      const swapRequestDoc = await db
+        .collection("swap_requests")
+        .doc(swapRequestId)
+        .get();
+
+      if (!swapRequestDoc.exists()) {
+        return res.status(404).send({ error: "Swap request not found" });
+      }
+
+      const swapRequestData = swapRequestDoc.data();
+      const { offeredBy, requestedFrom } = swapRequestData;
+
+      // ✅ NEW: Check if we should decrement the requester's count
+      const shouldDecrement = await shouldDecrementCount(
+        swapRequestId,
+        requestedFrom.uid
+      );
+
       // Delete messages collection
       await deleteCollection(db, `swap_requests/${swapRequestId}/messages`, 50);
 
-      // Delete presence collection if present
-      await deleteCollection(db, `swap_requests/${swapRequestId}/presence`);
+      // Delete presence collection
+      await deleteCollection(db, `swap_requests/${swapRequestId}/presence`, 50);
 
-      // Delete rental-request document
+      // Delete main swap request document
       await db.collection("swap_requests").doc(swapRequestId).delete();
-      res.status(200).send({ message: "Swap request deleted." });
+
+      // ✅ NEW: Decrement count if target user never read the request
+      if (shouldDecrement) {
+        await decrementMonthlySwapCount(offeredBy.uid);
+        console.log(
+          `Decremented count for requester ${offeredBy.uid} - target user never read the request`
+        );
+      } else {
+        console.log(
+          `Not decrementing count for requester ${offeredBy.uid} - target user had read the request`
+        );
+      }
+
+      res.status(200).send({
+        message: "Swap request deleted",
+        countDecremented: shouldDecrement,
+      });
     } catch (error) {
       console.log(error);
-      res.send({ error: error.message });
+      res.status(500).send({ error: error.message });
     }
   }
 );

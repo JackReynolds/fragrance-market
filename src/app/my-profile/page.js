@@ -277,22 +277,51 @@ export default function Profile() {
     );
   };
 
-  // Save address to firestore
+  // Function to save address to user document
   const saveAddressToFirestore = async (locationData) => {
-    const userRef = doc(db, "users", authUser.uid);
-    await updateDoc(userRef, {
-      formattedAddress: locationData.formattedAddress,
-      addressComponents: locationData.addressComponents,
-    });
+    try {
+      const response = await fetch("/api/firebase/handle-save-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userUid: authUser.uid,
+          formattedAddress: locationData.formattedAddress,
+          addressComponents: locationData.addressComponents,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to save address");
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error saving address:", error);
+      toast.error("Failed to save address. Please try again.");
+      throw error;
+    }
   };
 
-  const handleSaveAddress = (locationData) => {
-    setFormattedAddress(locationData.formattedAddress);
-    setEditingAddress(false);
-    setShowEnterAddressManually(false);
-    saveAddressToFirestore(locationData);
-    console.log(locationData);
-    toast.success("Address updated!");
+  // Handle address form submission
+  const handleSaveAddress = async (locationData) => {
+    try {
+      // Save to user document first
+      await saveAddressToFirestore(locationData);
+
+      // Update local state
+      setFormattedAddress(locationData.formattedAddress);
+      setEditingAddress(false);
+      setShowEnterAddressManually(false);
+
+      toast.success("Address saved!");
+    } catch (error) {
+      console.error("Error in handleSaveAddress:", error);
+      toast.error("Failed to save address. Please try again.");
+    }
   };
 
   let currency;

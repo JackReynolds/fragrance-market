@@ -47,7 +47,7 @@ export default function SwapRequestsList({
       case "swap_accepted":
         return (
           <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-800">
-            Accepted
+            Confirm Shipping Address
           </span>
         );
       case "swap_rejected":

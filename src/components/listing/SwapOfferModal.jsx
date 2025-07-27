@@ -23,14 +23,14 @@ const SwapOfferModal = ({
   isOpen,
   onClose,
   currentUser,
-  targetListing,
-  targetOwner,
+  requestedListing,
+  requestedFrom,
 }) => {
   const [userListings, setUserListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedListing, setSelectedListing] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingRequest, setExistingRequest] = useState(null); // ✅ Changed from object to single request
+  const [existingRequest, setExistingRequest] = useState(null);
 
   const { authUser } = useAuth();
 
@@ -67,14 +67,15 @@ const SwapOfferModal = ({
           swapRequestsRef,
           and(
             where("offeredBy.uid", "==", currentUser.uid),
-            where("requestedListing.id", "==", targetListing.id),
-            where("requestedFrom.uid", "==", targetOwner.uid)
+            where("requestedListing.id", "==", requestedListing.id),
+            where("requestedFrom.uid", "==", requestedFrom.uid),
+            where("status", "==", "swap_request")
           )
         );
 
         const requestsSnapshot = await getDocs(requestsQuery);
 
-        // ✅ If ANY request exists, store it (there should only be one anyway)
+        // If ANY request exists, store it
         if (!requestsSnapshot.empty) {
           const requestDoc = requestsSnapshot.docs[0];
           setExistingRequest({
@@ -94,9 +95,88 @@ const SwapOfferModal = ({
 
     if (isOpen) {
       fetchUserListings();
-      setSelectedListing(null); // Reset selection when modal opens
+      setSelectedListing(null);
     }
-  }, [isOpen, currentUser?.uid, targetListing.id, targetOwner.uid]);
+  }, [isOpen, currentUser?.uid, requestedListing.id, requestedFrom.uid]);
+
+  // Send swap request email
+  const sendSwapRequestEmail = async () => {
+    const requestedFromEmail = requestedFrom.email;
+    const requestedFromUsername = requestedFrom.username;
+    const requestedListingTitle = requestedListing.title;
+    const offeredByUsername = currentUser.displayName || currentUser.username;
+    const offeredListingTitle = selectedListing.title;
+
+    try {
+      const response = await fetch("/api/email/swap-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requestedFromEmail,
+          requestedFromUsername,
+          requestedListingTitle,
+          offeredByUsername,
+          offeredListingTitle,
+        }),
+      });
+
+      if (!response.ok) {
+        // Only parse JSON once, and only if response is not ok
+        const errorData = await response.json().catch(() => ({
+          message: `HTTP error! status: ${response.status}`,
+        }));
+        // No need to throw error here, just log it
+        console.log(errorData);
+      }
+
+      // Only parse JSON if response is ok
+      const result = await response.json();
+      console.log("Email sent successfully:", result);
+    } catch (error) {
+      console.error("Error sending swap request email:", error);
+      // Don't throw here - email is secondary, swap creation is primary
+      toast.warning(
+        "Swap request created, but notification email failed to send"
+      );
+    }
+  };
+
+  // Create swap request
+  const createSwapRequest = async () => {
+    try {
+      // Get the user's ID token for authentication
+      const idToken = await authUser.getIdToken();
+
+      const response = await fetch("/api/firebase/create-swap-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          offeredListingId: selectedListing.id,
+          requestedListingId: requestedListing.id,
+          requestedFromUid: requestedFrom.uid,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          message: `HTTP error! status: ${response.status}`,
+        }));
+        throw new Error(errorData.message || "Failed to create swap request");
+      }
+
+      const result = await response.json();
+
+      return result;
+    } catch (error) {
+      console.error("Error creating swap request:", error);
+      throw error; // Re-throw to handle in calling function
+    }
+  };
 
   // Handle "Send offer" button click
   const handleSubmitOffer = async () => {
@@ -105,28 +185,20 @@ const SwapOfferModal = ({
       return;
     }
 
+    if (!authUser) {
+      toast.error("Please sign in to send swap offers");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/firebase/create-swap-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await authUser.getIdToken()}`,
-        },
-        body: JSON.stringify({
-          offeredListingId: selectedListing.id,
-          requestedListingId: targetListing.id,
-          requestedFromUid: targetOwner.uid,
-        }),
-      });
+      // Create swap request first (critical)
+      await createSwapRequest();
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to send swap offer");
-      }
+      // Send email notification (secondary - no need to await)
+      sendSwapRequestEmail();
 
-      const result = await response.json();
-      toast.success("Swap offer sent successfully!");
+      toast.success("Swap request sent successfully!");
       onClose();
     } catch (error) {
       console.error("Error sending swap offer:", error);
@@ -136,7 +208,7 @@ const SwapOfferModal = ({
     }
   };
 
-  // ✅ If there's an existing request, show different UI
+  // If there's an existing request, show different UI
   if (existingRequest) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -145,7 +217,7 @@ const SwapOfferModal = ({
             <DialogTitle>Swap Request Already Sent</DialogTitle>
             <DialogDescription>
               You already have an active swap request for &quot;
-              {targetListing?.title}&quot;
+              {requestedListing?.title}&quot;
             </DialogDescription>
           </DialogHeader>
 
@@ -222,7 +294,7 @@ const SwapOfferModal = ({
           <DialogTitle>Offer a Swap</DialogTitle>
           <DialogDescription>
             Select one of your fragrances to offer for &quot;
-            {targetListing?.title}&quot;
+            {requestedListing?.title}&quot;
           </DialogDescription>
         </DialogHeader>
 

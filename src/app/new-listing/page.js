@@ -433,6 +433,7 @@ const NewListing = () => {
     "Lolita Lempicka",
     "Lomani",
     "Lorenzo Villoresi",
+    "Louis Vuitton",
     "Ltl",
     "Luciano Pavarotti",
     "Luciano Soprani",
@@ -898,7 +899,7 @@ const NewListing = () => {
         ownerIsPremium: userDoc?.isPremium,
         country: userDoc?.country,
         countryCode: userDoc?.countryCode,
-        ownerIdVerified: userDoc?.idVerified,
+        ownerIsIdVerified: userDoc?.isIdVerified,
         ownerUsername: authUser.displayName || "Anonymous User",
         status: "active",
       };

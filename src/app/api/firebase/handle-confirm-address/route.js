@@ -7,6 +7,8 @@ export async function POST(request) {
     const { swapRequestId, userUid, address, userRole, messageId } =
       await request.json();
 
+    console.log("address", address);
+
     // Validate required fields
     if (!swapRequestId || !userUid || !address || !userRole || !messageId) {
       console.error("Missing required fields", {

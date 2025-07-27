@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import CountrySelect from "@/components/countrySelect";
 
 export default function ManualAddressForm({ onSave, onCancel, initialValue }) {
   const [fields, setFields] = useState(
@@ -13,11 +14,20 @@ export default function ManualAddressForm({ onSave, onCancel, initialValue }) {
       state: "",
       postalCode: "",
       country: "",
+      countryCode: "",
     }
   );
 
   const handleChange = (e) => {
     setFields({ ...fields, [e.target.name]: e.target.value });
+  };
+
+  const handleCountryChange = (countryName, countryCode) => {
+    setFields({
+      ...fields,
+      country: countryName,
+      countryCode: countryCode,
+    });
   };
 
   const handleSave = () => {
@@ -70,12 +80,14 @@ export default function ManualAddressForm({ onSave, onCancel, initialValue }) {
         value={fields.postalCode}
         onChange={handleChange}
       />
-      <Input
-        name="country"
-        placeholder="Country"
+
+      <CountrySelect
         value={fields.country}
-        onChange={handleChange}
+        countryCode={fields.countryCode}
+        onChange={handleCountryChange}
+        placeholder="Select country..."
       />
+
       <div className="flex gap-2 mt-4">
         <Button
           className="hover:cursor-pointer hover:bg-primary/80"

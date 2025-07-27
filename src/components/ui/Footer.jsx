@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import * as React from "react";
-import { Instagram, Twitter, Facebook, Youtube } from "lucide-react";
+import { Instagram } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -14,8 +14,8 @@ const Footer = () => {
       }}
       className="text-gray-50 border-t border-border"
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+      <div className="container mx-auto px-4 sm:px-6 py-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <Image
@@ -153,66 +153,22 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-4 text-gray-100">
-              Subscribe
-            </h4>
-            <p className="text-sm text-gray-100">
-              Get the latest news and updates directly to your inbox.
-            </p>
-
-            <div className="flex max-w-sm flex-col space-y-2">
-              <div className="flex w-full max-w-sm items-center space-x-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-                <button
-                  type="submit"
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  Subscribe
-                </button>
-              </div>
-            </div>
-
-            <div className="flex space-x-4">
-              <a
-                href="#"
-                className="text-white hover:text-gray-300 transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-gray-300 transition-colors"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-gray-300 transition-colors"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="text-white hover:text-gray-300 transition-colors"
-              >
-                <Youtube className="h-5 w-5" />
-              </a>
-            </div>
-          </div>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-border flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
+        <div className="mt-6 pt-8 border-t border-border flex flex-col items-center justify-between space-y-4 sm:flex-row sm:space-y-0">
           <p className="text-sm text-gray-100">
             &copy; {new Date().getFullYear()} The Fragrance Market. All rights
             reserved.
           </p>
           <div className="flex space-x-6 text-sm">
+            <a
+              href="https://www.instagram.com/the_fragrancemarket/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-gray-300 transition-colors"
+            >
+              <Instagram className="h-5 w-5" />
+            </a>
             <Link
               href="/privacy"
               className="text-gray-100 hover:text-gray-300 transition-colors"

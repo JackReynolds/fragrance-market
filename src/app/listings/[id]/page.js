@@ -755,8 +755,8 @@ const ListingDetailPage = () => {
           onClose={() => setIsSwapModalOpen(false)}
           currentUser={authUser}
           userDoc={userDoc}
-          targetListing={listing}
-          targetOwner={owner}
+          requestedListing={listing}
+          requestedFrom={owner}
         />
       )}
     </div>
