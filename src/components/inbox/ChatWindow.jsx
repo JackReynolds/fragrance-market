@@ -26,7 +26,7 @@ import SwapRequestMessageCard from "./swapRequestMessageCard";
 import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
 import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
 import SwapCompletedMessageCard from "./swapCompletedMessageCard";
-import SwapTimeline from "./SwapTimeline";
+import SwapTimeline from "./swapTimeline";
 
 export default function ChatWindow({
   swapRequest,
