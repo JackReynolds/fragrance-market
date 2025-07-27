@@ -49,6 +49,7 @@ export async function POST(request) {
       confirmingUserUid,
       swapRequestData,
       confirmedAddress,
+      bothConfirmed,
     } = await request.json();
 
     if (!swapRequestId || !confirmingUserUid || !swapRequestData) {
@@ -59,7 +60,7 @@ export async function POST(request) {
     }
 
     // Determine who confirmed address and who gets the email
-    const { offeredBy, requestedFrom, addressConfirmation } = swapRequestData;
+    const { offeredBy, requestedFrom } = swapRequestData;
 
     let confirmingUser, recipientUser;
     if (confirmingUserUid === offeredBy.uid) {
@@ -70,13 +71,7 @@ export async function POST(request) {
       recipientUser = offeredBy;
     }
 
-    // Check if both users have confirmed their addresses
-    const bothConfirmed = !!(
-      addressConfirmation?.[offeredBy.uid] &&
-      addressConfirmation?.[requestedFrom.uid]
-    );
-
-    // Use the passed address or fall back to the user's stored address
+    // Use the passed bothConfirmed value (calculated by server)
     const addressToShow =
       confirmedAddress ||
       confirmingUser.formattedAddress ||

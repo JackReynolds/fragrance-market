@@ -92,15 +92,21 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   ]);
 
   // Function to send address confirmed email
-  const sendAddressConfirmedEmail = async (confirmedAddress = null) => {
+  const sendAddressConfirmedEmail = async (
+    confirmedAddress = null,
+    bothConfirmed = false
+  ) => {
     try {
+      console.log("bothConfirmed", bothConfirmed);
+
       const response = await fetch("/api/email/shipping-address-confirmed", {
         method: "POST",
         body: JSON.stringify({
           swapRequestId: swapRequest.id,
           swapRequestData: swapRequest,
           confirmingUserUid: authUser.uid,
-          confirmedAddress, // Pass the address directly
+          confirmedAddress,
+          bothConfirmed,
         }),
       });
 
@@ -177,12 +183,25 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
       const result = await response.json();
 
+      // Add debugging here
+      console.log("handleConfirmAddress - API response:", result);
+      console.log(
+        "handleConfirmAddress - bothConfirmed value:",
+        result.data?.bothConfirmed
+      );
+
       if (!result.success) {
         throw new Error(result.error || "Failed to confirm address");
       }
 
       setCurrentUserAddressConfirmed(true);
-      sendAddressConfirmedEmail(addressToUse);
+
+      // Use the server-calculated bothConfirmed value
+      console.log(
+        "About to call sendAddressConfirmedEmail with bothConfirmed:",
+        result.data.bothConfirmed
+      );
+      sendAddressConfirmedEmail(addressToUse, result.data.bothConfirmed);
 
       if (result.data.bothConfirmed) {
         if (result.data.pendingShipmentCreated) {

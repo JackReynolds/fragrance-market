@@ -39,7 +39,7 @@ export default function ChatWindow({
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [swapRequestExists, setSwapRequestExists] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false); // ✅ Add this
+  const [isDeleting, setIsDeleting] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const router = useRouter();
