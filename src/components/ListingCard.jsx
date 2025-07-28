@@ -16,6 +16,7 @@ import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
 import PremiumBadge from "./ui/premiumBadge";
+import IdVerifiedBadge from "./ui/idVerifiedBadge";
 
 // Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
 const ListingCard = ({ listing, hit, showUserInfo = true }) => {
@@ -125,7 +126,7 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                 </div>
 
                 {/* Badges with Tooltips - Responsive sizing */}
-                <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {data.ownerIsPremium && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -143,11 +144,11 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                       </TooltipContent>
                     </Tooltip>
                   )}
-                  {data.ownerIdVerified && (
+                  {data.ownerIsIdVerified && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">
-                          <ShieldCheck className="w-2 h-2 sm:w-4 sm:h-4 text-white" />
+                          <IdVerifiedBadge />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
