@@ -30,15 +30,9 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
-  MessageCircle,
   Heart,
   ShoppingBag,
-  Mail,
-  ShieldCheck,
   Loader2,
-  Crown,
-  Lock,
-  Zap,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -53,8 +47,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import CrownBadge from "@/components/ui/crownBadge";
 import SwapCountExceededButton from "@/components/ui/swapCountExceededButton";
+import VerificationBadges from "@/components/ui/verificationBadges";
 
 const ListingDetailPage = () => {
   const [listing, setListing] = useState(null);
@@ -173,55 +167,6 @@ const ListingDetailPage = () => {
           />
         ))}
         <span className="ml-1 text-sm font-medium">{rating.toFixed(1)}</span>
-      </div>
-    );
-  };
-
-  // Verification badge component
-  const VerificationBadge = ({ type, isVerified }) => {
-    if (!isVerified) return null;
-
-    const badges = {
-      // ID badge is dark green and gradient
-      id: {
-        icon: <ShieldCheck size={16} className="mr-1" />,
-        text: "ID Verified",
-        className:
-          "bg-gradient-to-r from-emerald-600 to-emerald-800 text-gray-100 font-semibold",
-      },
-      email: {
-        icon: <Mail size={16} className="mr-1" />,
-        text: "Email Verified",
-        className:
-          "bg-gradient-to-r from-blue-500 to-blue-800 text-white font-semibold",
-      },
-      // Premium badge is gold gradient
-      premium: {
-        icon: (
-          <CrownBadge
-            outerWidth="8"
-            outerHeight="8"
-            crownWidth="5"
-            crownHeight="5"
-          />
-        ),
-        text: "Premium Member",
-        className:
-          "bg-gradient-to-r from-yellow-300 to-yellow-500 text-yellow-900 font-semibold",
-      },
-    };
-
-    const badge = badges[type];
-
-    return (
-      <div
-        className={`inline-flex items-center rounded-full py-0.5 text-xs md:text-sm font-medium`}
-      >
-        {badge.icon}
-
-        <span className="text-xs md:text-sm font-medium ml-3">
-          {badge.text}
-        </span>
       </div>
     );
   };
@@ -662,21 +607,8 @@ const ListingDetailPage = () => {
                   </div>
 
                   {/* Verification badges */}
-                  <div className="mt-4 space-y-2">
-                    <div className="flex flex-col gap-2">
-                      <VerificationBadge
-                        type="premium"
-                        isVerified={owner?.isPremium}
-                      />
-                      <VerificationBadge
-                        type="email"
-                        isVerified={owner?.emailVerified}
-                      />
-                      <VerificationBadge
-                        type="id"
-                        isVerified={owner?.isIdVerified}
-                      />
-                    </div>
+                  <div className="ml-2 mt-2">
+                    <VerificationBadges user={owner} />
                   </div>
 
                   <div className="mt-4">

@@ -9,13 +9,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ShieldCheck, Crown, User } from "lucide-react";
+import { ShieldCheck, User } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
-import CrownBadge from "./ui/crownBadge";
+import PremiumBadge from "./ui/premiumBadge";
 
 // Both listing and hit are used for Algolia compatibility as hit is used for Algolia search results
 const ListingCard = ({ listing, hit, showUserInfo = true }) => {
@@ -130,7 +130,7 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center cursor-help">
-                          <CrownBadge
+                          <PremiumBadge
                             outerWidth="6"
                             outerHeight="6"
                             crownWidth="4"

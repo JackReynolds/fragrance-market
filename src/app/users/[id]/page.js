@@ -38,7 +38,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import ListingCard from "@/components/listingCard";
-import CrownBadge from "@/components/ui/crownBadge";
+import CrownBadge from "@/components/ui/premiumBadge";
 
 const PublicUserProfile = () => {
   const router = useRouter();

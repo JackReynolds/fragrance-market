@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import CrownBadge from "./ui/crownBadge";
+import PremiumBadge from "./ui/premiumBadge";
 import GoPremiumButton from "./goPremiumButton";
 import { useUserDoc } from "@/hooks/useUserDoc";
 
@@ -24,7 +24,7 @@ const PremiumMembershipWideCard = () => {
     <div className="bg-muted rounded-lg p-6">
       <div className="bg-card border rounded-lg p-8">
         <div className="flex items-center mb-6">
-          <CrownBadge
+          <PremiumBadge
             outerWidth="12"
             outerHeight="12"
             crownWidth="7"

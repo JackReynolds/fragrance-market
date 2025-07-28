@@ -183,13 +183,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
       const result = await response.json();
 
-      // Add debugging here
-      console.log("handleConfirmAddress - API response:", result);
-      console.log(
-        "handleConfirmAddress - bothConfirmed value:",
-        result.data?.bothConfirmed
-      );
-
       if (!result.success) {
         throw new Error(result.error || "Failed to confirm address");
       }
@@ -197,10 +190,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
       setCurrentUserAddressConfirmed(true);
 
       // Use the server-calculated bothConfirmed value
-      console.log(
-        "About to call sendAddressConfirmedEmail with bothConfirmed:",
-        result.data.bothConfirmed
-      );
       sendAddressConfirmedEmail(addressToUse, result.data.bothConfirmed);
 
       if (result.data.bothConfirmed) {

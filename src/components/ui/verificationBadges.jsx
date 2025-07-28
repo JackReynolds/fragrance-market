@@ -1,8 +1,9 @@
 /* eslint-disable react/prop-types */
 
 import React from "react";
-import { ShieldCheck, Mail, Crown, Star } from "lucide-react";
-import CrownBadge from "./crownBadge";
+import { Star } from "lucide-react";
+import PremiumBadge from "./premiumBadge";
+import IdVerifiedBadge from "./idVerifiedBadge";
 import { cn } from "@/lib/utils";
 
 const VerificationBadges = ({
@@ -12,13 +13,15 @@ const VerificationBadges = ({
   showLabels = true,
   className,
 }) => {
+  console.log("user", user);
+
   const badges = [
     {
       key: "premium",
       condition: user?.isPremium,
       component: (
         <div className="flex items-center gap-2">
-          <CrownBadge size={size === "sm" ? "sm" : "default"} />
+          <PremiumBadge size={size === "sm" ? "sm" : "default"} />
           {showLabels && (
             <span className="text-sm font-semibold bg-gradient-to-r from-yellow-600 to-amber-600 bg-clip-text text-transparent">
               Premium Member
@@ -30,19 +33,12 @@ const VerificationBadges = ({
     },
     {
       key: "id",
-      condition: user?.isIdVerified,
+      condition: user?.isIdVerified || user?.idVerified,
       component: (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 shadow-md">
-          <ShieldCheck
-            className={cn("text-white", size === "sm" ? "w-3 h-3" : "w-4 h-4")}
-          />
+        <div className="flex items-center gap-2">
+          <IdVerifiedBadge size={size === "sm" ? "sm" : "default"} />
           {showLabels && (
-            <span
-              className={cn(
-                "text-white font-medium",
-                size === "sm" ? "text-xs" : "text-sm"
-              )}
-            >
+            <span className="text-sm font-semibold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
               ID Verified
             </span>
           )}
@@ -51,51 +47,34 @@ const VerificationBadges = ({
       priority: 2,
     },
     {
-      key: "email",
-      condition: user?.emailVerified,
-      component: (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 shadow-md">
-          <Mail
-            className={cn("text-white", size === "sm" ? "w-3 h-3" : "w-4 h-4")}
-          />
-          {showLabels && (
-            <span
-              className={cn(
-                "text-white font-medium",
-                size === "sm" ? "text-xs" : "text-sm"
-              )}
-            >
-              Email Verified
-            </span>
-          )}
-        </div>
-      ),
-      priority: 3,
-    },
-    {
       key: "rating",
       condition: user?.rating && user.rating > 4.0,
       component: (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-purple-600 shadow-md">
-          <Star
+        <div className="flex items-center gap-2">
+          <div
             className={cn(
-              "text-white fill-white",
-              size === "sm" ? "w-3 h-3" : "w-4 h-4"
+              "relative bg-gradient-to-br from-purple-300 via-purple-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg border-2 border-purple-200",
+              "before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-t before:from-transparent before:to-white/20",
+              size === "sm" ? "w-6 h-6" : "w-8 h-8"
             )}
-          />
-          {showLabels && (
-            <span
+          >
+            <Star
               className={cn(
-                "text-white font-medium",
-                size === "sm" ? "text-xs" : "text-sm"
+                "text-purple-800 fill-purple-800 drop-shadow-sm relative z-10",
+                size === "sm" ? "w-3 h-3" : "w-5 h-5"
               )}
-            >
+            />
+            {/* Shine effect */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/30 to-transparent" />
+          </div>
+          {showLabels && (
+            <span className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
               Top Rated
             </span>
           )}
         </div>
       ),
-      priority: 4,
+      priority: 3,
     },
   ];
 
@@ -108,7 +87,7 @@ const VerificationBadges = ({
   return (
     <div
       className={cn(
-        "flex gap-2",
+        "flex gap-3",
         layout === "vertical" ? "flex-col" : "flex-row flex-wrap",
         className
       )}

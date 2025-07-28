@@ -24,10 +24,7 @@ import { Separator } from "@/components/ui/separator.jsx";
 import {
   Star,
   Shield,
-  Check,
-  X,
   Edit,
-  Eye,
   Package,
   MessageSquare,
   Loader2,
@@ -52,6 +49,7 @@ import ListingCard from "@/components/listingCard";
 import GoPremiumButton from "@/components/goPremiumButton";
 import SellerAccountStatus from "@/components/profile/sellerAccountStatus";
 import IDVerificationCard from "@/components/profile/idVerificationCard";
+import VerificationBadges from "@/components/ui/verificationBadges";
 
 const SAMPLE_REVIEWS = [
   {
@@ -89,9 +87,6 @@ export default function Profile() {
   );
   const [showEnterAddressManually, setShowEnterAddressManually] =
     useState(false);
-  const [stripeStatus, setStripeStatus] = useState(null);
-  const [loadingStripeStatus, setLoadingStripeStatus] = useState(false);
-  const [creatingStripeAccount, setCreatingStripeAccount] = useState(false);
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
 
   // Redirect to sign in if not authenticated
@@ -258,25 +253,6 @@ export default function Profile() {
     );
   };
 
-  // Verification badge component
-  const VerificationBadge = ({ isVerified, label }) => {
-    return (
-      <div className="flex items-center gap-1.5">
-        {isVerified ? (
-          <div className="flex items-center text-green-600">
-            <Check size={16} className="mr-1" />
-            <span className="text-sm">{label} Verified</span>
-          </div>
-        ) : (
-          <div className="flex items-center text-amber-600">
-            <X size={16} className="mr-1" />
-            <span className="text-sm">{label} Not Verified</span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // Function to save address to user document
   const saveAddressToFirestore = async (locationData) => {
     try {
@@ -439,16 +415,7 @@ export default function Profile() {
 
                       <Separator className="my-3" />
 
-                      <div className="space-y-2">
-                        <VerificationBadge
-                          isVerified={authUser?.emailVerified}
-                          label="Email"
-                        />
-                        <VerificationBadge
-                          isVerified={userDoc?.idVerified}
-                          label="ID"
-                        />
-                      </div>
+                      <VerificationBadges user={userDoc} />
                     </div>
 
                     <Button

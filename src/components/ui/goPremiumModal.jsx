@@ -24,7 +24,7 @@ import {
   Zap,
   Star,
 } from "lucide-react";
-import CrownBadge from "./crownBadge";
+import CrownBadge from "./premiumBadge";
 import GoPremiumButton from "../goPremiumButton";
 
 const GoPremiumModal = ({

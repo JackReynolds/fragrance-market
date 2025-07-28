@@ -6,7 +6,7 @@ import {
   MessageSquare,
   Medal,
 } from "lucide-react";
-import CrownBadge from "@/components/ui/crownBadge";
+import PremiumBadge from "@/components/ui/premiumBadge";
 import PremiumMembershipWideCard from "@/components/premiumMembershipWideCard";
 
 const PremiumBenefits = () => {
@@ -51,7 +51,7 @@ const PremiumBenefits = () => {
 
               <div className="flex items-start">
                 <div className="mr-3 mt-1">
-                  <CrownBadge
+                  <PremiumBadge
                     outerWidth="8"
                     outerHeight="8"
                     crownWidth="5"

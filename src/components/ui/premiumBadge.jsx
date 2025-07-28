@@ -4,7 +4,7 @@ import React from "react";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const CrownBadge = ({
+const PremiumBadge = ({
   outerWidth = "8",
   outerHeight = "8",
   crownWidth = "5",
@@ -77,4 +77,4 @@ const CrownBadge = ({
   );
 };
 
-export default CrownBadge;
+export default PremiumBadge;

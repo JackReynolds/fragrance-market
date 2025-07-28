@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import PremiumMembershipWideCard from "@/components/premiumMembershipWideCard";
-import CrownBadge from "@/components/ui/crownBadge";
+import CrownBadge from "@/components/ui/premiumBadge";
 import GoPremiumButton from "@/components/goPremiumButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserDoc } from "@/hooks/useUserDoc";

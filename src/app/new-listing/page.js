@@ -688,11 +688,14 @@ const NewListing = () => {
   // Form validation
   const [errors, setErrors] = useState({});
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated or email isn't verified
   useEffect(() => {
     if (!authLoading && !authUser) {
       toast.error("Please sign in to create a listing");
       router.push("/sign-in");
+    } else if (authUser && !authUser.emailVerified) {
+      toast.error("Please verify your email to create a listing");
+      router.push("/");
     }
   }, [authUser, authLoading]);
 
