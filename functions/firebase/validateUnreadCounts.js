@@ -70,7 +70,7 @@ exports.validateUnreadCounts = onSchedule(
       async function validateUserUnreadCount(userDoc) {
         const userData = userDoc.data();
         const userUid = userDoc.id;
-        const currentCount = userData.unreadMessagesCount || 0;
+        const currentCount = userData.unreadMessageCount || 0;
 
         // Calculate actual unread messages for this user
         const actualUnreadCount = await calculateActualUnreadCount(userUid);
@@ -88,7 +88,7 @@ exports.validateUnreadCounts = onSchedule(
 
           // Update the user's unread count
           await db.doc(`users/${userUid}`).update({
-            unreadMessagesCount: actualUnreadCount,
+            unreadMessageCount: actualUnreadCount,
             lastCountValidation: new Date(),
           });
         }

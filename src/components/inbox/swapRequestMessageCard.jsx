@@ -29,6 +29,26 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     });
   };
 
+  // Helper function to decerement unread message count
+  const decrementUnreadMessageCount = async (userUid) => {
+    try {
+      const response = await fetch(
+        "/api/firebase/decrement-unread-message-count",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userUid }),
+        }
+      );
+      if (!response.ok) {
+        console.log("Failed to decrement unread message count");
+      }
+    } catch (error) {
+      console.error("Error decrementing unread message count:", error);
+      toast.error("Error decrementing unread message count");
+    }
+  };
+
   // Helper function to update the swap_request message document with type = swap_accepted
   const updateSwapRequestMessage = async () => {
     try {
@@ -118,6 +138,11 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
       setIsRejecting(true);
       // delete swap request and messages collection
       await deleteSwapRequestAndMessages();
+
+      // If the requested from user has not yet seen the message, decrement their unreadMessageCount
+      if (!message.readBy.includes(message.requestedFrom.uid)) {
+        decrementUnreadMessageCount(message.requestedFrom.uid);
+      }
 
       toast.success(
         `Swap request ${decision === "reject" ? "rejected" : "cancelled"}`

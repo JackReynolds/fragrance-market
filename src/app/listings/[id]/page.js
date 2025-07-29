@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/carousel";
 import SwapCountExceededButton from "@/components/ui/swapCountExceededButton";
 import VerificationBadges from "@/components/ui/verificationBadges";
+import OwnersOtherFragrances from "@/components/listing/ownersOtherFragrances.jsx";
 
 const ListingDetailPage = () => {
   const [listing, setListing] = useState(null);
@@ -639,12 +640,15 @@ const ListingDetailPage = () => {
 
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Similar Listings</CardTitle>
+                  <CardTitle className="text-base">
+                    More from this owner
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-4">
-                  <p className="text-sm text-muted-foreground">
-                    More listings by this seller coming soon...
-                  </p>
+                <CardContent>
+                  <OwnersOtherFragrances
+                    ownerUid={listing?.ownerUid}
+                    currentListingId={listing?.id}
+                  />
                 </CardContent>
               </Card>
 

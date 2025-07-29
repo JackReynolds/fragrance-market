@@ -29,7 +29,7 @@ export async function POST(request) {
       swapCount: 0,
       isPremium: false,
       isIdVerified: false,
-      unreadMessagesCount: 0,
+      unreadMessageCount: 0,
       createdAt: FieldValue.serverTimestamp(),
     });
 

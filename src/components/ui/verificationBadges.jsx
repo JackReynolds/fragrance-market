@@ -13,8 +13,6 @@ const VerificationBadges = ({
   showLabels = true,
   className,
 }) => {
-  console.log("user", user);
-
   const badges = [
     {
       key: "premium",

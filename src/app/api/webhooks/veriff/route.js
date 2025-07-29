@@ -145,12 +145,12 @@ async function handleVerificationResult(payload) {
     const newVerificationAttempts = verificationAttempts + 1;
 
     // Determine if user is verified based on decision
-    const idVerified = decision === "approved";
+    const isIdVerified = decision === "approved";
 
     // Prepare comprehensive update data
     const updateData = {
       verificationAttempts: newVerificationAttempts,
-      idVerified: idVerified, // Boolean field used throughout the app
+      isIdVerified: isIdVerified, // Boolean field used throughout the app
       "veriff.status": status,
       "veriff.sessionId": sessionId,
       "veriff.eventType": eventType,
@@ -172,7 +172,7 @@ async function handleVerificationResult(payload) {
 
     console.log(`✅ User ${userUid} verification status updated:`, {
       decision,
-      idVerified,
+      isIdVerified,
       attempts: newVerificationAttempts,
     });
 
@@ -266,7 +266,7 @@ async function sendVerificationEmail(userUid, decision, userData) {
 }
 
 // Add this function to your webhook file
-async function updateUserListingsVerificationStatus(userUid, idVerified) {
+async function updateUserListingsVerificationStatus(userUid, isIdVerified) {
   try {
     console.log(
       `🔄 Syncing verification status for user ${userUid}'s listings...`
@@ -287,7 +287,7 @@ async function updateUserListingsVerificationStatus(userUid, idVerified) {
 
     listingsSnapshot.docs.forEach((doc) => {
       batch.update(doc.ref, {
-        ownerIdVerified: idVerified,
+        ownerIsIdVerified: isIdVerified,
         lastSyncedAt: FieldValue.serverTimestamp(),
       });
     });

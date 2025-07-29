@@ -37,13 +37,13 @@ exports.onMessageRead = onDocumentUpdated(
           const userDoc = await transaction.get(userRef);
 
           if (userDoc.exists) {
-            const currentCount = userDoc.data().unreadMessagesCount || 0;
+            const currentCount = userDoc.data().unreadMessageCount || 0;
             // Only decrement if count is positive
             if (currentCount > 0) {
               transaction.update(userRef, {
-                unreadMessagesCount: currentCount - 1,
+                unreadMessageCount: currentCount - 1,
               });
-              logger.info(`Decremented unreadMessagesCount for user ${uid}`);
+              logger.info(`Decremented unreadMessageCount for user ${uid}`);
             }
           }
         });
