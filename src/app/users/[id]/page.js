@@ -17,8 +17,6 @@ import {
   orderBy,
   limit,
 } from "firebase/firestore";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -28,7 +26,6 @@ import {
   Star,
   Package,
   MessageSquare,
-  Mail,
   Medal,
   CalendarDays,
   MapPin,
@@ -39,6 +36,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import ListingCard from "@/components/listingCard";
 import CrownBadge from "@/components/ui/premiumBadge";
+import VerificationBadges from "@/components/ui/verificationBadges";
 
 const PublicUserProfile = () => {
   const router = useRouter();
@@ -330,25 +328,17 @@ const PublicUserProfile = () => {
 
                       {/* Verification badges */}
                       <div className="flex flex-col space-y-2">
-                        <VerificationBadge
-                          type="premium"
-                          isVerified={userData.isPremium}
-                        />
-                        <VerificationBadge type="email" isVerified={true} />
-                        <VerificationBadge
-                          type="id"
-                          isVerified={userData.isIdVerified}
-                        />
+                        <VerificationBadges user={userData} />
                       </div>
                     </div>
 
                     {/* Contact button */}
-                    {authUser && authUser.uid !== userData.id && (
+                    {/* {authUser && authUser.uid !== userData.id && (
                       <Button className="w-full">
                         <MessageSquare size={16} className="mr-2" />
                         Contact
                       </Button>
-                    )}
+                    )} */}
                   </div>
                 </CardContent>
               </Card>

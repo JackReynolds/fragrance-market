@@ -116,12 +116,12 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
                 onClick={() => handleListingClick(listing.id)}
               >
                 {/* Image Section */}
-                <div className="relative aspect-[4/5] max-h-[250px] w-full overflow-hidden">
+                <div className="relative aspect-[4/5] max-h-[250px] w-full ">
                   <Image
                     src={listing.imageURLs?.[0] || "/fragrance-placeholder.jpg"}
                     alt={listing.title}
                     fill
-                    className="object-contain max-h-[250px] transition-transform duration-300 group-hover:scale-105"
+                    className="object-contain transition-transform duration-300 group-hover:scale-105"
                     sizes="350px"
                   />
 

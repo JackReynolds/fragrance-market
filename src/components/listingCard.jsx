@@ -42,13 +42,13 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
     <TooltipProvider>
       <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full">
         {/* Image Section - Responsive aspect ratio */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <div className="relative max-h-[300px] aspect-[4/5] w-full overflow-hidden">
           <Image
             src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
             alt={data.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-contain transition-transform duration-300 group-hover:scale-105"
             onClick={handleCardClick}
           />
 
@@ -69,7 +69,7 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
 
         {/* Content Section - Responsive padding */}
         <CardContent
-          className="p-2 sm:p-4 space-y-1.5 sm:space-y-3"
+          className="p-2 sm:p-4 flex flex-col h-full"
           onClick={handleCardClick}
         >
           {/* Brand Row */}
