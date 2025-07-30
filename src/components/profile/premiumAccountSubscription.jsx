@@ -8,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GoPremiumButton } from "@/components/goPremiumButton";
+import GoPremiumButton from "@/components/goPremiumButton";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserDoc } from "@/hooks/useUserDoc";
@@ -41,11 +41,11 @@ const PremiumAccountSubscription = () => {
         <div className="flex items-center gap-3">
           <div
             className={`p-2 rounded-lg ${
-              isPremium ? "bg-amber-100" : "bg-gray-100"
+              isPremium ? "bg-green-100" : "bg-gray-100"
             }`}
           >
             {isPremium ? (
-              <Crown className="h-5 w-5 text-amber-600" />
+              <Crown className="h-5 w-5 text-green-600" />
             ) : (
               <Star className="h-5 w-5 text-gray-600" />
             )}
@@ -64,13 +64,13 @@ const PremiumAccountSubscription = () => {
       <CardContent className="space-y-4">
         {isPremium ? (
           <>
-            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
               <PremiumBadge />
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="font-medium text-amber-900">Premium Active</p>
+                  <p className="font-medium text-green-900">Premium Active</p>
                 </div>
-                <p className="text-sm text-amber-700">
+                <p className="text-sm text-green-700">
                   You have full access to all premium features and unlimited
                   swaps.
                 </p>

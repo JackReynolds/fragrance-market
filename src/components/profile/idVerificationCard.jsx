@@ -26,13 +26,13 @@ const IDVerificationCard = () => {
         <div className="flex items-center gap-3">
           <div
             className={`p-2 rounded-lg ${
-              isVerified ? "bg-green-100" : "bg-blue-100"
+              isVerified ? "bg-green-100" : "bg-amber-100"
             }`}
           >
             {isVerified ? (
               <ShieldCheck className="h-5 w-5 text-green-600" />
             ) : (
-              <Shield className="h-5 w-5 text-blue-600" />
+              <Shield className="h-5 w-5 text-amber-600" />
             )}
           </div>
           <div>
