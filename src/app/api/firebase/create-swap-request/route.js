@@ -149,9 +149,10 @@ export async function POST(request) {
     const swapRequestRef = db.collection("swap_requests").doc();
     batch.set(swapRequestRef, swapRequestData);
 
-    // Create initial chat message
+    // Create initial chat message and remove "status" from swapRequestData - not needed in messages
+    const { status, ...restOfSwapRequestData } = swapRequestData;
     const messageData = {
-      ...swapRequestData,
+      ...restOfSwapRequestData,
       type: "swap_request",
       readBy: [currentUserUid],
       senderUid: currentUserUid,

@@ -30,9 +30,21 @@ const SwapTimeline = ({ swapRequest, className = "" }) => {
     const currentIndex = stages.findIndex((s) => s.key === currentStatus);
     const stageIndex = stages.findIndex((s) => s.key === stageKey);
 
-    if (stageIndex < currentIndex) return "completed";
-    if (stageIndex === currentIndex) return "current";
+    // If we're at the final stage, mark it as completed instead of current
+    if (stageIndex <= currentIndex) return "completed";
     return "upcoming";
+  };
+
+  // Calculate progress percentage
+  const getCurrentStageIndex = () => {
+    return stages.findIndex((s) => s.key === currentStatus);
+  };
+
+  const progressPercentage = () => {
+    const currentIndex = getCurrentStageIndex();
+    if (currentIndex === -1) return 0;
+    // For 3 stages: 0%, 50%, 100%
+    return (currentIndex / (stages.length - 1)) * 100;
   };
 
   return (
@@ -40,6 +52,14 @@ const SwapTimeline = ({ swapRequest, className = "" }) => {
       <div className="flex items-center justify-between relative">
         {/* Progress bar background */}
         <div className="absolute top-4 left-8 right-8 h-0.5 bg-muted -z-10" />
+
+        {/* Progress bar fill */}
+        <div
+          className="absolute top-4 left-8 h-0.5 bg-primary transition-all duration-500 ease-in-out -z-10"
+          style={{
+            width: `calc((100% - 4rem) * ${progressPercentage() / 100})`,
+          }}
+        />
 
         {stages.map((stage, index) => {
           const status = getStageStatus(stage.key);
@@ -50,18 +70,6 @@ const SwapTimeline = ({ swapRequest, className = "" }) => {
               key={stage.key}
               className="flex flex-col items-center relative"
             >
-              {/* Progress bar fill */}
-              {index > 0 && status === "completed" && (
-                <div
-                  className="absolute top-4 right-1/2 w-full h-0.5 bg-primary -z-10"
-                  style={{
-                    right: `calc(50% + ${
-                      ((stages.length - index) * 100) / stages.length
-                    }%)`,
-                  }}
-                />
-              )}
-
               {/* Icon circle */}
               <div
                 className={`
@@ -69,8 +77,6 @@ const SwapTimeline = ({ swapRequest, className = "" }) => {
                 ${
                   status === "completed"
                     ? "bg-primary border-primary text-white"
-                    : status === "current"
-                    ? "bg-white border-primary text-primary"
                     : "bg-muted border-muted-foreground/30 text-muted-foreground"
                 }
               `}
@@ -83,7 +89,7 @@ const SwapTimeline = ({ swapRequest, className = "" }) => {
                 className={`
                 text-xs mt-2 text-center max-w-24
                 ${
-                  status === "completed" || status === "current"
+                  status === "completed"
                     ? "text-foreground font-medium"
                     : "text-muted-foreground"
                 }

@@ -50,6 +50,8 @@ import GoPremiumButton from "@/components/goPremiumButton";
 import SellerAccountStatus from "@/components/profile/sellerAccountStatus";
 import IDVerificationCard from "@/components/profile/idVerificationCard";
 import VerificationBadges from "@/components/ui/verificationBadges";
+import { Textarea } from "@/components/ui/textarea";
+import PremiumAccountSubscription from "@/components/profile/premiumAccountSubscription";
 
 const SAMPLE_REVIEWS = [
   {
@@ -88,6 +90,10 @@ export default function Profile() {
   const [showEnterAddressManually, setShowEnterAddressManually] =
     useState(false);
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
+  const [personalInfo, setPersonalInfo] = useState({
+    username: userDoc?.username || "",
+    bio: userDoc?.bio || "",
+  });
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -297,6 +303,36 @@ export default function Profile() {
     } catch (error) {
       console.error("Error in handleSaveAddress:", error);
       toast.error("Failed to save address. Please try again.");
+    }
+  };
+
+  // Handle save changes
+  const handleSaveChanges = async () => {
+    try {
+      const { username, bio } = personalInfo;
+
+      if (!username && !bio) {
+        toast.error("No changes to save");
+        return;
+      }
+
+      if (username === userDoc?.username && bio === userDoc?.bio) {
+        toast.error("No changes to save");
+        return;
+      }
+
+      // Update user document first
+      const userRef = doc(db, "users", authUser.uid);
+      await updateDoc(userRef, {
+        username: username || userDoc?.username,
+        bio: bio || userDoc?.bio,
+        updatedAt: serverTimestamp(),
+      });
+
+      toast.success("Changes saved successfully!");
+    } catch (error) {
+      console.error("Error in handleSaveChanges:", error);
+      toast.error("Failed to save changes. Please try again.");
     }
   };
 
@@ -625,42 +661,7 @@ export default function Profile() {
                     <SellerAccountStatus userDoc={userDoc} />
                   ) : null}
 
-                  {/* Premium Account Subscription */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        Premium Account Subscription:{" "}
-                        {userDoc?.isPremium ? (
-                          <span className="text-primary">Active</span>
-                        ) : (
-                          <span className="text-destructive">Inactive</span>
-                        )}
-                      </CardTitle>
-                      <CardDescription>
-                        Manage your premium account subscription
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="w-3/5 md:w-2/5 lg:w-1/4 2xl:w-1/5">
-                      {userDoc?.isPremium ? (
-                        <Button
-                          className="w-full hover:cursor-pointer shadow-md"
-                          variant="outline"
-                          onClick={() =>
-                            router.push(
-                              `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${authUser?.email}`
-                            )
-                          }
-                        >
-                          Manage Subscription
-                        </Button>
-                      ) : (
-                        <GoPremiumButton
-                          authUser={authUser}
-                          currency={currency}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
+                  <PremiumAccountSubscription />
 
                   {/* Personal Information */}
                   <Card>
@@ -674,13 +675,14 @@ export default function Profile() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="display-name">Display Name</Label>
+                        <Label htmlFor="username">Username</Label>
                         <Input
-                          id="display-name"
+                          id="username"
                           defaultValue={
                             authUser?.displayName || userDoc?.username || ""
                           }
-                          placeholder="Your display name"
+                          disabled={true}
+                          placeholder="Your username"
                         />
                       </div>
 
@@ -691,7 +693,7 @@ export default function Profile() {
                           defaultValue={authUser?.email}
                           disabled
                         />
-                        {!authUser?.emailVerified && (
+                        {/* {!authUser?.emailVerified && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -702,23 +704,43 @@ export default function Profile() {
                           >
                             Verify Email
                           </Button>
-                        )}
+                        )} */}
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
                         <Input
                           id="phone"
-                          defaultValue={userDoc?.phoneNumber || ""}
+                          value={personalInfo.phoneNumber || ""}
+                          onChange={(e) =>
+                            setPersonalInfo({
+                              ...personalInfo,
+                              phoneNumber: e.target.value,
+                            })
+                          }
                           placeholder="Your phone number"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="bio">Bio</Label>
+                        <Textarea
+                          id="bio"
+                          value={personalInfo.bio || ""}
+                          onChange={(e) =>
+                            setPersonalInfo({
+                              ...personalInfo,
+                              bio: e.target.value,
+                            })
+                          }
+                          placeholder="Add some info about yourself..."
+                          rows={4}
                         />
                       </div>
 
                       <Button
                         className="mt-2 hover:cursor-pointer hover:bg-primary/80"
-                        onClick={() =>
-                          toast.success("Profile updated successfully!")
-                        }
+                        onClick={handleSaveChanges}
                       >
                         Save Changes
                       </Button>

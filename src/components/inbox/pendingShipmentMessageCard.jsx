@@ -96,6 +96,30 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     isRequestedFromUser,
   ]);
 
+  // Helper function to send shipment confirmed email
+  const sendShipmentConfirmedEmail = async () => {
+    try {
+      // Send email to other party that shipment has been confirmed
+      const response = await fetch("/api/email/shipment-confirmed", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          swapRequest,
+          confirmingUserUid: authUser.uid,
+          trackingNumber: trackingNumber.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to send shipment confirmed email");
+      }
+    } catch (error) {
+      console.error("Error sending shipment confirmed email:", error);
+    }
+  };
+
   const handleConfirmShipment = async () => {
     if (isConfirmingShipment) return;
 
@@ -125,10 +149,13 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       // Update local state based on server response
       setIsCurrentUserShipped(true);
 
-      // 🔥 ADD: Update local tracking number if provided
+      // 🔥 Update local tracking number if provided
       if (trackingNumber.trim()) {
         setCurrentUserTrackingNumber(trackingNumber.trim());
       }
+
+      // Send shipment confirmed email
+      await sendShipmentConfirmedEmail();
 
       if (result.data.swapCompleted) {
         toast.success("Swap completed! Both parties have shipped.");
