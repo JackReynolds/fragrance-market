@@ -47,7 +47,7 @@ const PremiumAccountSubscription = () => {
             {isPremium ? (
               <Crown className="h-5 w-5 text-green-600" />
             ) : (
-              <Star className="h-5 w-5 text-gray-600" />
+              <Crown className="h-5 w-5 text-gray-600" />
             )}
           </div>
           <div>
@@ -81,23 +81,23 @@ const PremiumAccountSubscription = () => {
               <h4 className="font-medium text-sm">Your premium benefits:</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                   Unlimited fragrance swaps
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                   Unlimited fragrance uploads
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                   Priority fragrance search ranking
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                   Premium badge on your profile
                 </li>
                 <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                   Ability to sell fragrances
                 </li>
               </ul>
@@ -132,20 +132,29 @@ const PremiumAccountSubscription = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                    Priority customer support
+                    Unlimited fragrance uploads
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                    Ability to verify your identity to build trust with other
+                    users
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                    Priority fragrance search ranking
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                    Ability to sell fragrances
                   </li>
                   <li className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                     Premium badge on your profile
                   </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                    Early access to new features
-                  </li>
                 </ul>
               </div>
 
-              <div className="pt-2 border-t">
+              <div className="pt-2 border-t w-1/3">
                 <GoPremiumButton authUser={authUser} currency={currency} />
               </div>
             </div>

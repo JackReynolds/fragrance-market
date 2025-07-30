@@ -80,7 +80,7 @@ const SAMPLE_REVIEWS = [
 export default function Profile() {
   const { authUser, authLoading } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("listings");
+  const [activeTab, setActiveTab] = useState("account");
   const [userListings, setUserListings] = useState([]);
   const { userDoc } = useUserDoc();
   const [editingAddress, setEditingAddress] = useState(false);
@@ -422,12 +422,17 @@ export default function Profile() {
                         <StarRating rating={userStats.rating} />
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Items Sold</span>
-                        <span className="text-sm font-medium">
-                          {userStats.itemsSold}
-                        </span>
-                      </div>
+                      {/* Items sold */}
+                      {userDoc?.isPremium ? (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">
+                            Items Sold
+                          </span>
+                          <span className="text-sm font-medium">
+                            {userStats.itemsSold}
+                          </span>
+                        </div>
+                      ) : null}
 
                       {/* Swap Count */}
                       <div className="flex items-center justify-between">
@@ -513,12 +518,19 @@ export default function Profile() {
             {/* Main content with tabs */}
             <div>
               <Tabs
-                defaultValue="listings"
+                defaultValue="account"
                 value={activeTab}
                 onValueChange={setActiveTab}
               >
                 <div className="flex justify-center md:justify-between items-center mb-6 gap-3">
                   <TabsList>
+                    <TabsTrigger
+                      value="account"
+                      className="px-4 hover:cursor-pointer"
+                    >
+                      <Edit size={16} className="mr-2 " />
+                      Account
+                    </TabsTrigger>
                     <TabsTrigger
                       value="listings"
                       className="px-4 hover:cursor-pointer"
@@ -532,13 +544,6 @@ export default function Profile() {
                     >
                       <MessageSquare size={16} className="mr-2 " />
                       Reviews
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="account"
-                      className="px-4 hover:cursor-pointer"
-                    >
-                      <Edit size={16} className="mr-2 " />
-                      Account
                     </TabsTrigger>
                   </TabsList>
 
@@ -569,7 +574,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className="flex justify-center">
-                      <div className="w-full grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="w-full grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
                         {userListings &&
                           userListings.map((listing) => (
                             <ListingCard
@@ -747,7 +752,8 @@ export default function Profile() {
                     </CardContent>
                   </Card>
 
-                  <IDVerificationCard />
+                  {/* Show ID verification if user is premium */}
+                  {userDoc?.isPremium ? <IDVerificationCard /> : null}
 
                   {/* Address Information */}
                   <Card>

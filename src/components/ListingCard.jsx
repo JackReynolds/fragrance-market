@@ -126,7 +126,7 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                 </div>
 
                 {/* Badges with Tooltips - Responsive sizing */}
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-3 mt-1 flex-shrink-0">
                   {data.ownerIsPremium && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -148,7 +148,12 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">
-                          <IdVerifiedBadge />
+                          <IdVerifiedBadge
+                            outerWidth="6"
+                            outerHeight="6"
+                            shieldWidth="4"
+                            shieldHeight="4"
+                          />
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>

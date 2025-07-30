@@ -346,9 +346,7 @@ const PublicUserProfile = () => {
               {/* Additional user info card */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
-                    Seller Information
-                  </CardTitle>
+                  <CardTitle className="text-base">Information</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {userData.bio ? (
@@ -437,7 +435,7 @@ const PublicUserProfile = () => {
                     </div>
                   ) : (
                     <div className="flex justify-center items-center">
-                      <div className="w-full grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      <div className="w-full grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {userListings.map((listing) => (
                           <ListingCard key={listing.id} listing={listing} />
                         ))}
