@@ -40,7 +40,7 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
 
   return (
     <TooltipProvider>
-      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full">
+      <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full relative flex flex-col">
         {/* Image Section - Responsive aspect ratio */}
         <div className="relative max-h-[300px] aspect-[4/5] w-full overflow-hidden">
           <Image
@@ -67,37 +67,40 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
           </div>
         </div>
 
-        {/* Content Section - Responsive padding */}
+        {/* Content Section - Flex grow to fill remaining space */}
         <CardContent
-          className="p-2 sm:p-4 flex flex-col h-full"
+          className="p-2 sm:p-4 pb-12 sm:pb-14 flex flex-col flex-grow"
           onClick={handleCardClick}
         >
-          {/* Brand Row */}
-          <div>
-            <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide line-clamp-1">
-              {data.brand}
-            </p>
-          </div>
-
-          {/* Title - Responsive sizing */}
-          <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-2 sm:mb-3">
-            {data.title}
-          </h3>
-
-          {/* Price Row - Responsive sizing */}
-          {data.price && data.type === "sell" && (
+          {/* Top content section */}
+          <div className="flex-grow">
+            {/* Brand Row */}
             <div>
-              <p className="text-sm sm:text-lg md:text-xl font-bold text-emerald-600">
-                {formatCurrency(data.price, data.currency || "EUR")}
+              <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide line-clamp-1">
+                {data.brand}
               </p>
             </div>
-          )}
 
-          {/* User Info Section - Responsive spacing */}
+            {/* Title - Responsive sizing */}
+            <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-2 sm:mb-3">
+              {data.title}
+            </h3>
+
+            {/* Price Row - Responsive sizing */}
+            {data.price && data.type === "sell" && (
+              <div className="mb-2 sm:mb-3">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-emerald-600">
+                  {formatCurrency(data.price, data.currency || "EUR")}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* User Info Section - Always at bottom */}
           {showUserInfo && (
-            <div className="space-y-1 sm:space-y-2 pt-1 sm:pt-2 border-t border-gray-100">
+            <div className="mt-auto space-y-1 sm:space-y-2 pt-1 sm:pt-2 border-t border-gray-100">
               {/* User Row - Compact on mobile */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
                   {/* Profile Picture - Responsive sizing */}
                   <div className="flex-shrink-0">
@@ -125,57 +128,37 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
                   </p>
                 </div>
 
-                {/* Badges with Tooltips - Responsive sizing */}
-                <div className="flex items-center gap-3 mt-1 flex-shrink-0">
-                  {data.ownerIsPremium && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center cursor-help">
-                          <PremiumBadge
-                            outerWidth="6"
-                            outerHeight="6"
-                            crownWidth="4"
-                            crownHeight="4"
-                          />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Premium Member</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  {data.ownerIsIdVerified && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="w-4 h-4 sm:w-7 sm:h-7 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center cursor-help">
-                          <IdVerifiedBadge
-                            outerWidth="6"
-                            outerHeight="6"
-                            shieldWidth="4"
-                            shieldHeight="4"
-                          />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>ID Verified</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-              </div>
+                <div className="flex items-center gap-2 mt-1 flex-shrink-0">
+                  {data.ownerIsPremium ? (
+                    <PremiumBadge
+                      outerWidth="6"
+                      outerHeight="6"
+                      crownWidth="4"
+                      crownHeight="4"
+                    />
+                  ) : null}
 
-              {/* Location Row - Responsive sizing */}
-              <div className="flex items-center gap-1 sm:gap-2 text-[10px] sm:text-sm text-gray-700">
-                <span className="text-xs sm:text-sm">
-                  {data?.countryCode && getCountryFlagEmoji(data.countryCode)}
-                </span>
-                <span className="truncate">
-                  {data?.country || "Location not specified"}
-                </span>
+                  {data.ownerIsIdVerified ? (
+                    <IdVerifiedBadge
+                      outerWidth="6"
+                      outerHeight="6"
+                      shieldWidth="4"
+                      shieldHeight="4"
+                    />
+                  ) : null}
+                </div>
               </div>
             </div>
           )}
         </CardContent>
+
+        {/* Country positioned absolutely at bottom left with proper spacing */}
+        <div className="absolute bottom-2 left-2 sm:bottom-4 sm:left-4 flex items-center gap-1 text-[10px] sm:text-sm text-gray-700 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 shadow-sm border border-gray-200 z-10">
+          <span className="text-xs sm:text-sm">
+            {data?.countryCode && getCountryFlagEmoji(data.countryCode)}
+          </span>
+          <span className="">{data?.country || "Unknown"}</span>
+        </div>
       </Card>
     </TooltipProvider>
   );

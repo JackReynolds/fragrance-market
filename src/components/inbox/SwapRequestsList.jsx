@@ -5,6 +5,8 @@
 import React from "react";
 import Image from "next/image";
 import { format } from "date-fns";
+import IdVerifiedBadge from "../ui/idVerifiedBadge";
+import PremiumBadge from "../ui/premiumBadge";
 
 export default function SwapRequestsList({
   requests,
@@ -18,7 +20,8 @@ export default function SwapRequestsList({
       return {
         username: request.requestedFrom.username,
         uid: request.requestedFrom.uid,
-        // Use placeholder for now
+        isPremium: request.requestedFrom.isPremium,
+        isIdVerified: request.requestedFrom.isIdVerified,
         profilePictureURL:
           request.requestedFrom.profilePictureURL ||
           "/profilePicturePlaceholder.png",
@@ -27,7 +30,8 @@ export default function SwapRequestsList({
       return {
         username: request.offeredBy.username,
         uid: request.offeredBy.uid,
-        // Use placeholder for now
+        isPremium: request.offeredBy.isPremium,
+        isIdVerified: request.offeredBy.isIdVerified,
         profilePictureURL:
           request.offeredBy.profilePictureURL ||
           "/profilePicturePlaceholder.png",
@@ -132,9 +136,29 @@ export default function SwapRequestsList({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {otherParty.username}
-                      </p>
+                      <div className="flex items-center gap-2 justify-between mb-2">
+                        <p className="font-medium text-sm truncate">
+                          {otherParty.username}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {otherParty.isIdVerified && (
+                            <IdVerifiedBadge
+                              outerWidth="5"
+                              outerHeight="5"
+                              shieldWidth="3"
+                              shieldHeight="3"
+                            />
+                          )}
+                          {otherParty.isPremium && (
+                            <PremiumBadge
+                              outerWidth="5"
+                              outerHeight="5"
+                              crownWidth="3"
+                              crownHeight="3"
+                            />
+                          )}
+                        </div>
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {requestTitle}
                       </p>

@@ -3,6 +3,11 @@
 import React from "react";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 const PremiumBadge = ({
   outerWidth = "8",
@@ -13,6 +18,7 @@ const PremiumBadge = ({
   className,
   showGlow = true,
   animated = true,
+  showTooltip = true,
 }) => {
   const sizeClasses = {
     sm: {
@@ -35,7 +41,7 @@ const PremiumBadge = ({
 
   const currentSize = sizeClasses[size] || sizeClasses.default;
 
-  return (
+  const badgeContent = (
     <div className="relative">
       {/* Glow effect */}
       {showGlow && (
@@ -74,6 +80,31 @@ const PremiumBadge = ({
         />
       </div>
     </div>
+  );
+
+  if (!showTooltip) {
+    return badgeContent;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="bg-gradient-to-r from-yellow-600 to-amber-700 text-white border-amber-300 max-w-56"
+      >
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-1 mb-1">
+            <Crown className="h-3 w-3" />
+            <span className="font-semibold">Premium Member</span>
+          </div>
+          <div className="text-xs opacity-90">
+            Unlimited swaps, unlimited fragrance uploads and priority search
+            ranking.
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
