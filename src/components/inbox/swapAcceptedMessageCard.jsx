@@ -12,10 +12,12 @@ import { db } from "@/firebase.config";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
 import { useUserDoc } from "@/hooks/useUserDoc";
 import { toast } from "sonner";
+import CancelSwapRequestModal from "./cancelSwapRequestModal";
 
 const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [isConfirmingAddress, setIsConfirmingAddress] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const { userDoc } = useUserDoc();
   const router = useRouter();
@@ -229,6 +231,60 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     } catch (error) {
       console.error("Error in handleSaveAddress:", error);
       toast.error("Failed to save address. Please try again.");
+    }
+  };
+
+  // Function to send swap request cancellation email
+  const sendSwapRequestCancellationEmail = async (cancelMessage = "") => {
+    try {
+      const response = await fetch("/api/email/swap-request-cancelled", {
+        method: "POST",
+        body: JSON.stringify({
+          requestedFromUsername: swapRequest.requestedFrom.username,
+          offeredByUsername: swapRequest.offeredBy.username,
+          requestedListingTitle: swapRequest.requestedListing.title,
+          offeredListingTitle: swapRequest.offeredListing.title,
+          cancelMessage: cancelMessage,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.error) {
+        throw new Error(
+          result.error || "Failed to send swap request cancellation email"
+        );
+      }
+    } catch (error) {
+      console.error("Error sending swap request cancellation email:", error);
+    }
+  };
+
+  // Handle cancel swap request
+  const handleCancelSwap = async (cancelMessage = "") => {
+    try {
+      const response = await fetch(`/api/firebase/delete-swap-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ swapRequestId: swapRequest.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to cancel swap request");
+      }
+
+      // If there's a cancellation message, you might want to send a notification email here
+      // This would require creating a new API endpoint for cancellation emails
+      if (cancelMessage) {
+        console.log("Cancellation message:", cancelMessage);
+        // TODO: Send cancellation email with message
+      }
+
+      setShowCancelModal(false);
+      toast.success("Swap request cancelled successfully");
+    } catch (error) {
+      console.error("Error cancelling swap:", error);
+      throw error; // Re-throw to be handled by the modal
     }
   };
 
@@ -472,7 +528,32 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
             </div>
           </div>
         </div>
+
+        {/* Add Cancel Button Section */}
+        <div className="border-t pt-3 mt-3">
+          <div className="flex justify-between items-center">
+            <p className="text-sm text-muted-foreground">
+              Need to cancel this swap?
+            </p>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setShowCancelModal(true)}
+              className="hover:bg-destructive/90 hover:cursor-pointer"
+            >
+              Cancel Swap
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* Add the Cancel Modal */}
+      <CancelSwapRequestModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelSwap}
+        swapRequest={swapRequest}
+      />
     </div>
   );
 };
