@@ -237,15 +237,28 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   // Function to send swap request cancellation email
   const sendSwapRequestCancellationEmail = async (cancelMessage = "") => {
     try {
-      const response = await fetch("/api/email/swap-request-cancelled", {
+      const emailPayload = {
+        // Email goes to the OTHER user (not the one cancelling)
+        recipientEmail: otherUserInfo.email,
+        recipientUsername: otherUserInfo.username,
+        // Cancelling user info
+        cancellingUsername: currentUserInfo.username,
+        // Swap details
+        offeredListingTitle: swapRequest.offeredListing.title,
+        requestedListingTitle: swapRequest.requestedListing.title,
+      };
+
+      // Only include cancelMessage if it exists and isn't empty
+      if (cancelMessage && cancelMessage.trim()) {
+        emailPayload.cancelMessage = cancelMessage.trim();
+      }
+
+      const response = await fetch("/api/email/cancel-swap-request", {
         method: "POST",
-        body: JSON.stringify({
-          requestedFromUsername: swapRequest.requestedFrom.username,
-          offeredByUsername: swapRequest.offeredBy.username,
-          requestedListingTitle: swapRequest.requestedListing.title,
-          offeredListingTitle: swapRequest.offeredListing.title,
-          cancelMessage: cancelMessage,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(emailPayload),
       });
 
       const result = await response.json();
@@ -255,14 +268,26 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           result.error || "Failed to send swap request cancellation email"
         );
       }
+
+      console.log("Cancellation email sent successfully");
     } catch (error) {
       console.error("Error sending swap request cancellation email:", error);
+      // Don't throw here - we don't want email failure to prevent cancellation
+      toast.warning("Swap cancelled, but notification email failed to send");
     }
   };
 
   // Handle cancel swap request
   const handleCancelSwap = async (cancelMessage = "") => {
     try {
+      // First, send the cancellation email to the other user
+      if (cancelMessage.trim()) {
+        await sendSwapRequestCancellationEmail(cancelMessage.trim());
+      } else {
+        await sendSwapRequestCancellationEmail(); // Send without message
+      }
+
+      // Then delete the swap request
       const response = await fetch(`/api/firebase/delete-swap-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -271,13 +296,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
       if (!response.ok) {
         throw new Error("Failed to cancel swap request");
-      }
-
-      // If there's a cancellation message, you might want to send a notification email here
-      // This would require creating a new API endpoint for cancellation emails
-      if (cancelMessage) {
-        console.log("Cancellation message:", cancelMessage);
-        // TODO: Send cancellation email with message
       }
 
       setShowCancelModal(false);
