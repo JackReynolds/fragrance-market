@@ -115,6 +115,7 @@ export async function POST(request) {
         updatedConfirmations[userUid] && updatedConfirmations[otherUserUid];
 
       let messageUpdated = false;
+      let swapCountIncremented = false;
 
       if (bothConfirmed) {
         // Only proceed if status is still "swap_accepted"
@@ -137,13 +138,35 @@ export async function POST(request) {
             readBy: [userUid],
           });
 
+          // ✅ INCREMENT SWAP COUNT FOR BOTH USERS
+          // This is when the swap is truly committed - both addresses confirmed
+          const offeredByUserRef = db.doc(`users/${swapData.offeredBy.uid}`);
+          const requestedFromUserRef = db.doc(
+            `users/${swapData.requestedFrom.uid}`
+          );
+
+          transaction.update(offeredByUserRef, {
+            swapCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
+          transaction.update(requestedFromUserRef, {
+            swapCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
           messageUpdated = true;
+          swapCountIncremented = true;
+
           console.log(
-            `Updated message ${messageId} to pending_shipment for swap ${swapRequestId}`
+            `Updated message ${messageId} to pending_shipment and incremented swap counts for swap ${swapRequestId}`
+          );
+          console.log(
+            `Incremented swap count for users: ${swapData.offeredBy.uid}, ${swapData.requestedFrom.uid}`
           );
         } else {
           console.log(
-            `Swap ${swapRequestId} status changed during transaction, skipping message update`
+            `Swap ${swapRequestId} status changed during transaction, skipping message update and swap count increment`
           );
         }
       }
@@ -152,6 +175,7 @@ export async function POST(request) {
         success: true,
         bothConfirmed,
         messageUpdated,
+        swapCountIncremented,
         confirmations: updatedConfirmations,
         newStatus:
           bothConfirmed && swapData.status === "swap_accepted"
