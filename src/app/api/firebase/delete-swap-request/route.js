@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(request) {
   const { swapRequestId } = await request.json();
 
-  async function deleteCollection(db, collectionPath, batchSize) {
+  async function deleteCollection(db, collectionPath, batchSize = 50) {
     const collectionRef = db.collection(collectionPath);
     const query = collectionRef.orderBy("__name__").limit(batchSize);
 
@@ -45,7 +45,7 @@ export async function POST(request) {
     await deleteCollection(db, `swap_requests/${swapRequestId}/messages`, 50);
 
     // Delete presence collection if present
-    await deleteCollection(db, `swap_requests/${swapRequestId}/presence`);
+    await deleteCollection(db, `swap_requests/${swapRequestId}/presence`, 50);
 
     return NextResponse.json({ message: "Swap request deleted." });
   } catch (error) {

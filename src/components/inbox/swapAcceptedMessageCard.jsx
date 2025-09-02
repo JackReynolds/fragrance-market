@@ -99,8 +99,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     bothConfirmed = false
   ) => {
     try {
-      console.log("bothConfirmed", bothConfirmed);
-
       const response = await fetch("/api/email/shipping-address-confirmed", {
         method: "POST",
         body: JSON.stringify({
@@ -268,8 +266,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           result.error || "Failed to send swap request cancellation email"
         );
       }
-
-      console.log("Cancellation email sent successfully");
     } catch (error) {
       console.error("Error sending swap request cancellation email:", error);
       // Don't throw here - we don't want email failure to prevent cancellation
@@ -282,9 +278,9 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     try {
       // First, send the cancellation email to the other user
       if (cancelMessage.trim()) {
-        await sendSwapRequestCancellationEmail(cancelMessage.trim());
+        sendSwapRequestCancellationEmail(cancelMessage.trim());
       } else {
-        await sendSwapRequestCancellationEmail(); // Send without message
+        sendSwapRequestCancellationEmail(); // Send without message
       }
 
       // Then delete the swap request

@@ -354,38 +354,46 @@ const ListingDetailPage = () => {
                       <>
                         <Button
                           variant="outline"
-                          size="icon"
                           onClick={handleShare}
                           title="Share listing"
+                          className="hover:cursor-pointer"
                         >
                           <Share2 className="h-4 w-4" />
+                          Share
                         </Button>
                         <Button
                           variant="outline"
-                          size="icon"
                           onClick={() =>
                             router.push(`/edit-listing/${listing.id}`)
                           }
                           title="Edit listing"
+                          className="hover:cursor-pointer"
                         >
                           <Edit className="h-4 w-4" />
+                          Edit
                         </Button>
                         <Button
                           variant={
                             listing.status === "active" ? "outline" : "default"
                           }
-                          size="icon"
                           onClick={toggleListingStatus}
                           title={
                             listing.status === "active"
                               ? "Deactivate listing"
                               : "Activate listing"
                           }
+                          className="hover:cursor-pointer"
                         >
                           {listing.status === "active" ? (
-                            <EyeOff className="h-4 w-4" />
+                            <>
+                              <EyeOff className="h-4 w-4" />
+                              Deactivate
+                            </>
                           ) : (
-                            <Eye className="h-4 w-4" />
+                            <>
+                              <Eye className="h-4 w-4" />
+                              Activate
+                            </>
                           )}
                         </Button>
                       </>
@@ -393,20 +401,20 @@ const ListingDetailPage = () => {
                       <>
                         <Button
                           variant="outline"
-                          size="icon"
                           className="hover:cursor-pointer"
                           onClick={handleShare}
                           title="Share listing"
                         >
                           <Share2 className="h-4 w-4" />
+                          Share
                         </Button>
                         <Button
                           variant="outline"
-                          size="icon"
                           className="hover:cursor-pointer"
-                          title="Add to favorites"
+                          title="Add to favourites"
                         >
                           <Heart className="h-4 w-4" />
+                          Favourite
                         </Button>
                       </>
                     )}
@@ -546,7 +554,7 @@ const ListingDetailPage = () => {
                         />
                       ) : (
                         <Button
-                          className="w-full py-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
+                          className="py-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
                           size="lg"
                           onClick={handleOfferSwap}
                           disabled={isCheckingListings}
