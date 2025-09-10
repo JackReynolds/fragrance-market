@@ -220,7 +220,7 @@ const MarketplaceContent = () => {
                   />
                 </div>
 
-                <SortBy
+                {/* <SortBy
                   items={[
                     { label: "Newest first", value: "fragrances" },
                     {
@@ -235,7 +235,7 @@ const MarketplaceContent = () => {
                   classNames={{
                     root: "w-full sm:w-auto",
                   }}
-                />
+                /> */}
               </div>
 
               {/* Results grid - Optimized for mobile 2-column */}
@@ -245,7 +245,7 @@ const MarketplaceContent = () => {
                   classNames={{
                     root: "w-full",
                     list: "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4",
-                    item: "max-w-72", // Removed min-width constraint
+                    item: "max-w-72",
                   }}
                 />
               </div>

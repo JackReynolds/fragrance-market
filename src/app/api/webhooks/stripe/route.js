@@ -3,8 +3,13 @@ import Stripe from "stripe";
 import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
-const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
-const endpointSecret = process.env.STRIPE_TEST_WEBHOOK_SECRET;
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY
+);
+const endpointSecret =
+  process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_TEST_WEBHOOK_SECRET;
+
+export const runtime = "nodejs";
 
 export async function POST(request) {
   console.log("WEBHOOK HIT! Timestamp:", new Date().toISOString());
@@ -102,9 +107,6 @@ async function handleCheckoutCompleted(session) {
       subscriptionPriceId: subscription.items.data[0]?.price?.id,
       updatedAt: FieldValue.serverTimestamp(),
     });
-
-    // Sync premium status to all user's listings
-    await syncPremiumStatusToListings(userUid, true);
   } catch (error) {
     console.error("Error in handleCheckoutCompleted:", error);
     console.error("Error stack:", error.stack);
@@ -153,9 +155,6 @@ async function handleSubscriptionUpdated(subscription) {
         : null,
       updatedAt: FieldValue.serverTimestamp(),
     });
-
-    // Sync premium status to listings
-    await syncPremiumStatusToListings(userUid, isPremium);
   } catch (error) {
     console.error("Error in handleSubscriptionUpdated:", error);
   }
@@ -191,50 +190,7 @@ async function handleSubscriptionDeleted(subscription) {
       subscriptionCurrentPeriodEnd: null,
       updatedAt: FieldValue.serverTimestamp(),
     });
-
-    // Sync premium status to listings
-    await syncPremiumStatusToListings(userUid, false);
   } catch (error) {
     console.error("Error in handleSubscriptionDeleted:", error);
-  }
-}
-
-// Add this function to your stripe webhook file
-async function syncPremiumStatusToListings(userUid, isPremium) {
-  try {
-    console.log(
-      `Syncing premium status (${isPremium}) for user ${userUid}'s listings...`
-    );
-
-    // Get all listings for this user
-    const listingsRef = db.collection("listings");
-    const userListingsQuery = listingsRef.where("ownerUid", "==", userUid);
-    const listingsSnapshot = await userListingsQuery.get();
-
-    if (listingsSnapshot.empty) {
-      console.log(`No listings found for user ${userUid}`);
-      return;
-    }
-
-    // Use batch write for atomic updates
-    const batch = db.batch();
-
-    listingsSnapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, {
-        ownerIsPremium: isPremium,
-        lastSyncedAt: FieldValue.serverTimestamp(),
-      });
-    });
-
-    await batch.commit();
-
-    console.log(
-      `Updated ${listingsSnapshot.docs.length} listings with premium status: ${isPremium}`
-    );
-  } catch (error) {
-    console.error(
-      `Error syncing premium status to listings for user ${userUid}:`,
-      error
-    );
   }
 }

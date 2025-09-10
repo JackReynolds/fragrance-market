@@ -36,7 +36,7 @@ exports.onUserTierChange = onDocumentUpdated("users/{uid}", async (event) => {
     let q = db
       .collection("listings")
       .where("ownerUid", "==", uid)
-      .orderBy("createdAt")
+      .orderBy("createdAt", "desc")
       .limit(batchSize);
 
     if (last) q = q.startAfter(last);

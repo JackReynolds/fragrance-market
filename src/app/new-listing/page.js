@@ -927,13 +927,12 @@ const NewListing = () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         status: "active",
-
-        // owner (denormalized)
         ownerUid: authUser.uid,
         ownerUsername:
           (userDoc && userDoc.username) ||
           authUser.displayName ||
           "Anonymous User",
+        ownerProfilePictureURL: (userDoc && userDoc.profilePictureURL) || null,
         country: (userDoc && userDoc.country) || null,
         countryCode: (userDoc && userDoc.countryCode) || null,
       };
