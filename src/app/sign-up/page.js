@@ -65,6 +65,25 @@ export default function SignUp() {
     }
   };
 
+  // Function to check if username is already taken
+  const checkUsernameAvailability = async (username) => {
+    const response = await fetch(`/api/firebase/check-username-availability`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || "Failed to check username availability"
+      );
+    }
+
+    const data = await response.json();
+    return data.isAvailable;
+  };
+
   const handleCountryChange = (countryName, countryCode) => {
     setFormData((prev) => ({
       ...prev,
@@ -81,11 +100,24 @@ export default function SignUp() {
     }
   };
 
-  const validate = () => {
+  const validate = async () => {
     const newErrors = {};
 
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
+    } else {
+      // Check username availability
+      try {
+        const isAvailable = await checkUsernameAvailability(
+          formData.username.trim()
+        );
+        if (!isAvailable) {
+          newErrors.username = "Username is already taken";
+        }
+      } catch (error) {
+        console.error("Username availability check failed:", error);
+        newErrors.username = "Could not verify username availability";
+      }
     }
 
     if (!formData.email.trim()) {
@@ -145,15 +177,15 @@ export default function SignUp() {
       confirmPassword: formData.confirmPassword.trim(),
     };
 
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     setIsLoading(true);
 
     try {
+      const validationErrors = await validate();
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
       // Create Firebase Auth user
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -168,7 +200,7 @@ export default function SignUp() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: formData.username,
+          username: formData.username.trim(),
           email: formData.email,
           uid: user.uid,
           country: formData.country,
@@ -188,7 +220,20 @@ export default function SignUp() {
       router.push("/");
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error(error.message || "Registration failed");
+
+      // Handle specific Firebase Auth errors
+      let errorMessage = "Registration failed";
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "An account with this email already exists";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password is too weak";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email address";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

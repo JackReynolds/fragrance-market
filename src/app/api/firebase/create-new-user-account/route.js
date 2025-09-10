@@ -10,18 +10,41 @@ export async function POST(request) {
     // Validate required fields
     if (!username || !email || !uid) {
       console.error("Missing required fields", { username, email, uid });
-      return NextResponse.json({
-        success: false,
-        error: "Missing required fields",
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Missing required fields",
+        },
+        { status: 400 }
+      );
+    }
+
+    const trimmedUsername = username.trim();
+
+    // Double-check username availability before creating account
+    const existingUserQuery = await db
+      .collection("users")
+      .where("usernameLowercase", "==", trimmedUsername.toLowerCase())
+      .limit(1)
+      .get();
+
+    if (!existingUserQuery.empty) {
+      console.error(`Username ${trimmedUsername} is already taken`);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Username is already taken",
+        },
+        { status: 409 }
+      );
     }
 
     // Create user document
     const userRef = db.collection("users").doc(uid);
 
     await userRef.set({
-      username,
-      usernameLowercase: username.toLowerCase(),
+      username: trimmedUsername,
+      usernameLowercase: trimmedUsername.toLowerCase(),
       email,
       country: country || "",
       countryCode: countryCode || "",
@@ -33,13 +56,18 @@ export async function POST(request) {
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    console.log(`Created new user account for ${uid}`);
+    console.log(
+      `Created new user account for ${uid} with username ${trimmedUsername}`
+    );
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error creating user account:", error);
-    return NextResponse.json({
-      success: false,
-      error: "Failed to create user account",
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to create user account",
+      },
+      { status: 500 }
+    );
   }
 }
