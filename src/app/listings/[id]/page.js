@@ -33,6 +33,7 @@ import {
   Heart,
   ShoppingBag,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -59,6 +60,7 @@ const ListingDetailPage = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [isCheckingListings, setIsCheckingListings] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const params = useParams();
   const { authUser } = useAuth();
@@ -254,6 +256,43 @@ const ListingDetailPage = () => {
     }
   };
 
+  // Handle delete listing
+  const handleDeleteListing = async () => {
+    try {
+      if (!isOwner || !listing) return;
+      if (!authUser) {
+        toast.error("Please sign in");
+        return;
+      }
+
+      setIsDeleting(true);
+
+      const idToken = await authUser.getIdToken();
+      const response = await fetch("/api/firebase/delete-listing", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ listingId: listing.id }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || "Failed to delete listing");
+      }
+
+      toast.success("Listing deleted");
+      router.push("/my-profile");
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+      toast.error(error.message || "Failed to delete listing");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -393,6 +432,25 @@ const ListingDetailPage = () => {
                             <>
                               <Eye className="h-4 w-4" />
                               Activate
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleDeleteListing}
+                          title="Delete listing"
+                          className="hover:cursor-pointer"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-4 w-4" />
+                              Delete
                             </>
                           )}
                         </Button>

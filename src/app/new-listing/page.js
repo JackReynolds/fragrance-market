@@ -868,56 +868,85 @@ const NewListing = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    const errors = validateForm();
+    if (Object.keys(errors).length) {
+      setErrors(errors);
+      const first = document.getElementById(Object.keys(errors)[0]);
+      if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
 
-      // Scroll to the first error
-      const firstErrorField = Object.keys(validationErrors)[0];
-      const element = document.getElementById(firstErrorField);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
+    if (!authUser || !userDoc) {
+      toast.error("Your profile is still loading. Please try again.");
+      return;
+    }
 
+    if (formData.type === "sell" && !formData.currency) {
+      toast.error("Please choose a currency.");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      // Create the listing object
+      // Safe price parsing → cents (avoid float issues)
+      const priceNumber =
+        formData.type === "sell"
+          ? Number(String(formData.price).replace(",", "."))
+          : null;
+      const priceCents =
+        formData.type === "sell" ? Math.round(priceNumber * 100) : null;
+
+      if (
+        formData.type === "sell" &&
+        (!Number.isFinite(priceCents) || priceCents <= 0)
+      ) {
+        toast.error("Please enter a valid price.");
+        setIsLoading(false);
+        return;
+      }
+
+      // amountLeft sanity check
+      const amountLeft = Number(formData.amount);
+      if (!Number.isFinite(amountLeft) || amountLeft < 0) {
+        toast.error("Please enter a valid amount left.");
+        setIsLoading(false);
+        return;
+      }
+
       const listingData = {
         title: formData.title.trim(),
-        type: formData.type,
+        type: formData.type, // "sell" | "swap"
         description: formData.description.trim(),
-        price: formData.type === "sell" ? parseFloat(formData.price) : null,
-        amountLeft: formData.amount,
+        priceCents,
+        amountLeft,
         brand: formData.brand.trim(),
         fragrance: formData.fragrance.trim(),
         swapPreferences:
           formData.type === "swap" ? formData.swapPreferences.trim() : null,
-        imageURLs: imageURLs,
+        imageURLs,
         createdAt: serverTimestamp(),
-        ownerUid: authUser.uid,
-        ownerIsPremium: userDoc?.isPremium,
-        country: userDoc?.country,
-        countryCode: userDoc?.countryCode,
-        ownerIsIdVerified: userDoc?.isIdVerified,
-        ownerUsername: authUser.displayName || "Anonymous User",
+        updatedAt: serverTimestamp(),
         status: "active",
+
+        // owner (denormalized)
+        ownerUid: authUser.uid,
+        ownerUsername:
+          (userDoc && userDoc.username) ||
+          authUser.displayName ||
+          "Anonymous User",
+        country: (userDoc && userDoc.country) || null,
+        countryCode: (userDoc && userDoc.countryCode) || null,
       };
 
-      if (listingData.type === "sell") {
+      if (formData.type === "sell") {
         listingData.currency = formData.currency.toLowerCase();
       }
 
-      // Add to Firestore
       const docRef = await addDoc(collection(db, "listings"), listingData);
-
       toast.success("Listing created successfully!");
       router.push(`/listings/${docRef.id}`);
-    } catch (error) {
-      console.error("Error creating listing:", error);
+    } catch (err) {
+      console.error("Error creating listing:", err);
       toast.error("Failed to create listing. Please try again.");
     } finally {
       setIsLoading(false);
