@@ -62,7 +62,7 @@ const SellerAccountStatus = ({ userDoc }) => {
       // No Stripe account at all
       setStripeAccountStatus({
         status: STATUS_CODES.NO_STRIPE_ACCOUNT,
-        message: "No Stripe account found",
+        message: "No seller account found",
       });
       setLoadingStripeStatus(false);
     } else {
@@ -137,7 +137,7 @@ const SellerAccountStatus = ({ userDoc }) => {
   // ✅ New function to generate links on-demand
   const generateStripeLink = async () => {
     if (!userDoc?.stripeAccountId) {
-      toast.error("No Stripe account found");
+      toast.error("No seller account found");
       return;
     }
 
@@ -207,7 +207,7 @@ const SellerAccountStatus = ({ userDoc }) => {
       case STATUS_CODES.TRANSFERS_DISABLED:
         return "Resolve Issues";
       case STATUS_CODES.NO_STRIPE_ACCOUNT:
-        return "Create Stripe Account";
+        return "Create Seller Account";
       default:
         return "Manage Stripe Account";
     }
@@ -233,7 +233,7 @@ const SellerAccountStatus = ({ userDoc }) => {
       case STATUS_CODES.TRANSFERS_DISABLED:
         return "Transfers Disabled - Resolve Issues";
       case STATUS_CODES.NO_STRIPE_ACCOUNT:
-        return "No Stripe Account";
+        return "No Seller Account";
       default:
         return "Unknown Stripe Status - Please Contact Support";
     }

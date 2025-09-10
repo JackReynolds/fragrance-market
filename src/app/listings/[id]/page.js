@@ -525,7 +525,7 @@ const ListingDetailPage = () => {
                 <div className="mt-8 space-y-4">
                   {listing.type === "sell" ? (
                     <Button
-                      className="w-full py-2 hover:cursor-pointer hover:bg-primary/80"
+                      className="py-2 hover:cursor-pointer hover:bg-primary/80"
                       size="lg"
                       onClick={handleBuyNow}
                       disabled={isLoadingBuyNow}
