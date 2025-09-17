@@ -1,22 +1,9 @@
 import React from "react";
 import { Button } from "@/components/ui/button.jsx";
-import { Card, CardContent } from "@/components/ui/card.jsx";
-import {
-  Upload,
-  Search,
-  Repeat,
-  ShoppingBag,
-  MessageSquare,
-  Medal,
-  ArrowRight,
-  ArrowUp,
-} from "lucide-react";
+import { Upload, Search, Repeat, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import GoPremiumButton from "@/components/goPremiumButton";
-import CrownBadge from "@/components/ui/premiumBadge";
 import StandardCard from "@/components/ui/standardCard";
 import PremiumCard from "@/components/premiumCard";
-import PremiumMembershipWideCard from "@/components/premiumMembershipWideCard";
 import PremiumBenefits from "@/components/premiumBenefits";
 
 const HowItWorks = () => {

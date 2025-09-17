@@ -5,7 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import { AuthProvider } from "@/context/authContext";
-import { UserDocProvider } from "@/context/userDocContext";
+import { ProfileDocProvider } from "@/context/profileDocContext";
 import Navigation from "@/components/ui/navigation";
 import Footer from "@/components/ui/footer";
 
@@ -32,12 +32,12 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <UserDocProvider>
+          <ProfileDocProvider>
             <Navigation />
             {children}
             <Footer />
             <Toaster position="top-right" richColors />
-          </UserDocProvider>
+          </ProfileDocProvider>
         </AuthProvider>
       </body>
     </html>

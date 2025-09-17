@@ -5,15 +5,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import GoPremiumButton from "@/components/goPremiumButton";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
 const PremiumCard = () => {
   const { authUser } = useAuth();
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   let currency;
 
-  switch (userDoc?.countryCode) {
+  switch (profileDoc?.countryCode) {
     case "US":
       currency = "USD";
       break;
@@ -86,11 +86,7 @@ const PremiumCard = () => {
             </li>
           </ul>
 
-          <GoPremiumButton
-            authUser={authUser}
-            userDoc={userDoc}
-            currency={currency}
-          />
+          <GoPremiumButton authUser={authUser} currency={currency} />
         </CardContent>
       </Card>
     </>

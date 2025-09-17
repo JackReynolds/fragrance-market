@@ -131,8 +131,8 @@ exports.onMessageWritten = onDocumentWritten(
           messageType: afterData.type,
         });
 
-        const userRef = db.doc(`users/${recipientUid}`);
-        batch.update(userRef, {
+        const userProfileRef = db.doc(`profiles/${recipientUid}`);
+        batch.update(userProfileRef, {
           unreadMessageCount: FieldValue.increment(1),
         });
       }

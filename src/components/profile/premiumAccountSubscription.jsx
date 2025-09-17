@@ -11,17 +11,17 @@ import { Button } from "@/components/ui/button";
 import GoPremiumButton from "@/components/goPremiumButton";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 import PremiumBadge from "@/components/ui/premiumBadge";
-import { Crown, Star, ExternalLink } from "lucide-react";
+import { Crown, ExternalLink } from "lucide-react";
 
 const PremiumAccountSubscription = () => {
   const router = useRouter();
   const { authUser } = useAuth();
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   let currency;
-  switch (userDoc?.countryCode) {
+  switch (profileDoc?.countryCode) {
     case "US":
       currency = "USD";
       break;
@@ -33,7 +33,7 @@ const PremiumAccountSubscription = () => {
       break;
   }
 
-  const isPremium = userDoc?.isPremium;
+  const isPremium = profileDoc?.isPremium;
 
   return (
     <Card>
@@ -109,7 +109,7 @@ const PremiumAccountSubscription = () => {
                 variant="outline"
                 onClick={() =>
                   router.push(
-                    `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${authUser?.email}`
+                    `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${profileDoc?.email}`
                   )
                 }
               >

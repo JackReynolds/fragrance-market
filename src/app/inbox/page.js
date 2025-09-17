@@ -13,7 +13,7 @@ import { db } from "@/firebase.config";
 import SwapRequestsList from "@/components/inbox/swapRequestsList";
 import ChatWindow from "@/components/inbox/chatWindow";
 import { Loader2 } from "lucide-react";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
 export default function InboxPage() {
   const { authUser } = useAuth();
@@ -22,7 +22,7 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   // Hide footer on this page
   useEffect(() => {
@@ -150,7 +150,7 @@ export default function InboxPage() {
                     swapRequest={selectedRequest}
                     authUser={authUser}
                     onBackClick={handleBackToList}
-                    userDoc={userDoc}
+                    profileDoc={profileDoc}
                     isMobile={true}
                   />
                 )}
@@ -182,7 +182,7 @@ export default function InboxPage() {
                       swapRequest={selectedRequest}
                       authUser={authUser}
                       onBackClick={null}
-                      userDoc={userDoc}
+                      profileDoc={profileDoc}
                       isMobile={false}
                     />
                   ) : (

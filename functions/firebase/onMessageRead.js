@@ -30,20 +30,22 @@ exports.onMessageRead = onDocumentUpdated(
 
       // Update counter for each user that newly read the message
       for (const uid of newReaders) {
-        const userRef = db.doc(`users/${uid}`);
+        const userProfileRef = db.doc(`profiles/${uid}`);
 
         // Use transaction to ensure accurate count
         await db.runTransaction(async (transaction) => {
-          const userDoc = await transaction.get(userRef);
+          const userProfileDoc = await transaction.get(userProfileRef);
 
-          if (userDoc.exists) {
-            const currentCount = userDoc.data().unreadMessageCount || 0;
+          if (userProfileDoc.exists) {
+            const currentCount = userProfileDoc.data().unreadMessageCount || 0;
             // Only decrement if count is positive
             if (currentCount > 0) {
-              transaction.update(userRef, {
+              transaction.update(userProfileRef, {
                 unreadMessageCount: currentCount - 1,
               });
-              logger.info(`Decremented unreadMessageCount for user ${uid}`);
+              logger.info(
+                `Decremented unreadMessageCount for user profile ${uid}`
+              );
             }
           }
         });

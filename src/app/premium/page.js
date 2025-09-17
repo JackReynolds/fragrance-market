@@ -12,20 +12,18 @@ import {
   MessageSquare,
   Medal,
   Upload,
-  Crown,
   Users,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import PremiumMembershipWideCard from "@/components/premiumMembershipWideCard";
 import CrownBadge from "@/components/ui/premiumBadge";
 import GoPremiumButton from "@/components/goPremiumButton";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
 export default function PremiumPage() {
   const { authUser } = useAuth();
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   const benefits = [
     {
@@ -131,7 +129,6 @@ export default function PremiumPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <GoPremiumButton
                 authUser={authUser}
-                userDoc={userDoc}
                 className="bg-white text-primary hover:bg-white/90 px-8 py-3 text-lg shadow-md hover:cursor-pointer hover:shadow-lg"
               />
               <Button
@@ -208,12 +205,7 @@ export default function PremiumPage() {
             <h3 className="text-xl font-bold mb-4">
               Ready to upgrade your experience?
             </h3>
-            <GoPremiumButton
-              authUser={authUser}
-              userDoc={userDoc}
-              size="lg"
-              className="px-8"
-            />
+            <GoPremiumButton authUser={authUser} size="lg" className="px-8" />
           </div>
         </div>
       </section>
@@ -304,9 +296,9 @@ export default function PremiumPage() {
                   Premium
                 </CardTitle>
                 <div className="text-3xl font-bold">
-                  {userDoc?.countryCode === "US"
+                  {profileDoc?.countryCode === "US"
                     ? "$6.99"
-                    : userDoc?.countryCode === "GB"
+                    : profileDoc?.countryCode === "GB"
                     ? "£5.99"
                     : "€6.99"}
                   <span className="text-base font-normal text-muted-foreground">
@@ -354,11 +346,7 @@ export default function PremiumPage() {
                     </span>
                   </div>
                 </div>
-                <GoPremiumButton
-                  authUser={authUser}
-                  userDoc={userDoc}
-                  className="w-full mt-6"
-                />
+                <GoPremiumButton authUser={authUser} className="w-full mt-6" />
               </CardContent>
             </Card>
           </div>
@@ -423,12 +411,7 @@ export default function PremiumPage() {
               fragrance collections.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <GoPremiumButton
-                authUser={authUser}
-                userDoc={userDoc}
-                size="lg"
-                className="px-8"
-              />
+              <GoPremiumButton authUser={authUser} size="lg" className="px-8" />
               <Button variant="outline" size="lg" asChild>
                 <Link href="/marketplace">Browse Fragrances</Link>
               </Button>

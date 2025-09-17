@@ -2,14 +2,14 @@
 import React from "react";
 import PremiumBadge from "./ui/premiumBadge";
 import GoPremiumButton from "./goPremiumButton";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
 const PremiumMembershipWideCard = () => {
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   let currency;
 
-  switch (userDoc?.countryCode) {
+  switch (profileDoc?.countryCode) {
     case "US":
       currency = "USD";
       break;

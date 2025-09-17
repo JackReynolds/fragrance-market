@@ -1,15 +1,12 @@
 "use client";
 import React, { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Navigation from "@/components/ui/navigation";
-import Footer from "@/components/ui/footer";
 import { algoliasearch } from "algoliasearch";
 import {
   InstantSearch,
   Configure,
   Hits,
   RefinementList,
-  SortBy,
   Pagination,
   Stats,
 } from "react-instantsearch";
@@ -275,11 +272,9 @@ const MarketplaceContent = () => {
 const Marketplace = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center">
-      {/* <Navigation /> */}
       <Suspense fallback={<div>Loading...</div>}>
         <MarketplaceContent />
       </Suspense>
-      {/* <Footer /> */}
     </div>
   );
 };

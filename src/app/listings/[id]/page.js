@@ -38,7 +38,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import SwapOfferModal from "@/components/listing/swapOfferModal.jsx";
-import { useUserDoc } from "@/hooks/useUserDoc.js";
+import { useProfileDoc } from "@/hooks/useProfileDoc.js";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
 import {
@@ -64,7 +64,7 @@ const ListingDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const { authUser } = useAuth();
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   // Fetch listing data
   useEffect(() => {
@@ -89,6 +89,7 @@ const ListingDetailPage = () => {
 
             if (ownerDoc.exists()) {
               const ownerData = ownerDoc.data();
+              console.log(ownerData);
               // Set default values for verification fields if they don't exist
               setOwner({
                 uid: ownerDoc.id,
@@ -233,7 +234,7 @@ const ListingDetailPage = () => {
           body: JSON.stringify({
             listingId: listing.id,
             buyerUid: authUser.uid,
-            buyerEmail: userDoc.email,
+            buyerEmail: profileDoc.email,
             successUrl: `${window.location.origin}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
             cancelUrl: window.location.href,
           }),
@@ -388,17 +389,20 @@ const ListingDetailPage = () => {
                   <h1 className="text-2xl font-bold md:text-3xl">
                     {listing.title}
                   </h1>
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-2 sm:space-x-3">
                     {isOwner ? (
                       <>
                         <Button
                           variant="outline"
                           onClick={handleShare}
                           title="Share listing"
-                          className="hover:cursor-pointer"
+                          className="hover:cursor-pointer px-2 sm:px-3"
+                          size="sm"
                         >
                           <Share2 className="h-4 w-4" />
-                          Share
+                          <span className="hidden sm:ml-2 sm:inline">
+                            Share
+                          </span>
                         </Button>
                         <Button
                           variant="outline"
@@ -406,10 +410,11 @@ const ListingDetailPage = () => {
                             router.push(`/edit-listing/${listing.id}`)
                           }
                           title="Edit listing"
-                          className="hover:cursor-pointer"
+                          className="hover:cursor-pointer px-2 sm:px-3"
+                          size="sm"
                         >
                           <Edit className="h-4 w-4" />
-                          Edit
+                          <span className="hidden sm:ml-2 sm:inline">Edit</span>
                         </Button>
                         <Button
                           variant={
@@ -421,17 +426,22 @@ const ListingDetailPage = () => {
                               ? "Deactivate listing"
                               : "Activate listing"
                           }
-                          className="hover:cursor-pointer"
+                          className="hover:cursor-pointer px-2 sm:px-3"
+                          size="sm"
                         >
                           {listing.status === "active" ? (
                             <>
                               <EyeOff className="h-4 w-4" />
-                              Deactivate
+                              <span className="hidden sm:ml-2 sm:inline">
+                                Deactivate
+                              </span>
                             </>
                           ) : (
                             <>
                               <Eye className="h-4 w-4" />
-                              Activate
+                              <span className="hidden sm:ml-2 sm:inline">
+                                Activate
+                              </span>
                             </>
                           )}
                         </Button>
@@ -439,18 +449,23 @@ const ListingDetailPage = () => {
                           variant="destructive"
                           onClick={handleDeleteListing}
                           title="Delete listing"
-                          className="hover:cursor-pointer"
+                          className="hover:cursor-pointer px-2 sm:px-3"
                           disabled={isDeleting}
+                          size="sm"
                         >
                           {isDeleting ? (
                             <>
                               <Loader2 className="h-4 w-4 animate-spin" />
-                              Deleting...
+                              <span className="hidden sm:ml-2 sm:inline">
+                                Deleting...
+                              </span>
                             </>
                           ) : (
                             <>
                               <Trash2 className="h-4 w-4" />
-                              Delete
+                              <span className="hidden sm:ml-2 sm:inline">
+                                Delete
+                              </span>
                             </>
                           )}
                         </Button>
@@ -459,20 +474,26 @@ const ListingDetailPage = () => {
                       <>
                         <Button
                           variant="outline"
-                          className="hover:cursor-pointer"
+                          className="hover:cursor-pointer px-2 sm:px-3"
                           onClick={handleShare}
                           title="Share listing"
+                          size="sm"
                         >
                           <Share2 className="h-4 w-4" />
-                          Share
+                          <span className="hidden sm:ml-2 sm:inline">
+                            Share
+                          </span>
                         </Button>
                         <Button
                           variant="outline"
-                          className="hover:cursor-pointer"
+                          className="hover:cursor-pointer px-2 sm:px-3"
                           title="Add to favourites"
+                          size="sm"
                         >
                           <Heart className="h-4 w-4" />
-                          Favourite
+                          <span className="hidden sm:ml-2 sm:inline">
+                            Favourite
+                          </span>
                         </Button>
                       </>
                     )}
@@ -602,11 +623,11 @@ const ListingDetailPage = () => {
                   ) : (
                     <>
                       {/* Check if user has exceeded swap count */}
-                      {userDoc &&
-                      !userDoc?.isPremium &&
-                      userDoc?.monthlySwapCount >= 1 ? (
+                      {profileDoc &&
+                      !profileDoc?.isPremium &&
+                      profileDoc?.monthlySwapCount >= 1 ? (
                         <SwapCountExceededButton
-                          userDoc={userDoc}
+                          profileDoc={profileDoc}
                           authUser={authUser}
                           className="w-full"
                         />
@@ -756,7 +777,6 @@ const ListingDetailPage = () => {
           isOpen={isSwapModalOpen}
           onClose={() => setIsSwapModalOpen(false)}
           currentUser={authUser}
-          userDoc={userDoc}
           requestedListing={listing}
           requestedFrom={owner}
         />

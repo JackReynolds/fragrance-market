@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Crown, Lock, Zap } from "lucide-react";
 import GoPremiumModal from "./goPremiumModal";
 
-const SwapCountExceededButton = ({ userDoc, authUser, className }) => {
+const SwapCountExceededButton = ({ profileDoc, authUser, className }) => {
   const [showModal, setShowModal] = useState(false);
 
   // Check if user has exceeded their monthly swap limit
   const hasExceededLimit =
-    userDoc && !userDoc.isPremium && userDoc.monthlySwapCount >= 1;
+    profileDoc && !profileDoc.isPremium && profileDoc.monthlySwapCount >= 1;
 
   if (!hasExceededLimit) return null;
 
@@ -35,7 +35,7 @@ const SwapCountExceededButton = ({ userDoc, authUser, className }) => {
           <span className="font-medium">Monthly Swap Limit Reached</span>
           <div className="ml-2 px-2 py-1 bg-amber-200 rounded-full">
             <span className="text-xs font-bold">
-              {userDoc?.monthlySwapCount}/1
+              {profileDoc?.monthlySwapCount}/1
             </span>
           </div>
         </div>
@@ -58,7 +58,7 @@ const SwapCountExceededButton = ({ userDoc, authUser, className }) => {
       <GoPremiumModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        userDoc={userDoc}
+        profileDoc={profileDoc}
         authUser={authUser}
         trigger="swap_limit"
       />

@@ -28,12 +28,12 @@ import {
   SheetClose,
 } from "@/components/ui/sheet.jsx";
 import { Button } from "@/components/ui/button.jsx";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
 const Navigation = () => {
   const { authUser } = useAuth();
   const router = useRouter();
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   // State for window width with default value
   const [windowWidth, setWindowWidth] = useState(768); // Default to desktop size
@@ -60,8 +60,8 @@ const Navigation = () => {
   }, []);
 
   // assume userDoc.unreadCount is kept up-to-date by your Cloud Function
-  const unreadCount = userDoc?.unreadMessageCount || 0;
-  const hasUnreadMessages = userDoc?.unreadMessageCount > 0;
+  const unreadCount = profileDoc?.unreadMessageCount || 0;
+  const hasUnreadMessages = profileDoc?.unreadMessageCount > 0;
 
   const handleSignOut = () => {
     signOut(auth);
@@ -139,9 +139,9 @@ const Navigation = () => {
                 )}
               </Link>
               <div className="flex items-center gap-1 hover:cursor-pointer">
-                {userDoc?.profilePictureURL ? (
+                {profileDoc?.profilePictureURL ? (
                   <Image
-                    src={userDoc.profilePictureURL}
+                    src={profileDoc.profilePictureURL}
                     onClick={() => router.push("/my-profile")}
                     alt="Profile Picture"
                     width={32}

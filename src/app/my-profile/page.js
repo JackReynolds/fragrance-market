@@ -42,7 +42,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
 import GoogleLocationSearch from "@/components/googleLocationSearch";
 import ListingCard from "@/components/listingCard";
@@ -82,17 +82,17 @@ export default function Profile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [userListings, setUserListings] = useState([]);
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
   const [editingAddress, setEditingAddress] = useState(false);
   const [formattedAddress, setFormattedAddress] = useState(
-    userDoc?.formattedAddress || ""
+    profileDoc?.formattedAddress || ""
   );
   const [showEnterAddressManually, setShowEnterAddressManually] =
     useState(false);
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
   const [personalInfo, setPersonalInfo] = useState({
-    username: userDoc?.username || "",
-    bio: userDoc?.bio || "",
+    username: profileDoc?.username || "",
+    bio: profileDoc?.bio || "",
   });
 
   // Redirect to sign in if not authenticated
@@ -236,7 +236,7 @@ export default function Profile() {
   const userStats = {
     itemsSold: 15,
     rating: 4.8,
-    status: userDoc?.isPremium ? "Premium" : "Standard",
+    status: profileDoc?.isPremium ? "Premium" : "Standard",
   };
 
   // Display star rating
@@ -316,7 +316,7 @@ export default function Profile() {
         return;
       }
 
-      if (username === userDoc?.username && bio === userDoc?.bio) {
+      if (username === profileDoc?.username && bio === profileDoc?.bio) {
         toast.error("No changes to save");
         return;
       }
@@ -324,8 +324,8 @@ export default function Profile() {
       // Update user document first
       const userRef = doc(db, "users", authUser.uid);
       await updateDoc(userRef, {
-        username: username || userDoc?.username,
-        bio: bio || userDoc?.bio,
+        username: username || profileDoc?.username,
+        bio: bio || profileDoc?.bio,
         updatedAt: serverTimestamp(),
       });
 
@@ -338,7 +338,7 @@ export default function Profile() {
 
   let currency;
 
-  switch (userDoc?.countryCode) {
+  switch (profileDoc?.countryCode) {
     case "US":
       currency = "USD";
       break;
@@ -350,7 +350,7 @@ export default function Profile() {
   }
 
   // Loading state
-  if (authLoading || (!authUser && !userDoc)) {
+  if (authLoading || (!authUser && !profileDoc)) {
     return (
       <div className="flex min-h-screen flex-col">
         {/* <Navigation /> */}
@@ -375,9 +375,9 @@ export default function Profile() {
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="relative w-24 h-24 overflow-hidden rounded-full bg-primary/10">
-                      {userDoc?.profilePictureURL ? (
+                      {profileDoc?.profilePictureURL ? (
                         <Image
-                          src={userDoc?.profilePictureURL}
+                          src={profileDoc?.profilePictureURL}
                           alt={authUser?.displayName || "User"}
                           fill
                           className="object-cover"
@@ -402,7 +402,9 @@ export default function Profile() {
 
                     <div className="text-center">
                       <h2 className="text-xl font-bold">
-                        {authUser?.displayName || userDoc?.username || "User"}
+                        {authUser?.displayName ||
+                          profileDoc?.username ||
+                          "User"}
                       </h2>
                       <p className="text-sm text-muted-foreground">
                         {authUser?.email}
@@ -423,7 +425,7 @@ export default function Profile() {
                       </div>
 
                       {/* Items sold */}
-                      {userDoc?.isPremium ? (
+                      {profileDoc?.isPremium ? (
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">
                             Items Sold
@@ -441,22 +443,22 @@ export default function Profile() {
                         </span>
                         <span
                           className={`text-sm font-medium ${
-                            userDoc?.isPremium
+                            profileDoc?.isPremium
                               ? "text-green-600"
-                              : userDoc?.monthlySwapCount === 0
+                              : profileDoc?.monthlySwapCount === 0
                               ? "text-green-600"
                               : "text-red-600"
                           }`}
                         >
-                          {userDoc?.isPremium
+                          {profileDoc?.isPremium
                             ? "Unlimited"
-                            : `${userDoc?.monthlySwapCount || 0}/1 `}
+                            : `${profileDoc?.monthlySwapCount || 0}/1 `}
                         </span>
                       </div>
 
                       <Separator className="my-3" />
 
-                      <VerificationBadges user={userDoc} />
+                      <VerificationBadges profile={profileDoc} />
                     </div>
 
                     <Button
@@ -662,8 +664,8 @@ export default function Profile() {
                   <h2 className="text-2xl font-bold">Account Settings</h2>
 
                   {/* Seller Account */}
-                  {userDoc?.isPremium ? (
-                    <SellerAccountStatus userDoc={userDoc} />
+                  {profileDoc?.isPremium ? (
+                    <SellerAccountStatus profileDoc={profileDoc} />
                   ) : null}
 
                   <PremiumAccountSubscription />
@@ -684,7 +686,7 @@ export default function Profile() {
                         <Input
                           id="username"
                           defaultValue={
-                            authUser?.displayName || userDoc?.username || ""
+                            authUser?.displayName || profileDoc?.username || ""
                           }
                           disabled={true}
                           placeholder="Your username"
@@ -753,7 +755,7 @@ export default function Profile() {
                   </Card>
 
                   {/* Show ID verification if user is premium */}
-                  {userDoc?.isPremium ? <IDVerificationCard /> : null}
+                  {profileDoc?.isPremium ? <IDVerificationCard /> : null}
 
                   {/* Address Information */}
                   <Card>

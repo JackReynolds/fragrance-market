@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase.config";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 import { toast } from "sonner";
 import CancelSwapRequestModal from "./cancelSwapRequestModal";
 
@@ -19,7 +19,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const [isConfirmingAddress, setIsConfirmingAddress] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
   const router = useRouter();
 
   // Get user info from message
@@ -42,7 +42,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
   // Initialize addresses from the swapRequest data
   const [currentUserAddress, setCurrentUserAddress] = useState(
-    currentUserInfo?.formattedAddress || userDoc?.formattedAddress || ""
+    currentUserInfo?.formattedAddress || profileDoc?.formattedAddress || ""
   );
   const [otherUserAddress, setOtherUserAddress] = useState(
     otherUserInfo?.formattedAddress || ""

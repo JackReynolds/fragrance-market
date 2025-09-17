@@ -13,11 +13,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-const VeriffIDVerificationButton = ({ authUser, userDoc }) => {
+const VeriffIDVerificationButton = ({ authUser, profileDoc }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Safe access to veriff data
-  const veriffData = userDoc?.veriff || {};
+  const veriffData = profileDoc?.veriff || {};
   const { decision, sessionUrl } = veriffData;
 
   // Helper function to create Veriff verification session
@@ -35,7 +35,7 @@ const VeriffIDVerificationButton = ({ authUser, userDoc }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userUid: authUser.uid,
+          userUid: profileDoc.uid,
         }),
       });
 

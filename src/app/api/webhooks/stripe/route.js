@@ -89,8 +89,9 @@ async function handleCheckoutCompleted(session) {
       session.subscription
     );
 
+    // GET CURRENT PERIOD END FROM SUBSCRIPTION ITEM
     const subscriptionCurrentPeriodEnd = subscription.items.data[0]
-      .current_period_end
+      ?.current_period_end
       ? Timestamp.fromDate(
           new Date(subscription.items.data[0].current_period_end * 1000)
         )
@@ -105,6 +106,9 @@ async function handleCheckoutCompleted(session) {
       subscriptionStatus: subscription.status,
       subscriptionCurrentPeriodEnd: subscriptionCurrentPeriodEnd,
       subscriptionPriceId: subscription.items.data[0]?.price?.id,
+      subscriptionCancelAtPeriodEnd: false,
+      subscriptionCanceledAt: null,
+      subscriptionCancelAt: null,
       updatedAt: FieldValue.serverTimestamp(),
     });
   } catch (error) {
@@ -120,6 +124,13 @@ async function handleSubscriptionCreated(subscription) {
 
 async function handleSubscriptionUpdated(subscription) {
   console.log("Subscription updated:", subscription.id);
+  console.log("Subscription details:", {
+    status: subscription.status,
+    cancel_at_period_end: subscription.cancel_at_period_end,
+    cancel_at: subscription.cancel_at,
+    canceled_at: subscription.canceled_at,
+    current_period_end: subscription.items.data[0]?.current_period_end, // Fixed: Get from items
+  });
 
   try {
     // Find user by subscription ID
@@ -140,21 +151,58 @@ async function handleSubscriptionUpdated(subscription) {
     const userUid = userDoc.id;
 
     // Determine if user should be premium based on subscription status
+    // User remains premium if:
+    // 1. Status is active or trialing
+    // 2. Even if cancel_at_period_end is true, they keep premium until actual end date
     const isPremium = ["active", "trialing"].includes(subscription.status);
 
+    // Determine if subscription is scheduled for cancellation
+    const isScheduledForCancellation =
+      subscription.cancel_at_period_end === true;
+
+    // Calculate when the subscription will actually end - GET FROM SUBSCRIPTION ITEM
+    const subscriptionCurrentPeriodEnd = subscription.items.data[0]
+      ?.current_period_end
+      ? Timestamp.fromDate(
+          new Date(subscription.items.data[0].current_period_end * 1000)
+        )
+      : null;
+
+    // Calculate when cancellation was requested (if applicable)
+    const canceledAt = subscription.canceled_at
+      ? Timestamp.fromDate(new Date(subscription.canceled_at * 1000))
+      : null;
+
+    // Calculate when cancellation will take effect (if applicable)
+    const cancelAt = subscription.cancel_at
+      ? Timestamp.fromDate(new Date(subscription.cancel_at * 1000))
+      : null;
+
     console.log(
-      `Updating subscription status for user ${userUid}: ${subscription.status} (isPremium: ${isPremium})`
+      `Updating subscription for user ${userUid}:`,
+      `Status: ${subscription.status},`,
+      `isPremium: ${isPremium},`,
+      `scheduledForCancellation: ${isScheduledForCancellation},`,
+      `cancelAt: ${cancelAt?.toDate()}`
     );
 
-    // Update user document
+    // Update user document with comprehensive subscription info
     await userDoc.ref.update({
       isPremium: isPremium,
       subscriptionStatus: subscription.status,
-      subscriptionCurrentPeriodEnd: subscription.current_period_end
-        ? Timestamp.fromDate(new Date(subscription.current_period_end * 1000))
-        : null,
+      subscriptionCurrentPeriodEnd: subscriptionCurrentPeriodEnd,
+      subscriptionCancelAtPeriodEnd: isScheduledForCancellation,
+      subscriptionCanceledAt: canceledAt,
+      subscriptionCancelAt: cancelAt,
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // Log the action for debugging
+    if (isScheduledForCancellation) {
+      console.log(
+        `✅ User ${userUid} subscription is scheduled for cancellation on ${cancelAt?.toDate()}, but remains premium until then`
+      );
+    }
   } catch (error) {
     console.error("Error in handleSubscriptionUpdated:", error);
   }

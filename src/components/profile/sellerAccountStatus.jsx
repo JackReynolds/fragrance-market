@@ -15,7 +15,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-const SellerAccountStatus = ({ userDoc }) => {
+const SellerAccountStatus = ({ profileDoc }) => {
   const { authUser } = useAuth();
   const [loadingStripeStatus, setLoadingStripeStatus] = useState(true);
   const [stripeAccountStatus, setStripeAccountStatus] = useState(null);
@@ -51,14 +51,16 @@ const SellerAccountStatus = ({ userDoc }) => {
       return;
     }
 
-    if (userDoc?.stripeAccountStatus) {
+    if (profileDoc?.stripeAccountStatus) {
       setStripeAccountStatus({
-        status: userDoc.stripeAccountStatus.statusCode,
-        message: generateStatusMessage(userDoc.stripeAccountStatus.statusCode),
+        status: profileDoc.stripeAccountStatus.statusCode,
+        message: generateStatusMessage(
+          profileDoc.stripeAccountStatus.statusCode
+        ),
         // ✅ Remove actionURL from here - we'll generate on-demand
       });
       setLoadingStripeStatus(false);
-    } else if (!userDoc?.stripeAccountId) {
+    } else if (!profileDoc?.stripeAccountId) {
       // No Stripe account at all
       setStripeAccountStatus({
         status: STATUS_CODES.NO_STRIPE_ACCOUNT,
@@ -69,7 +71,7 @@ const SellerAccountStatus = ({ userDoc }) => {
       // If we have a stripeAccountId but no cached status, fetch it
       fetchStripeStatus();
     }
-  }, [userDoc, authUser]);
+  }, [profileDoc, authUser]);
 
   const fetchStripeStatus = async () => {
     if (!authUser) return;
@@ -136,7 +138,7 @@ const SellerAccountStatus = ({ userDoc }) => {
 
   // ✅ New function to generate links on-demand
   const generateStripeLink = async () => {
-    if (!userDoc?.stripeAccountId) {
+    if (!profileDoc?.stripeAccountId) {
       toast.error("No seller account found");
       return;
     }
@@ -158,7 +160,7 @@ const SellerAccountStatus = ({ userDoc }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          stripeAccountId: userDoc.stripeAccountId,
+          stripeAccountId: profileDoc.stripeAccountId,
           linkType: linkType,
         }),
       });

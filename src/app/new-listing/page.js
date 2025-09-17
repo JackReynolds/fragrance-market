@@ -59,7 +59,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import profanityList from "@/data/profanityList";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 import {
   Dialog,
   DialogContent,
@@ -82,15 +82,15 @@ const NewListing = () => {
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [currentListingCount, setCurrentListingCount] = useState(0);
 
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   // Check listing limit on page load
   useEffect(() => {
     const checkListingLimit = async () => {
-      if (!authUser?.uid || !userDoc) return;
+      if (!authUser?.uid || !profileDoc) return;
 
       // If user is premium, no limits
-      if (userDoc.isPremium) return;
+      if (profileDoc.isPremium) return;
 
       try {
         // Get current active listing count
@@ -114,10 +114,10 @@ const NewListing = () => {
       }
     };
 
-    if (!authLoading && authUser && userDoc) {
+    if (!authLoading && authUser && profileDoc) {
       checkListingLimit();
     }
-  }, [authUser, authLoading, userDoc]);
+  }, [authUser, authLoading, profileDoc]);
 
   const brands = [
     "100 Bon",
@@ -876,7 +876,7 @@ const NewListing = () => {
       return;
     }
 
-    if (!authUser || !userDoc) {
+    if (!authUser || !profileDoc) {
       toast.error("Your profile is still loading. Please try again.");
       return;
     }
@@ -929,12 +929,13 @@ const NewListing = () => {
         status: "active",
         ownerUid: authUser.uid,
         ownerUsername:
-          (userDoc && userDoc.username) ||
+          (profileDoc && profileDoc.username) ||
           authUser.displayName ||
           "Anonymous User",
-        ownerProfilePictureURL: (userDoc && userDoc.profilePictureURL) || null,
-        country: (userDoc && userDoc.country) || null,
-        countryCode: (userDoc && userDoc.countryCode) || null,
+        ownerProfilePictureURL:
+          (profileDoc && profileDoc.profilePictureURL) || null,
+        country: (profileDoc && profileDoc.country) || null,
+        countryCode: (profileDoc && profileDoc.countryCode) || null,
       };
 
       if (formData.type === "sell") {
@@ -956,11 +957,9 @@ const NewListing = () => {
   if (authLoading) {
     return (
       <div className="flex min-h-screen flex-col">
-        {/* <Navigation /> */}
         <main className="flex-1 flex items-center justify-center">
           <div className="animate-pulse text-xl">Loading...</div>
         </main>
-        {/* <Footer /> */}
       </div>
     );
   }

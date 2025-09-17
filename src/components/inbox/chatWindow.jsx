@@ -32,7 +32,7 @@ export default function ChatWindow({
   swapRequest,
   authUser,
   onBackClick,
-  userDoc,
+  profileDoc,
   isMobile = false,
 }) {
   const [messages, setMessages] = useState([]);
@@ -167,7 +167,7 @@ export default function ChatWindow({
     const message = {
       text: newMessage.trim(),
       senderUid: authUser.uid,
-      senderUsername: userDoc.username,
+      senderUsername: profileDoc.username,
       createdAt: serverTimestamp(),
       readBy: [authUser.uid],
     };

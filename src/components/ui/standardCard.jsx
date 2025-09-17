@@ -5,14 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
 const StandardCard = () => {
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
 
   let currency;
 
-  switch (userDoc?.countryCode) {
+  switch (profileDoc?.countryCode) {
     case "US":
       currency = "USD";
       break;

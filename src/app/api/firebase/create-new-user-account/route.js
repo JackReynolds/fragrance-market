@@ -39,16 +39,27 @@ export async function POST(request) {
       );
     }
 
-    // Create user document
+    // Create user document with publicly accessible information
     const userRef = db.collection("users").doc(uid);
 
     await userRef.set({
       username: trimmedUsername,
       usernameLowercase: trimmedUsername.toLowerCase(),
+      uid,
+      swapCount: 0,
+      isPremium: false,
+      isIdVerified: false,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    // Create profile document with all infromation (with the same uid)
+    const profileRef = db.collection("profiles").doc(uid);
+    await profileRef.set({
+      uid,
+      username: trimmedUsername,
       email,
       country: country || "",
       countryCode: countryCode || "",
-      uid,
       swapCount: 0,
       isPremium: false,
       isIdVerified: false,

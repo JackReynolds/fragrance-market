@@ -32,7 +32,7 @@ exports.reduceSwapCountToZero = onSchedule(
 
     while (true) {
       let q = db
-        .collection("users")
+        .collection("profiles")
         .where("swapCount", ">", 0)
         .orderBy("swapCount") // required for startAfter with inequality
         .limit(batchSize);

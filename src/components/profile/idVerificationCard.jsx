@@ -11,14 +11,14 @@ import {
 import { ShieldCheck, Shield, AlertCircle } from "lucide-react";
 import VeriffIDVerificationButton from "@/components/veriffIDVerificationButton";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserDoc } from "@/hooks/useUserDoc";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 import IdVerifiedBadge from "../ui/idVerifiedBadge";
 
 const IDVerificationCard = () => {
-  const { userDoc } = useUserDoc();
+  const { profileDoc } = useProfileDoc();
   const { authUser } = useAuth();
 
-  const isVerified = userDoc.veriff?.decision === "approved";
+  const isVerified = profileDoc.veriff?.decision === "approved";
 
   return (
     <Card>
@@ -101,7 +101,7 @@ const IDVerificationCard = () => {
                 </p>
                 <VeriffIDVerificationButton
                   authUser={authUser}
-                  userDoc={userDoc}
+                  profileDoc={profileDoc}
                 />
               </div>
             </div>

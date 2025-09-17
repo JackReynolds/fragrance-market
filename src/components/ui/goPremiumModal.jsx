@@ -30,14 +30,14 @@ import GoPremiumButton from "../goPremiumButton";
 const GoPremiumModal = ({
   isOpen,
   onClose,
-  userDoc,
+  profileDoc,
   authUser,
   trigger = "general",
 }) => {
   const currency =
-    userDoc?.countryCode === "US"
+    profileDoc?.countryCode === "US"
       ? "USD"
-      : userDoc?.countryCode === "GB"
+      : profileDoc?.countryCode === "GB"
       ? "GBP"
       : "EUR";
 
@@ -151,7 +151,7 @@ const GoPremiumModal = ({
             {trigger === "swap_limit" && (
               <div className="mt-4 bg-white/10 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold mb-1">
-                  {userDoc?.monthlySwapCount || 0}/1
+                  {profileDoc?.monthlySwapCount || 0}/1
                 </div>
                 <div className="text-sm text-white/80">
                   Swaps used this month
@@ -256,7 +256,6 @@ const GoPremiumModal = ({
 
               <GoPremiumButton
                 authUser={authUser}
-                userDoc={userDoc}
                 currency={currency.toLowerCase()}
                 className="w-full"
                 size="lg"
