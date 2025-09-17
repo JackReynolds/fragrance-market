@@ -68,7 +68,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog.jsx";
-import PremiumCard from "@/components/premiumCard";
 
 const NewListing = () => {
   const { authUser, authLoading } = useAuth();
@@ -1329,7 +1328,7 @@ const NewListing = () => {
                               </div>
                             </SelectItem>
                             {/* Only showcase sell option if the user is premium */}
-                            {userDoc?.isPremium ? (
+                            {profileDoc?.isPremium ? (
                               <SelectItem value="sell">
                                 <div className="flex items-center">
                                   <EuroIcon className="mr-2 h-4 w-4" />
