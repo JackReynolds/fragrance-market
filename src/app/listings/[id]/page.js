@@ -84,7 +84,7 @@ const ListingDetailPage = () => {
 
           // Fetch owner data
           if (listingData.ownerUid) {
-            const ownerRef = doc(db, "users", listingData.ownerUid);
+            const ownerRef = doc(db, "profiles", listingData.ownerUid);
             const ownerDoc = await getDoc(ownerRef);
 
             if (ownerDoc.exists()) {

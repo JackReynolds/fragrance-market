@@ -52,44 +52,59 @@ export default function InboxPage() {
 
   // Fetch swap requests
   useEffect(() => {
-    if (!authUser?.uid) return;
+    // Don't start query until auth is fully loaded
+    if (!authUser?.uid) {
+      setLoading(false);
+      return;
+    }
 
-    const requestsRef = collection(db, "swap_requests");
-    const q = query(
-      requestsRef,
-      or(
-        where("requestedFrom.uid", "==", authUser.uid),
-        where("offeredBy.uid", "==", authUser.uid)
-      ),
-      orderBy("updatedAt", "desc")
-    );
+    // Add a small delay to ensure token is propagated
+    const timer = setTimeout(() => {
+      const requestsRef = collection(db, "swap_requests");
+      const q = query(
+        requestsRef,
+        where("participants", "array-contains", authUser.uid),
+        orderBy("updatedAt", "desc")
+      );
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const requests = [];
-      querySnapshot.forEach((doc) => {
-        requests.push({ id: doc.id, ...doc.data() });
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const requests = [];
+          querySnapshot.forEach((doc) => {
+            requests.push({ id: doc.id, ...doc.data() });
+          });
 
-      setSwapRequests(requests);
+          setSwapRequests(requests);
 
-      if (selectedRequest) {
-        const stillExists = requests.find((r) => r.id === selectedRequest.id);
-        if (!stillExists) {
-          setSelectedRequest(null);
-          if (isMobile) {
-            setShowChat(false);
+          if (selectedRequest) {
+            const stillExists = requests.find(
+              (r) => r.id === selectedRequest.id
+            );
+            if (!stillExists) {
+              setSelectedRequest(null);
+              if (isMobile) {
+                setShowChat(false);
+              }
+              if (requests.length > 0) {
+                setTimeout(() => {
+                  setSelectedRequest(requests[0]);
+                }, 100);
+              }
+            }
           }
-          if (requests.length > 0) {
-            setTimeout(() => {
-              setSelectedRequest(requests[0]);
-            }, 100);
-          }
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching swap requests:", error);
+          setLoading(false);
         }
-      }
-    });
+      );
 
-    setLoading(false);
-    return () => unsubscribe();
+      return () => unsubscribe();
+    }, 100); // Small delay to ensure auth token is ready
+
+    return () => clearTimeout(timer);
   }, [authUser?.uid, isMobile, selectedRequest]);
 
   const handleSelectRequest = (request) => {
