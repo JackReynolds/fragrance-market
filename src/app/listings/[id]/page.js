@@ -220,40 +220,18 @@ const ListingDetailPage = () => {
 
   // Handle buy now button click
   const handleBuyNow = async () => {
-    try {
-      setIsLoadingBuyNow(true);
-      // Create checkout session
-      const response = await fetch(
-        "https://createbuycheckoutsession-createbuycheckoutsession-qwe4clieqa-nw.a.run.app",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            listingId: listing.id,
-            buyerUid: authUser.uid,
-            buyerEmail: profileDoc.email,
-            successUrl: `${window.location.origin}/purchase-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancelUrl: window.location.href,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to create checkout session");
-      }
-
-      // Redirect to Stripe checkout
-      window.location.href = result.data.url;
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
-      toast.error(error.message || "Failed to initiate purchase");
-    } finally {
-      setIsLoadingBuyNow(false);
+    if (!authUser) {
+      toast.error("Please sign in to make a purchase");
+      return;
     }
+
+    if (!profileDoc?.email) {
+      toast.error("Email address required. Please update your profile.");
+      return;
+    }
+
+    // Navigate to custom checkout page
+    router.push(`/checkout?listingId=${listing.id}`);
   };
 
   // Handle delete listing

@@ -200,7 +200,7 @@ async function handleSubscriptionUpdated(subscription) {
     // Log the action for debugging
     if (isScheduledForCancellation) {
       console.log(
-        `✅ User ${userUid} subscription is scheduled for cancellation on ${cancelAt?.toDate()}, but remains premium until then`
+        `User ${userUid} subscription is scheduled for cancellation on ${cancelAt?.toDate()}, but remains premium until then`
       );
     }
   } catch (error) {
