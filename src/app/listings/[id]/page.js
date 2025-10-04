@@ -84,12 +84,11 @@ const ListingDetailPage = () => {
 
           // Fetch owner data
           if (listingData.ownerUid) {
-            const ownerRef = doc(db, "profiles", listingData.ownerUid);
+            const ownerRef = doc(db, "users", listingData.ownerUid);
             const ownerDoc = await getDoc(ownerRef);
 
             if (ownerDoc.exists()) {
               const ownerData = ownerDoc.data();
-              console.log(ownerData);
               // Set default values for verification fields if they don't exist
               setOwner({
                 uid: ownerDoc.id,

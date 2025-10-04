@@ -411,11 +411,22 @@ export default function Profile() {
                       </p>
                     </div>
 
+                    {/* Status */}
                     <div className="w-full space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">Status</span>
                         <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                           {userStats.status}
+                        </span>
+                      </div>
+
+                      {/* Email Verified */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          Email Verified
+                        </span>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          {authUser?.emailVerified ? "Yes" : "No"}
                         </span>
                       </div>
 
