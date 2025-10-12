@@ -23,7 +23,7 @@ const HeroSearchBar = () => {
       >
         <input
           type="search"
-          placeholder="Search by brand, name, or notes..."
+          placeholder="Search by brand or fragrance name..."
           className="h-10 sm:h-12 w-full rounded-md border border-white/20 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 sm:py-3 pl-9 sm:pl-10 text-sm sm:text-base text-white placeholder:text-white/80 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}

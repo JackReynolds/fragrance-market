@@ -8,17 +8,17 @@ export async function POST(request) {
   try {
     const {
       title,
-      email,
       ownerUid,
       buyerUid,
       buyerName,
+      buyerEmail,
+      buyerPhone,
       amount,
       listingId,
       currency,
-      shippingAddress,
     } = await request.json();
 
-    // Validate inputs
+    // Validate required inputs
     if (!listingId || !buyerUid || !ownerUid || !amount) {
       return NextResponse.json(
         { error: "Missing required parameters" },
@@ -26,9 +26,19 @@ export async function POST(request) {
       );
     }
 
-    if (!shippingAddress) {
+    // Validate contact information
+    if (!buyerName || !buyerEmail) {
       return NextResponse.json(
-        { error: "Shipping address is required" },
+        { error: "Buyer name and email are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(buyerEmail)) {
+      return NextResponse.json(
+        { error: "Invalid email address" },
         { status: 400 }
       );
     }
@@ -66,54 +76,75 @@ export async function POST(request) {
       );
     }
 
-    // Prepare shipping address for metadata (Stripe has character limits)
-    const shippingAddressString = JSON.stringify({
-      formattedAddress: shippingAddress.formattedAddress,
-      components: shippingAddress.addressComponents,
-    });
+    // Fetch owner stripe account id from user's profile document
+    const ownerProfileRef = db.collection("profiles").doc(ownerUid);
+    const ownerProfileDoc = await ownerProfileRef.get();
 
-    // Create payment intent with shipping address in metadata
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
-      currency: currency?.toLowerCase() || "eur",
-      description: title || `${listing.brand} - ${listing.fragrance}`,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      metadata: {
-        listingId,
-        buyerUid,
-        buyerName: buyerName || "Unknown",
-        buyerEmail: email || "",
-        ownerUid,
-        title: listing.title,
-        brand: listing.brand,
-        fragrance: listing.fragrance,
-        type: "fragrance_purchase",
-        // Store shipping address (note: metadata has 500 char limit per value)
-        shippingAddress: shippingAddressString.substring(0, 500),
-      },
-      shipping: {
-        name: buyerName || "Customer",
-        address: {
-          line1:
-            shippingAddress.addressComponents?.streetAddress ||
-            `${shippingAddress.addressComponents?.streetNumber || ""} ${
-              shippingAddress.addressComponents?.streetName || ""
-            }`.trim(),
-          city: shippingAddress.addressComponents?.city || "",
-          state: shippingAddress.addressComponents?.state || "",
-          postal_code: shippingAddress.addressComponents?.postalCode || "",
-          country:
-            shippingAddress.addressComponents?.countryCode ||
-            shippingAddress.addressComponents?.country ||
-            "",
+    if (!ownerProfileDoc.exists) {
+      return NextResponse.json(
+        { error: "Seller profile not found" },
+        { status: 404 }
+      );
+    }
+
+    const ownerStripeAccountId = ownerProfileDoc.data().stripeAccountId;
+
+    if (!ownerStripeAccountId) {
+      return NextResponse.json(
+        { error: "Seller has not set up their payment account" },
+        { status: 400 }
+      );
+    }
+
+    // Generate idempotency key
+    const idempotencyKey = `payment-${listingId}-${buyerUid}-${Date.now()}`;
+
+    // Calculate platform fee (5%)
+    const platformFee = Math.round(amount * 0.05);
+
+    // Create payment intent on PLATFORM account with destination charge
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: amount,
+        currency: currency?.toLowerCase() || "eur",
+        description: title || `${listing.brand} - ${listing.fragrance}`,
+        automatic_payment_methods: {
+          enabled: true,
+        },
+        // Use transfer_data to send funds to connected account
+        transfer_data: {
+          destination: ownerStripeAccountId,
+        },
+        // Platform fee is kept automatically
+        application_fee_amount: platformFee,
+        metadata: {
+          listingId,
+          type: "fragrance_purchase",
+          buyerUid,
+          buyerName: buyerName.substring(0, 500),
+          buyerEmail: buyerEmail.substring(0, 500),
+          buyerPhone: buyerPhone || "",
+          ownerUid,
+          ownerStripeAccountId, // Store this for webhook processing
+          title: listing.title.substring(0, 500),
+          brand: listing.brand || "",
+          fragrance: listing.fragrance || "",
         },
       },
-    });
+      {
+        idempotencyKey: idempotencyKey,
+      }
+    );
 
     console.log(
-      `✅ PaymentIntent created: ${paymentIntent.id} for listing ${listingId} with shipping address`
+      `PaymentIntent created: ${paymentIntent.id}`,
+      `\n   Listing: ${listingId}`,
+      `\n   Buyer: ${buyerName} (${buyerEmail})`,
+      `\n   Amount: ${amount / 100} ${currency?.toUpperCase()}`,
+      `\n   Platform Fee: ${platformFee / 100} ${currency?.toUpperCase()}`,
+      `\n   Seller receives: ${
+        (amount - platformFee) / 100
+      } ${currency?.toUpperCase()}`
     );
 
     return NextResponse.json({
@@ -122,6 +153,15 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Error creating payment intent:", error);
+
+    // Provide more specific error messages
+    if (error.type === "StripeInvalidRequestError") {
+      return NextResponse.json(
+        { error: `Stripe error: ${error.message}` },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: error.message || "Unable to create payment intent" },
       { status: 500 }

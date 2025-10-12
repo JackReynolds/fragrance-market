@@ -220,15 +220,21 @@ const ListingDetailPage = () => {
 
   // Handle buy now button click
   const handleBuyNow = async () => {
+    // Not required for now
     if (!authUser) {
       toast.error("Please sign in to make a purchase");
       return;
     }
 
-    if (!profileDoc?.email) {
-      toast.error("Email address required. Please update your profile.");
-      return;
-    }
+    // if (!profileDoc?.email) {
+    //   toast.error("Email address required. Please update your profile.");
+    //   return;
+    // }
+
+    // if (!profileDoc?.email) {
+    //   toast.error("Email address required. Please update your profile.");
+    //   return;
+    // }
 
     // Navigate to custom checkout page
     router.push(`/checkout?listingId=${listing.id}`);

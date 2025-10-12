@@ -157,8 +157,7 @@ async function handlePaymentSucceeded(paymentIntent) {
       // 4. Calculate amounts
       const totalAmount = paymentIntent.amount; // in cents
       const currency = paymentIntent.currency;
-      const PLATFORM_FEE_PERCENTAGE = 0.1; // 10%
-      const platformFee = Math.round(totalAmount * PLATFORM_FEE_PERCENTAGE);
+      const platformFee = paymentIntent.application_fee_amount || 0; // ← Use Stripe's value
       const sellerAmount = totalAmount - platformFee;
 
       // 5. Create order record
