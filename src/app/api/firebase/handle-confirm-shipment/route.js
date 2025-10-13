@@ -140,10 +140,10 @@ export async function POST(request) {
         });
 
         // Increment swap count for both users
-        transaction.update(db.doc(`users/${userUid}`), {
+        transaction.update(db.doc(`profiles/${userUid}`), {
           swapCount: FieldValue.increment(1),
         });
-        transaction.update(db.doc(`users/${otherUserUid}`), {
+        transaction.update(db.doc(`profiles/${otherUserUid}`), {
           swapCount: FieldValue.increment(1),
         });
 
@@ -164,7 +164,7 @@ export async function POST(request) {
     });
 
     console.log(
-      `Shipment confirmed for user ${userUid} in swap ${swapRequestId}`,
+      `Shipment confirmed for profile ${userUid} in swap ${swapRequestId}`,
       result
     );
 

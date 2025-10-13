@@ -93,7 +93,7 @@ export async function POST(request) {
       });
 
       // Also update user's profile with the address
-      const userRef = db.doc(`users/${userUid}`);
+      const userRef = db.doc(`profiles/${userUid}`);
       transaction.update(userRef, {
         formattedAddress: address,
         updatedAt: FieldValue.serverTimestamp(),
@@ -140,9 +140,9 @@ export async function POST(request) {
 
           // ✅ INCREMENT SWAP COUNT FOR BOTH USERS
           // This is when the swap is truly committed - both addresses confirmed
-          const offeredByUserRef = db.doc(`users/${swapData.offeredBy.uid}`);
+          const offeredByUserRef = db.doc(`profiles/${swapData.offeredBy.uid}`);
           const requestedFromUserRef = db.doc(
-            `users/${swapData.requestedFrom.uid}`
+            `profiles/${swapData.requestedFrom.uid}`
           );
 
           transaction.update(offeredByUserRef, {
@@ -185,7 +185,7 @@ export async function POST(request) {
     });
 
     console.log(
-      `Address confirmed for user ${userUid} in swap ${swapRequestId}`,
+      `Address confirmed for profile ${userUid} in swap ${swapRequestId}`,
       result
     );
 

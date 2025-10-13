@@ -15,8 +15,8 @@ export async function POST(request) {
       });
     }
 
-    // Update user document with address
-    const userRef = db.doc(`users/${userUid}`);
+    // Update profile document with address
+    const profileRef = db.doc(`profiles/${userUid}`);
 
     const updateData = {
       formattedAddress: formattedAddress.trim(),
@@ -28,9 +28,9 @@ export async function POST(request) {
       updateData.addressComponents = addressComponents;
     }
 
-    await userRef.update(updateData);
+    await profileRef.update(updateData);
 
-    console.log(`Address updated for user ${userUid}: ${formattedAddress}`);
+    console.log(`Address updated for profile ${userUid}: ${formattedAddress}`);
 
     return NextResponse.json({
       success: true,
@@ -41,13 +41,13 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.error("Error saving address:", error);
+    console.error("Error saving address for profile:", error);
 
     // Handle specific Firestore errors
     if (error.code === "not-found") {
       return NextResponse.json({
         success: false,
-        error: "User not found",
+        error: "Profile not found",
       });
     }
 

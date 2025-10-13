@@ -65,12 +65,8 @@ const SwapOfferModal = ({
         const swapRequestsRef = collection(db, "swap_requests");
         const requestsQuery = query(
           swapRequestsRef,
-          and(
-            where("offeredBy.uid", "==", currentUser.uid),
-            where("requestedListing.id", "==", requestedListing.id),
-            where("requestedFrom.uid", "==", requestedFrom.uid),
-            where("status", "==", "swap_request")
-          )
+          where("participants", "array-contains", currentUser.uid),
+          where("status", "==", "swap_request")
         );
 
         const requestsSnapshot = await getDocs(requestsQuery);

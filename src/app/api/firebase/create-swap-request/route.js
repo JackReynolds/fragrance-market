@@ -87,15 +87,12 @@ export async function POST(request) {
 
     // 3 Get user profiles
     const [currentUserDoc, targetUserDoc] = await Promise.all([
-      db.collection("users").doc(currentUserUid).get(),
-      db.collection("users").doc(requestedFromUid).get(),
+      db.collection("profiles").doc(currentUserUid).get(),
+      db.collection("profiles").doc(requestedFromUid).get(),
     ]);
 
     if (!currentUserDoc.exists || !targetUserDoc.exists) {
-      return NextResponse.json(
-        { error: "User profile not found" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Profile not found" }, { status: 400 });
     }
 
     const currentUser = currentUserDoc.data();

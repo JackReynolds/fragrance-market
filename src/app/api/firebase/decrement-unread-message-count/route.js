@@ -16,11 +16,11 @@ export async function POST(request) {
       });
     }
 
-    const userRef = db.doc(`users/${userUid}`);
+    const profileRef = db.doc(`profiles/${userUid}`);
 
     // Get current count to ensure we don't go below 0
-    const userDoc = await userRef.get();
-    const currentCount = userDoc.data()?.unreadMessageCount || 0;
+    const profileDoc = await profileRef.get();
+    const currentCount = profileDoc.data()?.unreadMessageCount || 0;
 
     if (currentCount <= 0) {
       return NextResponse.json({
@@ -35,22 +35,25 @@ export async function POST(request) {
       updatedAt: FieldValue.serverTimestamp(),
     };
 
-    await userRef.update(updateData);
+    await profileRef.update(updateData);
 
-    console.log(`Unread message count decremented for user ${userUid}`);
+    console.log(`Unread message count decremented for profile ${userUid}`);
 
     return NextResponse.json({
       success: true,
       message: "Unread message count decremented successfully",
     });
   } catch (error) {
-    console.error("Error decrementing unread message count:", error);
+    console.error(
+      "Error decrementing unread message count for profile:",
+      error
+    );
 
     // Handle specific Firestore errors
     if (error.code === "not-found") {
       return NextResponse.json({
         success: false,
-        error: "User not found or no unread messages",
+        error: "Profile not found or no unread messages",
       });
     }
 
