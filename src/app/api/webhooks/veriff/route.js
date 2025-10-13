@@ -130,18 +130,28 @@ async function handleVerificationResult(payload) {
   }
 
   try {
+    // References to both collections
     const userRef = db.collection("users").doc(userUid);
+    const profileRef = db.collection("profiles").doc(userUid);
 
-    // Fetch existing user data
-    const userSnapshot = await userRef.get();
+    // Fetch existing data from both collections
+    const [userSnapshot, profileSnapshot] = await Promise.all([
+      userRef.get(),
+      profileRef.get(),
+    ]);
 
     if (!userSnapshot.exists) {
       console.error(`User not found: ${userUid}`);
       throw new Error(`User not found: ${userUid}`);
     }
 
-    const existingData = userSnapshot.data() || {};
-    const verificationAttempts = existingData.verificationAttempts || 0;
+    if (!profileSnapshot.exists) {
+      console.error(`Profile not found: ${userUid}`);
+      throw new Error(`Profile not found: ${userUid}`);
+    }
+
+    const existingUserData = userSnapshot.data() || {};
+    const verificationAttempts = existingUserData.verificationAttempts || 0;
     const newVerificationAttempts = verificationAttempts + 1;
 
     // Determine if user is verified based on decision
@@ -167,16 +177,22 @@ async function handleVerificationResult(payload) {
       updateData["veriff.maxAttemptsReached"] = true;
     }
 
-    // Update Firestore
-    await userRef.update(updateData);
+    // Update BOTH Firestore collections atomically
+    await Promise.all([
+      userRef.update(updateData),
+      profileRef.update(updateData),
+    ]);
 
-    console.log(`✅ User ${userUid} verification status updated:`, {
-      decision,
-      isIdVerified,
-      attempts: newVerificationAttempts,
-    });
+    console.log(
+      `User ${userUid} verification status updated in both collections:`,
+      {
+        decision,
+        isIdVerified,
+        attempts: newVerificationAttempts,
+      }
+    );
 
-    // 🆕 ADD THIS: Sync verification status to all user's listings
+    // Sync verification status to all user's listings
     if (decision === "approved") {
       await updateUserListingsVerificationStatus(userUid, true);
     }
@@ -185,8 +201,8 @@ async function handleVerificationResult(payload) {
     const emailDecisions = ["approved", "declined", "resubmission_requested"];
     if (emailDecisions.includes(decision)) {
       try {
-        await sendVerificationEmail(userUid, decision, existingData);
-        console.log(`📧 Verification email sent for decision: ${decision}`);
+        await sendVerificationEmail(userUid, decision, existingUserData);
+        console.log(`Verification email sent for decision: ${decision}`);
       } catch (emailError) {
         console.error("Email sending failed:", emailError);
         // Don't throw - email failure shouldn't fail the webhook
@@ -253,7 +269,7 @@ async function sendVerificationEmail(userUid, decision, userData) {
     // Send the email
     await sgMail.send(message);
     console.log(
-      `📧 Verification email sent to ${email} with decision: ${decision}`
+      `Verification email sent to ${email} with decision: ${decision}`
     );
   } catch (error) {
     console.error("Failed to send verification email:", {
@@ -269,7 +285,7 @@ async function sendVerificationEmail(userUid, decision, userData) {
 async function updateUserListingsVerificationStatus(userUid, isIdVerified) {
   try {
     console.log(
-      `🔄 Syncing verification status for user ${userUid}'s listings...`
+      `Syncing verification status for user ${userUid}'s listings...`
     );
 
     // Get all listings for this user

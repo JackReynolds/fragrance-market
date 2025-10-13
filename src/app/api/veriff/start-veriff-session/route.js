@@ -3,7 +3,6 @@ import { db } from "@/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
 import axios from "axios";
 
-//const veriffTestSecretKey = process.env.VERIFF_TEST_SECRET_KEY;
 const veriffAPIKey = process.env.VERIFF_API_KEY;
 
 export async function POST(request) {
@@ -11,7 +10,8 @@ export async function POST(request) {
 
   try {
     // 1. Parse request body
-    const { userUid } = await request.json();
+    const { userUid: uid } = await request.json();
+    userUid = uid; // For error logging
 
     console.log("userUid", userUid);
 
@@ -30,18 +30,28 @@ export async function POST(request) {
       );
     }
 
-    // 1) Fetch the user doc
+    // 3. Fetch BOTH user doc and profile doc
     const userDocRef = db.collection("users").doc(userUid);
-    const userDocSnap = await userDocRef.get();
+    const profileDocRef = db.collection("profiles").doc(userUid);
 
+    const [userDocSnap, profileDocSnap] = await Promise.all([
+      userDocRef.get(),
+      profileDocRef.get(),
+    ]);
+
+    // 4. Validate both documents exist
     if (!userDocSnap.exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (!profileDocSnap.exists) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
     const userData = userDocSnap.data();
     const decision = userData?.veriff?.decision || "";
 
-    // 6. Business logic checks
+    // 5. Business logic checks
     if (decision === "approved") {
       return NextResponse.json(
         { error: "User is already verified" },
@@ -65,7 +75,7 @@ export async function POST(request) {
       );
     }
 
-    // 7. Create new Veriff session
+    // 6. Create new Veriff session
     const veriffResponse = await axios.post(
       "https://stationapi.veriff.com/v1/sessions",
       {
@@ -85,17 +95,26 @@ export async function POST(request) {
     const { url: verificationUrl, id: sessionId } =
       veriffResponse.data.verification;
 
-    // 4) Update Firestore with newly created session info
-    await userDocRef.update({
-      veriff: {
-        sessionUrl: verificationUrl,
-        sessionId: sessionId,
-        status: "created",
-        createdAt: FieldValue.serverTimestamp(),
-      },
-    });
+    // 7. Update BOTH Firestore collections with session info
+    const veriffData = {
+      sessionUrl: verificationUrl,
+      sessionId: sessionId,
+      status: "created",
+      createdAt: FieldValue.serverTimestamp(),
+    };
 
-    // 5) Send the session URL back to the client
+    await Promise.all([
+      // Update public users doc (for display)
+      userDocRef.update({
+        veriff: veriffData,
+      }),
+      // Update private profiles doc (for backend reference)
+      profileDocRef.update({
+        veriff: veriffData,
+      }),
+    ]);
+
+    // 8. Send the session URL back to the client
     return NextResponse.json({ verificationUrl }, { status: 200 });
   } catch (error) {
     console.error("Error creating Veriff session:", {

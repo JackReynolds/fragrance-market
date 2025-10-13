@@ -97,10 +97,8 @@ async function handleCheckoutCompleted(session) {
         )
       : null;
 
-    // Update Firebase user
-    console.log("Updating Firebase user...");
-    await db.collection("users").doc(userUid).update({
-      isPremium: true,
+    // Prepare update data
+    const subscriptionData = {
       stripeCustomerId: session.customer,
       stripeSubscriptionId: session.subscription,
       subscriptionStatus: subscription.status,
@@ -110,7 +108,27 @@ async function handleCheckoutCompleted(session) {
       subscriptionCanceledAt: null,
       subscriptionCancelAt: null,
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+    // Update BOTH collections
+    console.log("Updating Firebase user in both collections...");
+    await Promise.all([
+      // Update profiles (private - has full subscription details)
+      db
+        .collection("profiles")
+        .doc(userUid)
+        .update({
+          isPremium: true,
+          ...subscriptionData,
+        }),
+      // Update users (public - only isPremium flag for display)
+      db.collection("users").doc(userUid).update({
+        isPremium: true,
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+    ]);
+
+    console.log(`✅ User ${userUid} upgraded to premium in both collections`);
   } catch (error) {
     console.error("Error in handleCheckoutCompleted:", error);
     console.error("Error stack:", error.stack);
@@ -129,38 +147,35 @@ async function handleSubscriptionUpdated(subscription) {
     cancel_at_period_end: subscription.cancel_at_period_end,
     cancel_at: subscription.cancel_at,
     canceled_at: subscription.canceled_at,
-    current_period_end: subscription.items.data[0]?.current_period_end, // Fixed: Get from items
+    current_period_end: subscription.items.data[0]?.current_period_end,
   });
 
   try {
     // Find user by subscription ID
-    const usersRef = db.collection("users");
-    const userQuery = usersRef.where(
+    const profilesRef = db.collection("profiles");
+    const profilesQuery = profilesRef.where(
       "stripeSubscriptionId",
       "==",
       subscription.id
     );
-    const userSnapshot = await userQuery.get();
+    const profilesSnapshot = await profilesQuery.get();
 
-    if (userSnapshot.empty) {
+    if (profilesSnapshot.empty) {
       console.error(`No user found with subscription ID: ${subscription.id}`);
       return;
     }
 
-    const userDoc = userSnapshot.docs[0];
-    const userUid = userDoc.id;
+    const profileDoc = profilesSnapshot.docs[0];
+    const userUid = profileDoc.id;
 
     // Determine if user should be premium based on subscription status
-    // User remains premium if:
-    // 1. Status is active or trialing
-    // 2. Even if cancel_at_period_end is true, they keep premium until actual end date
     const isPremium = ["active", "trialing"].includes(subscription.status);
 
     // Determine if subscription is scheduled for cancellation
     const isScheduledForCancellation =
       subscription.cancel_at_period_end === true;
 
-    // Calculate when the subscription will actually end - GET FROM SUBSCRIPTION ITEM
+    // Calculate timestamps
     const subscriptionCurrentPeriodEnd = subscription.items.data[0]
       ?.current_period_end
       ? Timestamp.fromDate(
@@ -168,12 +183,10 @@ async function handleSubscriptionUpdated(subscription) {
         )
       : null;
 
-    // Calculate when cancellation was requested (if applicable)
     const canceledAt = subscription.canceled_at
       ? Timestamp.fromDate(new Date(subscription.canceled_at * 1000))
       : null;
 
-    // Calculate when cancellation will take effect (if applicable)
     const cancelAt = subscription.cancel_at
       ? Timestamp.fromDate(new Date(subscription.cancel_at * 1000))
       : null;
@@ -186,8 +199,8 @@ async function handleSubscriptionUpdated(subscription) {
       `cancelAt: ${cancelAt?.toDate()}`
     );
 
-    // Update user document with comprehensive subscription info
-    await userDoc.ref.update({
+    // Prepare profile update data (detailed subscription info)
+    const profileUpdateData = {
       isPremium: isPremium,
       subscriptionStatus: subscription.status,
       subscriptionCurrentPeriodEnd: subscriptionCurrentPeriodEnd,
@@ -195,7 +208,22 @@ async function handleSubscriptionUpdated(subscription) {
       subscriptionCanceledAt: canceledAt,
       subscriptionCancelAt: cancelAt,
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+    // Update BOTH collections
+    await Promise.all([
+      // Update profiles (private - full subscription details)
+      profileDoc.ref.update(profileUpdateData),
+      // Update users (public - only isPremium flag)
+      db.collection("users").doc(userUid).update({
+        isPremium: isPremium,
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+    ]);
+
+    console.log(
+      `✅ Updated subscription status in both collections for user ${userUid}`
+    );
 
     // Log the action for debugging
     if (isScheduledForCancellation) {
@@ -213,31 +241,46 @@ async function handleSubscriptionDeleted(subscription) {
 
   try {
     // Find user by subscription ID
-    const usersRef = db.collection("users");
-    const userQuery = usersRef.where(
+    const profilesRef = db.collection("profiles");
+    const profilesQuery = profilesRef.where(
       "stripeSubscriptionId",
       "==",
       subscription.id
     );
-    const userSnapshot = await userQuery.get();
+    const profilesSnapshot = await profilesQuery.get();
 
-    if (userSnapshot.empty) {
+    if (profilesSnapshot.empty) {
       console.error(`No user found with subscription ID: ${subscription.id}`);
       return;
     }
 
-    const userDoc = userSnapshot.docs[0];
-    const userUid = userDoc.id;
+    const profileDoc = profilesSnapshot.docs[0];
+    const userUid = profileDoc.id;
 
     console.log(`Removing premium status for user ${userUid}`);
 
-    // Update user document
-    await userDoc.ref.update({
+    // Prepare profile update
+    const profileUpdateData = {
       isPremium: false,
       subscriptionStatus: "canceled",
       subscriptionCurrentPeriodEnd: null,
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+    // Update BOTH collections
+    await Promise.all([
+      // Update profiles (private)
+      profileDoc.ref.update(profileUpdateData),
+      // Update users (public)
+      db.collection("users").doc(userUid).update({
+        isPremium: false,
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+    ]);
+
+    console.log(
+      `Removed premium status in both collections for user ${userUid}`
+    );
   } catch (error) {
     console.error("Error in handleSubscriptionDeleted:", error);
   }

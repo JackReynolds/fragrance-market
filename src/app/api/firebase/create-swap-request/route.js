@@ -2,6 +2,14 @@ import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import sgMail from "@sendgrid/mail";
+
+const sendGridApiKey = process.env.SENDGRID_API_KEY;
+const swapRequestTemplateId = process.env.SENDGRID_SWAP_REQUEST_TEMPLATE_ID;
+
+if (sendGridApiKey) {
+  sgMail.setApiKey(sendGridApiKey);
+}
 
 export async function POST(request) {
   try {
@@ -85,14 +93,17 @@ export async function POST(request) {
       );
     }
 
-    // 3 Get user profiles
+    // 3. Get user public profiles from USERS collection (not profiles!)
     const [currentUserDoc, targetUserDoc] = await Promise.all([
-      db.collection("profiles").doc(currentUserUid).get(),
-      db.collection("profiles").doc(requestedFromUid).get(),
+      db.collection("users").doc(currentUserUid).get(), // ✅ Public data
+      db.collection("users").doc(requestedFromUid).get(), // ✅ Public data
     ]);
 
     if (!currentUserDoc.exists || !targetUserDoc.exists) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 400 });
+      return NextResponse.json(
+        { error: "User profile not found" },
+        { status: 400 }
+      );
     }
 
     const currentUser = currentUserDoc.data();
@@ -103,7 +114,6 @@ export async function POST(request) {
       offeredBy: {
         uid: currentUserUid,
         username: currentUser.username || "Unknown",
-        email: currentUser.email,
         isIdVerified: currentUser.isIdVerified || false,
         isPremium: currentUser.isPremium || false,
         profilePictureURL: currentUser.profilePictureURL || "",
@@ -120,7 +130,6 @@ export async function POST(request) {
       requestedFrom: {
         uid: requestedFromUid,
         username: targetUser.username || "Unknown",
-        email: targetUser.email,
         isIdVerified: targetUser.isIdVerified || false,
         isPremium: targetUser.isPremium || false,
         profilePictureURL: targetUser.profilePictureURL || "",
@@ -165,6 +174,43 @@ export async function POST(request) {
     batch.set(messageRef, messageData);
 
     await batch.commit();
+
+    // 6. Send email notification to the listing owner (server-side)
+    try {
+      // Fetch target user's email from profiles collection
+      const targetProfileDoc = await db
+        .collection("profiles")
+        .doc(requestedFromUid)
+        .get();
+      const targetProfileData = targetProfileDoc.data();
+
+      if (targetProfileData?.email && sendGridApiKey && swapRequestTemplateId) {
+        const message = {
+          to: targetProfileData.email,
+          from: {
+            name: "The Fragrance Market",
+            email: "info@thefragrancemarket.com",
+          },
+          templateId: swapRequestTemplateId,
+          dynamicTemplateData: {
+            requestedFromUsername: targetUser.username,
+            offeredByUsername: currentUser.username,
+            requestedListingTitle: requestedListing.title,
+            offeredListingTitle: offeredListing.title,
+          },
+          subject: "New Swap Request | The Fragrance Market",
+        };
+
+        await sgMail.send(message);
+        console.log(`Swap request email sent to ${targetProfileData.email}`);
+      } else {
+        console.warn("Email not sent: Missing email, API key, or template ID");
+      }
+    } catch (emailError) {
+      // Don't fail the request if email fails - just log it
+      console.error("Failed to send swap request email:", emailError);
+      console.error("Email error details:", emailError.response?.body);
+    }
 
     return NextResponse.json({
       success: true,

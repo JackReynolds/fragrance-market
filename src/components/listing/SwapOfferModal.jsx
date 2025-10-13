@@ -95,50 +95,6 @@ const SwapOfferModal = ({
     }
   }, [isOpen, currentUser?.uid, requestedListing.id, requestedFrom.uid]);
 
-  // Send swap request email
-  const sendSwapRequestEmail = async () => {
-    const requestedFromEmail = requestedFrom.email;
-    const requestedFromUsername = requestedFrom.username;
-    const requestedListingTitle = requestedListing.title;
-    const offeredByUsername = currentUser.displayName || currentUser.username;
-    const offeredListingTitle = selectedListing.title;
-
-    try {
-      const response = await fetch("/api/email/swap-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requestedFromEmail,
-          requestedFromUsername,
-          requestedListingTitle,
-          offeredByUsername,
-          offeredListingTitle,
-        }),
-      });
-
-      if (!response.ok) {
-        // Only parse JSON once, and only if response is not ok
-        const errorData = await response.json().catch(() => ({
-          message: `HTTP error! status: ${response.status}`,
-        }));
-        // No need to throw error here, just log it
-        console.log(errorData);
-      }
-
-      // Only parse JSON if response is ok
-      const result = await response.json();
-      console.log("Email sent successfully:", result);
-    } catch (error) {
-      console.error("Error sending swap request email:", error);
-      // Don't throw here - email is secondary, swap creation is primary
-      toast.warning(
-        "Swap request created, but notification email failed to send"
-      );
-    }
-  };
-
   // Create swap request
   const createSwapRequest = async () => {
     try {
@@ -191,8 +147,7 @@ const SwapOfferModal = ({
       // Create swap request first (critical)
       await createSwapRequest();
 
-      // Send email notification (secondary - no need to await)
-      sendSwapRequestEmail();
+      // Email notification is sent in the create-swap-request route
 
       toast.success("Swap request sent successfully!");
       onClose();
