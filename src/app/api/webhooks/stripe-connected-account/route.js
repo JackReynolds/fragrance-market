@@ -82,7 +82,7 @@ export async function POST(request) {
     body = await request.text(); // Get raw text body
     console.log("Body received, length:", body.length);
   } catch (error) {
-    console.error("❌ Error reading request body:", error);
+    console.error("Error reading request body:", error);
     return NextResponse.json(
       { error: "Error reading request body" },
       { status: 400 }
@@ -111,19 +111,19 @@ export async function POST(request) {
 
     const account = event.data.object;
 
-    // Fetch the user associated with the Stripe account from Firestore
-    const usersRef = db.collection("users");
+    // Fetch the profile associated with the Stripe account from Firestore
+    const profilesRef = db.collection("profiles");
 
     try {
-      const snapshot = await usersRef
+      const snapshot = await profilesRef
         .where("stripeAccountId", "==", account.id)
         .get();
 
-      console.log("Users found with this Stripe account ID:", snapshot.size);
+      console.log("Profiles found with this Stripe account ID:", snapshot.size);
 
       if (!snapshot.empty) {
-        const userDocRef = snapshot.docs[0].ref;
-        const user = snapshot.docs[0].data();
+        const profileDocRef = snapshot.docs[0].ref;
+        const profile = snapshot.docs[0].data();
 
         console.log("Account status:", {
           chargesEnabled: account.charges_enabled,
@@ -164,22 +164,22 @@ export async function POST(request) {
             account.requirements?.currently_due?.length > 0,
         };
 
-        console.log("Updating user with:", updates);
+        console.log("Updating profile with:", updates);
 
         // Send email if new requirements and onboarding was previously complete
         if (
           account.requirements?.currently_due?.length > 0 &&
           account.details_submitted &&
-          user.stripeOnboardingCompleted // Was previously completed
+          profile.stripeOnboardingCompleted
         ) {
-          console.log("Sending requirements due email to:", user.email);
-          await sendRequirementsDueEmail(user.email);
+          console.log("Sending requirements due email to:", profile.email);
+          await sendRequirementsDueEmail(profile.email);
         }
 
-        await userDocRef.update(updates);
-        console.log("User document updated successfully");
+        await profileDocRef.update(updates);
+        console.log("Profile document updated successfully");
       } else {
-        console.log("No user found with Stripe account ID:", account.id);
+        console.log("No profile found with Stripe account ID:", account.id);
       }
     } catch (firestoreError) {
       console.error("Firestore error:", firestoreError);
@@ -189,7 +189,7 @@ export async function POST(request) {
       );
     }
   } else {
-    console.log("ℹUnhandled event type:", event.type);
+    console.log("Unhandled event type:", event.type);
   }
 
   // Respond with 200 status to acknowledge receipt of the webhook

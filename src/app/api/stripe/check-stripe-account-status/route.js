@@ -28,14 +28,14 @@ export async function POST(request) {
 
     // Initialize the Stripe instance with the secret key
 
-    const userRef = db.collection("users").doc(uid);
-    const userDoc = await userRef.get();
+    const profileRef = db.collection("profiles").doc(uid);
+    const profileDoc = await profileRef.get();
 
-    if (!userDoc.exists) {
-      return NextResponse.json({ error: "User not found" }, { status: 400 });
+    if (!profileDoc.exists) {
+      return NextResponse.json({ error: "Profile not found" }, { status: 400 });
     }
 
-    const stripeAccountId = userDoc.data().stripeAccountId;
+    const stripeAccountId = profileDoc.data().stripeAccountId;
 
     if (!stripeAccountId) {
       return NextResponse.json(

@@ -9,15 +9,15 @@ export async function POST(request) {
     const { uid, accountType, email } = await request.json();
 
     // Check if the user exists in Firestore
-    const userRef = db.collection("users").doc(uid);
-    const userDoc = await userRef.get();
+    const profileRef = db.collection("profiles").doc(uid);
+    const profileDoc = await profileRef.get();
 
-    if (!userDoc.exists) {
-      console.error(`User with UID ${uid} not found`);
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!profileDoc.exists) {
+      console.error(`Profile with UID ${uid} not found`);
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    let stripeAccountId = userDoc.data().stripeAccountId;
+    let stripeAccountId = profileDoc.data().stripeAccountId;
 
     // If Stripe account ID doesn't exist, create a new account
     if (!stripeAccountId) {
@@ -25,10 +25,7 @@ export async function POST(request) {
         type: accountType,
         business_type: "individual",
         individual: {
-          first_name: userDoc.data().firstName,
-          last_name: userDoc.data().lastName,
           email: email,
-          phone: userDoc.data().phoneNumber,
         },
         metadata: {
           uid,
@@ -47,10 +44,9 @@ export async function POST(request) {
         },
       });
       stripeAccountId = account.id;
-      await userRef.update({ stripeAccountId });
+      await profileRef.update({ stripeAccountId });
       console.log(`Created new Stripe account with ID: ${stripeAccountId}`);
     }
-
     // Create the account link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
