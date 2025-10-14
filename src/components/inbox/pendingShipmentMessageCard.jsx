@@ -62,7 +62,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       if (docSnapshot.exists()) {
         const data = docSnapshot.data();
         const shipmentStatus = data.shipmentStatus || {};
-        const trackingNumbers = data.trackingNumbers || {}; // 🔥 ADD: Get tracking numbers
+        const trackingNumbers = data.trackingNumbers || {}; // Get tracking numbers
 
         console.log("Shipment status update:", shipmentStatus); // Debug
         console.log("Tracking numbers update:", trackingNumbers); // Debug
@@ -71,7 +71,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
         setIsCurrentUserShipped(!!shipmentStatus[currentUserInfo.uid]);
         setIsOtherUserShipped(!!shipmentStatus[otherUserInfo.uid]);
 
-        // 🔥 ADD: Update tracking numbers
+        // Update tracking numbers
         setCurrentUserTrackingNumber(
           trackingNumbers[currentUserInfo.uid] || null
         );
@@ -149,7 +149,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
       // Update local state based on server response
       setIsCurrentUserShipped(true);
 
-      // 🔥 Update local tracking number if provided
+      // Update local tracking number if provided
       if (trackingNumber.trim()) {
         setCurrentUserTrackingNumber(trackingNumber.trim());
       }
@@ -221,7 +221,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
               </span>
             </Badge>
 
-            {/* 🔥 ADD: Show tracking number if available */}
+            {/* Show tracking number if available */}
             {isCurrentUserShipped && currentUserTrackingNumber && (
               <div className="flex items-center gap-2 mt-2 p-2 bg-muted/30 rounded-md">
                 <Package className="h-3.5 w-3.5 text-muted-foreground" />
@@ -250,7 +250,7 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
               </span>
             </Badge>
 
-            {/* 🔥 ADD: Show tracking number if available */}
+            {/* Show tracking number if available */}
             {isOtherUserShipped && otherUserTrackingNumber && (
               <div className="flex items-center gap-2 mt-2 p-2 bg-muted/30 rounded-md">
                 <Package className="h-3.5 w-3.5 text-muted-foreground" />

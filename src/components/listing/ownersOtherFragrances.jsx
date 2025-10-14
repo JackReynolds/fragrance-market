@@ -71,8 +71,10 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
     fetchOwnerListings();
   }, [ownerUid, currentListingId]);
 
-  const handleListingClick = (listingId) => {
-    router.push(`/listings/${listingId}`);
+  const handleListingClick = (listing) => {
+    // Use slug if available, otherwise fall back to ID
+    const identifier = listing.slug || listing.id;
+    router.push(`/listings/${identifier}`);
   };
 
   if (isLoading) {
@@ -113,7 +115,7 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
             <CarouselItem key={listing.id}>
               <Card
                 className="hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group"
-                onClick={() => handleListingClick(listing.id)}
+                onClick={() => handleListingClick(listing)}
               >
                 {/* Image Section */}
                 <div className="relative aspect-[4/5] max-h-[250px] w-full ">

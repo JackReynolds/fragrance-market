@@ -32,6 +32,7 @@ const CheckoutContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [elementsOptions, setElementsOptions] = useState(null);
   const [isToastShown, setIsToastShown] = useState(false);
+  const [listingIdentifier, setListingIdentifier] = useState(null); // For navigation back to listing
 
   // Contact information state (email only, name and phone collected via AddressElement)
   const [contactInfo, setContactInfo] = useState({
@@ -86,16 +87,19 @@ const CheckoutContent = () => {
           ...listingDoc.data(),
         };
 
+        // Store the identifier for navigation (prefer slug over ID)
+        setListingIdentifier(listingData.slug || listingData.id);
+
         // Validate listing
         if (listingData.status !== "active") {
           toast.error("This listing is no longer available");
-          router.push(`/listings/${listingId}`);
+          router.push(`/listings/${listingData.slug || listingId}`);
           return;
         }
 
         if (listingData.type !== "sell") {
           toast.error("This listing is not for sale");
-          router.push(`/listings/${listingId}`);
+          router.push(`/listings/${listingData.slug || listingId}`);
           return;
         }
 
@@ -130,9 +134,9 @@ const CheckoutContent = () => {
   useEffect(() => {
     if (listing && authUser && listing.ownerUid === authUser.uid) {
       toast.error("You cannot purchase your own listing");
-      router.push(`/listings/${listingId}`);
+      router.push(`/listings/${listingIdentifier || listingId}`);
     }
-  }, [listing, authUser, router, listingId]);
+  }, [listing, authUser, router, listingId, listingIdentifier]);
 
   const handlePaymentSuccess = () => {
     toast.success("Payment successful!");
@@ -177,7 +181,9 @@ const CheckoutContent = () => {
       <div className="max-w-6xl mx-auto">
         {/* Back button */}
         <button
-          onClick={() => router.push(`/listings/${listingId}`)}
+          onClick={() =>
+            router.push(`/listings/${listingIdentifier || listingId}`)
+          }
           className="flex items-center text-sm font-medium mb-6 hover:underline hover:cursor-pointer"
         >
           <ArrowLeft className="mr-1 h-4 w-4" /> Back to listing

@@ -11,8 +11,11 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 const CustomHit = ({ hit }) => {
+  // Use slug if available, otherwise fall back to objectID
+  const identifier = hit.slug || hit.objectID;
+
   return (
-    <Link href={`/listings/${hit.objectID}`} className="block">
+    <Link href={`/listings/${identifier}`} className="block">
       <div className="border rounded-md overflow-hidden hover:shadow-md max-w-84">
         <img
           src={hit.imageURLs[0]}

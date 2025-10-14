@@ -61,11 +61,12 @@ const SwapOfferModal = ({
 
         setUserListings(listings);
 
-        // Check for existing swap requests
+        // Check for existing swap requests for this specific listing
         const swapRequestsRef = collection(db, "swap_requests");
         const requestsQuery = query(
           swapRequestsRef,
           where("participants", "array-contains", currentUser.uid),
+          where("requestedListingId", "==", requestedListing.id),
           where("status", "==", "swap_request")
         );
 

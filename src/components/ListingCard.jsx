@@ -33,9 +33,12 @@ const ListingCard = ({ listing, hit, showUserInfo = true }) => {
   // Normalize ID (handle both Algolia listings and Firestore docs)
   const id = data.objectID || data.id;
 
+  // Use slug if available, otherwise fall back to ID (for old listings)
+  const listingIdentifier = data.slug || id;
+
   // Handle clicks on card
   const handleCardClick = (e) => {
-    router.push(`/listings/${id}`);
+    router.push(`/listings/${listingIdentifier}`);
   };
 
   return (

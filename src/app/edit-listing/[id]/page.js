@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
+import { isSlug } from "@/utils/generateSlug";
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
@@ -78,10 +79,31 @@ const EditListing = () => {
       if (!authUser || !listingId) return;
 
       try {
-        const listingRef = doc(db, "listings", listingId);
-        const listingSnap = await getDoc(listingRef);
+        let listingSnap;
+        let actualListingId;
 
-        if (!listingSnap.exists()) {
+        // Check if listingId is a slug or a UID
+        if (isSlug(listingId)) {
+          // It's a slug - query by slug field
+          const { collection, query, where, getDocs } = await import(
+            "firebase/firestore"
+          );
+          const listingsRef = collection(db, "listings");
+          const q = query(listingsRef, where("slug", "==", listingId));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            listingSnap = querySnapshot.docs[0];
+            actualListingId = listingSnap.id;
+          }
+        } else {
+          // It's a UID - query by document ID (backwards compatibility)
+          const listingRef = doc(db, "listings", listingId);
+          listingSnap = await getDoc(listingRef);
+          actualListingId = listingId;
+        }
+
+        if (!listingSnap || !listingSnap.exists()) {
           setNotFound(true);
           toast.error("Listing not found");
           return;

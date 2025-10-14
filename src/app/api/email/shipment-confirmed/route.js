@@ -62,9 +62,25 @@ export async function POST(request) {
       recipientUser = offeredBy;
     }
 
+    // Fetch recipient's email from profiles collection
+    const { db } = await import("@/lib/firebaseAdmin");
+    const recipientProfileDoc = await db
+      .collection("profiles")
+      .doc(recipientUser.uid)
+      .get();
+
+    if (!recipientProfileDoc.exists) {
+      throw new Error("Recipient profile not found");
+    }
+
+    const recipientEmail = recipientProfileDoc.data()?.email;
+    if (!recipientEmail) {
+      throw new Error("Recipient email not found");
+    }
+
     // Prepare email data
     const emailData = {
-      recipientEmail: recipientUser.email,
+      recipientEmail: recipientEmail,
       recipientUsername: recipientUser.username,
       confirmingUsername: confirmingUser.username,
       offeredListingTitle: swapRequest.offeredListing.title,

@@ -187,7 +187,11 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
             <div
               className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
               onClick={() => {
-                router.push(`/listings/${message.offeredListing.id}`);
+                router.push(
+                  `/listings/${
+                    message.offeredListing.slug || message.offeredListing.id
+                  }`
+                );
               }}
             >
               <Image
@@ -202,7 +206,11 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               <p
                 className="font-medium text-sm sm:text-base truncate hover:cursor-pointer hover:underline hover:font-semibold"
                 onClick={() => {
-                  router.push(`/listings/${message.offeredListing.id}`);
+                  router.push(
+                    `/listings/${
+                      message.offeredListing.slug || message.offeredListing.id
+                    }`
+                  );
                 }}
               >
                 {message.offeredListing.title}

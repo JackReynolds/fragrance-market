@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/firebase.config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { isSlug } from "@/utils/generateSlug";
 import { Button } from "@/components/ui/button.jsx";
 import {
   Card,
@@ -72,12 +73,33 @@ const ListingDetailPage = () => {
       if (!params.id) return;
 
       try {
-        const listingRef = doc(db, "listings", params.id);
-        const listingDoc = await getDoc(listingRef);
+        let listingDoc;
+        let listingId;
 
-        if (listingDoc.exists()) {
+        // Check if params.id is a slug or a UID
+        if (isSlug(params.id)) {
+          // It's a slug - query by slug field
+          const { collection, query, where, getDocs } = await import(
+            "firebase/firestore"
+          );
+          const listingsRef = collection(db, "listings");
+          const q = query(listingsRef, where("slug", "==", params.id));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            listingDoc = querySnapshot.docs[0];
+            listingId = listingDoc.id;
+          }
+        } else {
+          // It's a UID - query by document ID (backwards compatibility)
+          const listingRef = doc(db, "listings", params.id);
+          listingDoc = await getDoc(listingRef);
+          listingId = params.id;
+        }
+
+        if (listingDoc && listingDoc.exists()) {
           const listingData = {
-            id: listingDoc.id,
+            id: listingId,
             ...listingDoc.data(),
           };
           setListing(listingData);
@@ -383,7 +405,7 @@ const ListingDetailPage = () => {
                           size="sm"
                         >
                           <Share2 className="h-4 w-4" />
-                          <span className="hidden sm:ml-2 sm:inline">
+                          <span className="hidden sm:ml-1 sm:inline">
                             Share
                           </span>
                         </Button>
@@ -397,7 +419,7 @@ const ListingDetailPage = () => {
                           size="sm"
                         >
                           <Edit className="h-4 w-4" />
-                          <span className="hidden sm:ml-2 sm:inline">Edit</span>
+                          <span className="hidden sm:ml-1 sm:inline">Edit</span>
                         </Button>
                         <Button
                           variant={
@@ -415,7 +437,7 @@ const ListingDetailPage = () => {
                           {listing.status === "active" ? (
                             <>
                               <EyeOff className="h-4 w-4" />
-                              <span className="hidden sm:ml-2 sm:inline">
+                              <span className="hidden sm:ml-1 sm:inline">
                                 Deactivate
                               </span>
                             </>
@@ -439,16 +461,14 @@ const ListingDetailPage = () => {
                           {isDeleting ? (
                             <>
                               <Loader2 className="h-4 w-4 animate-spin" />
-                              <span className="hidden sm:ml-2 sm:inline">
+                              <span className="hidden sm:ml-1 sm:inline">
                                 Deleting...
                               </span>
                             </>
                           ) : (
                             <>
                               <Trash2 className="h-4 w-4" />
-                              <span className="hidden sm:ml-2 sm:inline">
-                                Delete
-                              </span>
+                              <span className="hidden sm:inline">Delete</span>
                             </>
                           )}
                         </Button>
@@ -654,7 +674,9 @@ const ListingDetailPage = () => {
                           alt={owner.username || "Seller"}
                           fill
                           className="object-cover hover:cursor-pointer"
-                          onClick={() => router.push(`/users/${owner.uid}`)}
+                          onClick={() =>
+                            router.push(`/users/${owner.username || owner.uid}`)
+                          }
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-lg font-semibold text-primary">
@@ -666,7 +688,9 @@ const ListingDetailPage = () => {
                       <h3
                         className="font-medium hover:font-semibold hover:cursor-pointer"
                         onClick={() =>
-                          router.push(`/users/${listing.ownerUid}`)
+                          router.push(
+                            `/users/${owner?.username || listing.ownerUid}`
+                          )
                         }
                       >
                         {owner?.username ||
@@ -684,7 +708,7 @@ const ListingDetailPage = () => {
 
                   <div className="mt-4">
                     <Link
-                      href={`/users/${listing.ownerUid}`}
+                      href={`/users/${owner?.username || listing.ownerUid}`}
                       className="text-sm text-primary hover:cursor-pointer hover:font-semibold"
                     >
                       View Profile

@@ -54,13 +54,38 @@ const PublicUserProfile = () => {
       if (!params.id) return;
 
       try {
-        // Fetch user profile
-        const userRef = doc(db, "users", params.id);
-        const userDoc = await getDoc(userRef);
+        let userDoc;
+        let userId;
 
-        if (userDoc.exists()) {
+        // Check if params.id looks like a username (contains letters/no hyphens at end with random chars)
+        // or if it's a UID (typically alphanumeric, often longer)
+        // Simple heuristic: if it's 20+ chars and alphanumeric, it's likely a UID
+        const looksLikeUID =
+          params.id.length >= 20 && /^[a-zA-Z0-9]+$/.test(params.id);
+
+        if (!looksLikeUID) {
+          // Try to query by username first
+          const usersRef = collection(db, "users");
+          const q = query(
+            usersRef,
+            where("usernameLowercase", "==", params.id.toLowerCase())
+          );
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            userDoc = querySnapshot.docs[0];
+            userId = userDoc.id;
+          }
+        } else {
+          // It's a UID - query by document ID (backwards compatibility)
+          const userRef = doc(db, "users", params.id);
+          userDoc = await getDoc(userRef);
+          userId = params.id;
+        }
+
+        if (userDoc && userDoc.exists()) {
           const user = {
-            id: userDoc.id,
+            id: userId,
             ...userDoc.data(),
             // Set defaults for missing fields
             emailVerified: userDoc.data().emailVerified || false,
@@ -71,10 +96,10 @@ const PublicUserProfile = () => {
           setUserData(user);
 
           // Fetch user's listings
-          fetchUserListings(params.id);
+          fetchUserListings(userId);
 
           // Fetch user's reviews
-          fetchUserReviews(params.id);
+          fetchUserReviews(userId);
         } else {
           toast.error("User not found");
           router.push("/");
@@ -260,7 +285,11 @@ const PublicUserProfile = () => {
                           alt={userData.username || "User"}
                           fill
                           className="object-cover hover:cursor-pointer"
-                          onClick={() => router.push(`/users/${userData.id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/users/${userData.username || userData.id}`
+                            )
+                          }
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-primary/10 text-4xl font-semibold text-primary">

@@ -40,7 +40,7 @@ const sendCancellationEmail = async (emailData) => {
 export async function POST(request) {
   try {
     const {
-      recipientEmail,
+      recipientUid,
       recipientUsername,
       cancellingUsername,
       offeredListingTitle,
@@ -49,7 +49,7 @@ export async function POST(request) {
     } = await request.json();
 
     if (
-      !recipientEmail ||
+      !recipientUid ||
       !recipientUsername ||
       !cancellingUsername ||
       !offeredListingTitle ||
@@ -59,6 +59,22 @@ export async function POST(request) {
         { error: "Missing required parameters" },
         { status: 400 }
       );
+    }
+
+    // Fetch recipient's email from profiles collection
+    const { db } = await import("@/lib/firebaseAdmin");
+    const recipientProfileDoc = await db
+      .collection("profiles")
+      .doc(recipientUid)
+      .get();
+
+    if (!recipientProfileDoc.exists) {
+      throw new Error("Recipient profile not found");
+    }
+
+    const recipientEmail = recipientProfileDoc.data()?.email;
+    if (!recipientEmail) {
+      throw new Error("Recipient email not found");
     }
 
     await sendCancellationEmail({

@@ -60,6 +60,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import profanityList from "@/data/profanityList";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
+import { generateSlug } from "@/utils/generateSlug";
 import {
   Dialog,
   DialogContent,
@@ -912,9 +913,13 @@ const NewListing = () => {
         return;
       }
 
+      // Generate SEO-friendly slug for the listing
+      const slug = generateSlug(formData.title.trim());
+
       const listingData = {
         title: formData.title.trim(),
-        type: formData.type, // "sell" | "swap"
+        slug,
+        type: formData.type,
         description: formData.description.trim(),
         priceCents,
         amountLeft,
@@ -943,7 +948,7 @@ const NewListing = () => {
 
       const docRef = await addDoc(collection(db, "listings"), listingData);
       toast.success("Listing created successfully!");
-      router.push(`/listings/${docRef.id}`);
+      router.push(`/listings/${slug}`);
     } catch (err) {
       console.error("Error creating listing:", err);
       toast.error("Failed to create listing. Please try again.");

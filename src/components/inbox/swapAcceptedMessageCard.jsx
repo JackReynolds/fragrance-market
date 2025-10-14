@@ -236,8 +236,8 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const sendSwapRequestCancellationEmail = async (cancelMessage = "") => {
     try {
       const emailPayload = {
-        // Email goes to the OTHER user (not the one cancelling)
-        recipientEmail: otherUserInfo.email,
+        // send uuid instead of email
+        recipientUid: otherUserInfo.uid,
         recipientUsername: otherUserInfo.username,
         // Cancelling user info
         cancellingUsername: currentUserInfo.username,
@@ -337,7 +337,11 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
             <div
               className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
               onClick={() => {
-                router.push(`/listings/${message.offeredListing.id}`);
+                router.push(
+                  `/listings/${
+                    message.offeredListing.slug || message.offeredListing.id
+                  }`
+                );
               }}
             >
               <Image
