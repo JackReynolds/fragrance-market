@@ -157,6 +157,16 @@ const Navigation = () => {
                   Profile
                 </Link>
               </div>
+
+              <div>
+                <Link
+                  href="/favourites"
+                  className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"
+                >
+                  Favourites
+                </Link>
+              </div>
+
               <button
                 onClick={handleSignOut}
                 className="text-sm font-medium hover:cursor-pointer hover:text-primary/70 transition-colors"

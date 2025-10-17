@@ -61,6 +61,9 @@ const ListingDetailPage = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isSwapModalOpen, setIsSwapModalOpen] = useState(false);
   const [isCheckingListings, setIsCheckingListings] = useState(false);
+  const [isFavourited, setIsFavourited] = useState(false);
+  const [isTogglingFavourite, setIsTogglingFavourite] = useState(false);
+
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const params = useParams();
@@ -136,6 +139,13 @@ const ListingDetailPage = () => {
 
     fetchListingData();
   }, [params.id, router]);
+
+  // Add useEffect to check if listing is favourited
+  useEffect(() => {
+    if (profileDoc?.favourites && listing?.id) {
+      setIsFavourited(profileDoc.favourites.includes(listing.id));
+    }
+  }, [profileDoc, listing?.id]);
 
   // Check if current user is the owner
   const isOwner =
@@ -296,6 +306,45 @@ const ListingDetailPage = () => {
       toast.error(error.message || "Failed to delete listing");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Add handler function
+  const handleToggleFavourite = async () => {
+    if (!authUser) {
+      toast.error("Please sign in to save favourites");
+      router.push("/sign-in");
+      return;
+    }
+
+    setIsTogglingFavourite(true);
+    try {
+      const idToken = await authUser.getIdToken();
+      const response = await fetch("/api/firebase/handle-add-to-favourites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          listingId: listing.id,
+          action: isFavourited ? "remove" : "add",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update favourites");
+      }
+
+      setIsFavourited(result.isFavourited);
+      toast.success(result.message);
+    } catch (error) {
+      console.error("Error toggling favourite:", error);
+      toast.error("Failed to update favourites");
+    } finally {
+      setIsTogglingFavourite(false);
     }
   };
 
@@ -483,19 +532,34 @@ const ListingDetailPage = () => {
                           size="sm"
                         >
                           <Share2 className="h-4 w-4" />
-                          <span className="hidden sm:ml-2 sm:inline">
+                          <span className="hidden sm:ml-1 sm:inline">
                             Share
                           </span>
                         </Button>
+
                         <Button
                           variant="outline"
                           className="hover:cursor-pointer px-2 sm:px-3"
-                          title="Add to favourites"
+                          onClick={handleToggleFavourite}
+                          title={
+                            isFavourited
+                              ? "Remove from favourites"
+                              : "Add to favourites"
+                          }
+                          disabled={isTogglingFavourite}
                           size="sm"
                         >
-                          <Heart className="h-4 w-4" />
-                          <span className="hidden sm:ml-2 sm:inline">
-                            Favourite
+                          {isTogglingFavourite ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Heart
+                              className={`h-4 w-4 ${
+                                isFavourited ? "fill-current text-red-500" : ""
+                              }`}
+                            />
+                          )}
+                          <span className="hidden sm:ml-1 sm:inline">
+                            {isFavourited ? "Unfavourite" : "Favourite"}
                           </span>
                         </Button>
                       </>
