@@ -11,7 +11,14 @@ if (!apiKey || !templateId) {
 
 sgMail.setApiKey(apiKey);
 
-const sendContactEmail = async (name, email, subject, inquiryType, message) => {
+const sendContactEmail = async (
+  name,
+  email,
+  inquiryType,
+  message,
+  isPremium = false,
+  userUid = null
+) => {
   const contactMessage = {
     to: "info@thefragrancemarket.com",
     from: { name: "The Fragrance Market", email: fromEmail },
@@ -19,11 +26,14 @@ const sendContactEmail = async (name, email, subject, inquiryType, message) => {
     dynamicTemplateData: {
       name,
       email,
-      subject,
       inquiryType,
       message,
+      isPremium,
+      userUid,
     },
-    subject: "Contact | The Fragrance Market",
+    subject: `${
+      isPremium ? "Priority Support Request" : "Support Request"
+    } | The Fragrance Market`,
   };
 
   await sgMail.send(contactMessage);
@@ -31,16 +41,24 @@ const sendContactEmail = async (name, email, subject, inquiryType, message) => {
 
 export async function POST(request) {
   try {
-    const { name, email, subject, inquiryType, message } = await request.json();
+    const { name, email, inquiryType, message, isPremium, userUid } =
+      await request.json();
 
-    if (!name || !email || !subject || !inquiryType || !message) {
+    if (!name || !email || !inquiryType || !message) {
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
       );
     }
 
-    await sendContactEmail(name, email, subject, inquiryType, message);
+    await sendContactEmail(
+      name,
+      email,
+      inquiryType,
+      message,
+      (isPremium = false),
+      (userUid = null)
+    );
 
     return NextResponse.json(
       { message: "Contact email sent successfully" },

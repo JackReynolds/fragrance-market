@@ -25,16 +25,24 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import GoPremiumButton from "@/components/goPremiumButton";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
+import { Crown } from "lucide-react";
+import PremiumBadge from "@/components/ui/premiumBadge";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    subject: "",
     inquiryType: "",
     message: "",
   });
+
+  const { authUser } = useAuth();
+  const { profileDoc } = useProfileDoc();
+
+  const isPremium = profileDoc?.isPremium || false;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -74,7 +82,11 @@ export default function ContactPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          isPremium: isPremium,
+          userUid: authUser?.uid || null,
+        }),
       });
 
       if (response.ok) {
@@ -82,7 +94,6 @@ export default function ContactPage() {
         setFormData({
           name: "",
           email: "",
-          subject: "",
           inquiryType: "",
           message: "",
         });
@@ -266,18 +277,6 @@ export default function ContactPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="subject">Subject</Label>
-                      <Input
-                        id="subject"
-                        name="subject"
-                        type="text"
-                        value={formData.subject}
-                        onChange={handleInputChange}
-                        placeholder="Brief subject of your message"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
                       <Label htmlFor="message">Message *</Label>
                       <Textarea
                         id="message"
@@ -332,9 +331,18 @@ export default function ContactPage() {
                     <Clock className="h-5 w-5 text-primary mt-0.5" />
                     <div>
                       <p className="font-medium">Response Time</p>
-                      <p className="text-sm text-muted-foreground">
-                        Within 24 hours
-                      </p>
+                      {isPremium ? (
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-green-600 font-medium">
+                            12-24 hours (Priority)
+                          </p>
+                          <Crown className="h-4 w-4 text-amber-500" />
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Within 48 hours
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
@@ -344,14 +352,19 @@ export default function ContactPage() {
                       <p className="text-sm text-muted-foreground">
                         Monday - Friday: 9AM - 6PM GMT
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        Weekend: Limited support
-                      </p>
+                      {isPremium ? (
+                        <p className="text-sm text-green-600 font-medium">
+                          Weekend: Extended support available ✓
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Weekend: Limited support
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader>
                   <CardTitle className="text-xl">Quick Help</CardTitle>
@@ -376,19 +389,69 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="pt-6">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    <h4 className="font-medium">Premium Support</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Premium members get priority support with faster response
-                    times and dedicated assistance.
-                  </p>
-                  <GoPremiumButton />
-                </CardContent>
-              </Card>
+              {/* Premium Support Card - Different content based on user status */}
+              {isPremium ? (
+                // Show premium benefits card for premium users
+                <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 shadow-md">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <div className="bg-amber-100 rounded-full p-2">
+                        <PremiumBadge />
+                      </div>
+                      <h4 className="font-semibold text-lg">Premium Support</h4>
+                    </div>
+
+                    <div className="bg-white/60 rounded-lg p-4 mb-4 border border-amber-200">
+                      <p className="text-sm font-medium text-amber-900 mb-2">
+                        ✨ You have Premium Support Access
+                      </p>
+                      <ul className="text-sm text-gray-700 space-y-1.5">
+                        <li className="flex items-start">
+                          <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>
+                            <strong>Priority Response:</strong> 12-24 hour
+                            response time during business hours
+                          </span>
+                        </li>
+                        <li className="flex items-start">
+                          <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>
+                            <strong>Dedicated Support:</strong> Your inquiries
+                            are escalated to senior team members
+                          </span>
+                        </li>
+                        <li className="flex items-start">
+                          <CheckCircle className="h-4 w-4 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>
+                            <strong>Weekend Support:</strong> Extended support
+                            on weekends
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground text-center">
+                      Your premium status is automatically detected. No need to
+                      mention it in your inquiry.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                // Show upgrade prompt for non-premium users
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <CheckCircle className="h-5 w-5 text-primary" />
+                      <h4 className="font-medium">Premium Support</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Premium members get priority support with faster response
+                      times and dedicated assistance.
+                    </p>
+                    <GoPremiumButton />
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>

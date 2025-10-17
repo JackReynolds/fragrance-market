@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, Heart, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import ListingCard from "@/components/listingCard"; // ✅ Reuse!
+import ListingCard from "@/components/listingCard";
 
 const FavouritesPage = () => {
   const { authUser } = useAuth();
@@ -72,7 +72,7 @@ const FavouritesPage = () => {
     fetchFavouriteListings();
   }, [authUser, profileDoc, router]);
 
-  // ✅ Callback when favorite is toggled (removes from list)
+  // Callback when favorite is toggled (removes from list)
   const handleFavoriteChange = (listingId, isFavorited) => {
     if (!isFavorited) {
       // Removed from favorites, update local state
