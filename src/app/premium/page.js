@@ -31,7 +31,7 @@ export default function PremiumPage() {
       title: "Unlimited Listings",
       description:
         "Create as many fragrance listings as you want. No limits, no restrictions.",
-      standardLimit: "3 listings max",
+      standardLimit: "2 listings max",
       premiumFeature: "Unlimited",
     },
     {
@@ -241,7 +241,7 @@ export default function PremiumPage() {
                   </div>
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Up to 3 active listings</span>
+                    <span>Up to 2 active listings</span>
                   </div>
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-green-500 mr-3" />
@@ -305,7 +305,7 @@ export default function PremiumPage() {
                     /month
                   </span>
                 </div>
-                <p className="text-muted-foreground">For serious collectors</p>
+                <p className="text-muted-foreground">For enthusiasts</p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -395,31 +395,6 @@ export default function PremiumPage() {
                 anything.
               </p>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-16 md:py-24 bg-primary/5">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Ready to Unlock Your Full Potential?
-            </h2>
-            <p className="text-muted-foreground mb-8 text-lg">
-              Join thousands of premium members who are making the most of their
-              fragrance collections.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <GoPremiumButton authUser={authUser} size="lg" className="px-8" />
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/marketplace">Browse Fragrances</Link>
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              Cancel anytime • Secure payment through Stripe • No long-term
-              commitment
-            </p>
           </div>
         </div>
       </section>

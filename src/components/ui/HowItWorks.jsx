@@ -1,14 +1,15 @@
 "use client";
 
 import { ShieldCheck, PackageOpen, Repeat } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
 
 const steps = [
   {
     icon: ShieldCheck,
-    title: "Join & Verify",
+    title: "Join for Free",
     description:
-      "Sign up and get verified for a secure experience. Our verification process ensures trust among all members.",
+      "Sign up with a free account and start exploring. Upgrade to premium to unlock ID verification and enhanced features.",
   },
   {
     icon: PackageOpen,
@@ -58,12 +59,12 @@ const HowItWorks = () => {
         </div>
 
         <div className="mt-12 flex justify-center">
-          <a
-            href="/how-it-works"
+          <Link
             className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+            href={"/how-it-works"}
           >
             Learn More
-          </a>
+          </Link>
         </div>
       </div>
     </section>

@@ -146,6 +146,7 @@ const Navigation = () => {
                     alt="Profile Picture"
                     width={32}
                     height={32}
+                    className="rounded-full"
                   />
                 ) : (
                   <User className="h-4 w-4 mr-2" />
