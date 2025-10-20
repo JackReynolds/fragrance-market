@@ -36,7 +36,11 @@ exports.onMessageWritten = onDocumentWritten(
         beforeData &&
         (beforeData.type !== afterData.type ||
           JSON.stringify(beforeData.addressConfirmation || {}) !==
-            JSON.stringify(afterData.addressConfirmation || {}));
+            JSON.stringify(afterData.addressConfirmation || {}) ||
+          JSON.stringify(beforeData.shipmentStatus || {}) !==
+            JSON.stringify(afterData.shipmentStatus || {}) ||
+          JSON.stringify(beforeData.confirmationTimestamps || {}) !==
+            JSON.stringify(afterData.confirmationTimestamps || {}));
 
       // Skip if this is just a readBy update
       const isReadByOnlyChange =

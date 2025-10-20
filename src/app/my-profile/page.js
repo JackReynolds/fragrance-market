@@ -52,6 +52,7 @@ import IDVerificationCard from "@/components/profile/idVerificationCard";
 import VerificationBadges from "@/components/ui/verificationBadges";
 import { Textarea } from "@/components/ui/textarea";
 import PremiumAccountSubscription from "@/components/profile/premiumAccountSubscription";
+import DeleteAccountModal from "@/components/profile/deleteAccountModal";
 
 const SAMPLE_REVIEWS = [
   {
@@ -94,6 +95,7 @@ export default function Profile() {
     username: profileDoc?.username || "",
     bio: profileDoc?.bio || "",
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -333,6 +335,49 @@ export default function Profile() {
     } catch (error) {
       console.error("Error in handleSaveChanges:", error);
       toast.error("Failed to save changes. Please try again.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      // Get ID token for authentication
+      const idToken = await authUser.getIdToken();
+
+      // Call delete account API
+      const response = await fetch("/api/firebase/handle-delete-account", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Success! Account deleted
+        setShowDeleteModal(false);
+        toast.success("Your account has been deleted successfully. Goodbye!", {
+          duration: 5000,
+        });
+
+        // Sign out and redirect to home page
+        setTimeout(() => {
+          router.push("/");
+        }, 2000);
+      } else {
+        // This shouldn't happen since we pre-checked, but handle it anyway
+        toast.error(
+          result.error || "Failed to delete account. Please try again."
+        );
+        setShowDeleteModal(false);
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error(
+        "An unexpected error occurred. Please try again or contact support."
+      );
+      setShowDeleteModal(false);
     }
   };
 
@@ -906,11 +951,7 @@ export default function Profile() {
                         <Button
                           variant="destructive"
                           className="mt-4 hover:cursor-pointer hover:bg-destructive/80"
-                          onClick={() =>
-                            toast.error(
-                              "Account deletion is disabled in this demo"
-                            )
-                          }
+                          onClick={() => setShowDeleteModal(true)}
                         >
                           Delete Account
                         </Button>
@@ -925,6 +966,14 @@ export default function Profile() {
       </main>
 
       {/* <Footer /> */}
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        authUser={authUser}
+      />
     </div>
   );
 }
