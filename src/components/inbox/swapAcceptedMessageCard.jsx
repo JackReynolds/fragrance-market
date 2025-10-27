@@ -13,11 +13,15 @@ import ManualAddressForm from "@/components/profile/manualAddressForm";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
 import { toast } from "sonner";
 import CancelSwapRequestModal from "./cancelSwapRequestModal";
+import GoogleLocationSearch from "@/components/googleLocationSearch";
 
 const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const [showAddressForm, setShowAddressForm] = useState(false);
+  const [showEnterAddressManually, setShowEnterAddressManually] =
+    useState(false);
   const [isConfirmingAddress, setIsConfirmingAddress] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [pendingAddressData, setPendingAddressData] = useState(null);
 
   const { profileDoc } = useProfileDoc();
   const router = useRouter();
@@ -121,6 +125,30 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
     } catch (error) {
       console.error("Error sending address confirmed email:", error);
     }
+  };
+
+  // Handle Google location selection - just populate fields, don't save yet
+  const handleLocationSelect = (locationData) => {
+    setPendingAddressData(locationData);
+    setShowEnterAddressManually(true); // Show the form fields
+  };
+
+  // Handle final address confirmation after user reviews
+  const handleConfirmPendingAddress = async () => {
+    if (!pendingAddressData) return;
+
+    try {
+      await handleSaveAddress(pendingAddressData);
+      setPendingAddressData(null);
+      setShowEnterAddressManually(false);
+    } catch (error) {
+      console.error("Error confirming address:", error);
+    }
+  };
+
+  // Handle manual address field changes
+  const handleManualFieldChange = (updatedData) => {
+    setPendingAddressData(updatedData);
   };
 
   // Function to save address to user document
@@ -400,6 +428,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
       </div>
 
       {/* Address confirmation section */}
+      {/* Address confirmation section */}
       <div className="border-t pt-3 mt-3">
         <div className="mb-4">
           <h5 className="font-medium text-sm sm:text-base mb-3">
@@ -410,75 +439,119 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
           <div className="mb-3 p-3 bg-muted/40 rounded-md">
             <p className="text-sm font-medium mb-2">Your Shipping Address:</p>
 
-            {!showAddressForm ? (
+            {currentUserAddressConfirmed ? (
+              // Address is confirmed - show confirmation state
               <>
                 <p className="text-xs sm:text-sm mb-3 text-muted-foreground break-words">
-                  {currentUserAddress || "No address provided"}
+                  {currentUserAddress}
                 </p>
-
-                {!currentUserAddressConfirmed ? (
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    {currentUserAddress ? (
-                      <Button
-                        size="sm"
-                        onClick={() => handleConfirmAddress(true)}
-                        className="w-full sm:w-auto hover:cursor-pointer hover:bg-primary/80"
-                        disabled={isConfirmingAddress}
-                      >
-                        {isConfirmingAddress ? (
-                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                        ) : (
-                          <Check size={14} className="mr-2" />
-                        )}
-                        {isConfirmingAddress
-                          ? "Confirming..."
-                          : "Confirm Address"}
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => setShowAddressForm(true)}
-                        className="w-full sm:w-auto hover:cursor-pointer"
-                      >
-                        Add Address
-                      </Button>
-                    )}
-
+                <div className="flex items-center text-green-600 mt-1">
+                  <Check size={16} className="mr-2" />
+                  <span className="text-sm">Address Confirmed</span>
+                </div>
+              </>
+            ) : !currentUserAddress || showAddressForm ? (
+              // No address or editing - show form
+              pendingAddressData || showEnterAddressManually ? (
+                <div className="mt-2">
+                  {pendingAddressData && (
+                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                      <strong>Review your address:</strong> Please verify all
+                      fields are correct before confirming.
+                    </div>
+                  )}
+                  <ManualAddressForm
+                    initialValue={{
+                      streetAddress:
+                        pendingAddressData?.addressComponents?.streetNumber &&
+                        pendingAddressData?.addressComponents?.streetName
+                          ? `${pendingAddressData.addressComponents.streetNumber} ${pendingAddressData.addressComponents.streetName}`.trim()
+                          : currentUserAddress,
+                      city: pendingAddressData?.addressComponents?.city || "",
+                      state: pendingAddressData?.addressComponents?.state || "",
+                      postalCode:
+                        pendingAddressData?.addressComponents?.postalCode || "",
+                      country:
+                        pendingAddressData?.addressComponents?.country || "",
+                      countryCode:
+                        pendingAddressData?.addressComponents?.country || "",
+                    }}
+                    onSave={handleSaveAddress}
+                    onCancel={() => {
+                      if (currentUserAddress) {
+                        setShowAddressForm(false);
+                        setShowEnterAddressManually(false);
+                        setPendingAddressData(null);
+                      } else {
+                        setShowEnterAddressManually(false);
+                        setPendingAddressData(null);
+                      }
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <GoogleLocationSearch
+                    defaultValue={currentUserAddress}
+                    onSelect={handleLocationSelect}
+                  />
+                  <div className="flex items-center mt-4 gap-2">
                     {currentUserAddress && (
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => setShowAddressForm(true)}
-                        className="w-full sm:w-auto hover:cursor-pointer"
+                        variant="destructive"
+                        className="hover:cursor-pointer hover:bg-destructive/80"
+                        onClick={() => {
+                          setShowAddressForm(false);
+                          setShowEnterAddressManually(false);
+                          setPendingAddressData(null);
+                        }}
                       >
-                        <X size={14} className="mr-2" />
-                        Update Address
+                        Cancel
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="hover:cursor-pointer"
+                      onClick={() => setShowEnterAddressManually(true)}
+                    >
+                      Enter address manually
+                    </Button>
                   </div>
-                ) : (
-                  <div className="flex items-center text-green-600 mt-1">
-                    <Check size={16} className="mr-2" />
-                    <span className="text-sm">Address Confirmed</span>
-                  </div>
-                )}
-              </>
+                </div>
+              )
             ) : (
-              <div className="mt-2">
-                <ManualAddressForm
-                  initialValue={{
-                    streetAddress: currentUserAddress,
-                  }}
-                  onSave={handleSaveAddress}
-                  onCancel={() => {
-                    if (currentUserAddress) {
-                      setShowAddressForm(false);
-                    } else {
-                      toast.error("Please add an address to proceed");
-                    }
-                  }}
-                />
-              </div>
+              // Has address but not confirmed - show with confirm/update buttons
+              <>
+                <p className="text-xs sm:text-sm mb-3 text-muted-foreground break-words">
+                  {currentUserAddress}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleConfirmAddress(true)}
+                    className="w-full sm:w-auto hover:cursor-pointer hover:bg-primary/80"
+                    disabled={isConfirmingAddress}
+                  >
+                    {isConfirmingAddress ? (
+                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    ) : (
+                      <Check size={14} className="mr-2" />
+                    )}
+                    {isConfirmingAddress ? "Confirming..." : "Confirm Address"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowAddressForm(true)}
+                    className="w-full sm:w-auto hover:cursor-pointer"
+                  >
+                    <X size={14} className="mr-2" />
+                    Update Address
+                  </Button>
+                </div>
+              </>
             )}
           </div>
 

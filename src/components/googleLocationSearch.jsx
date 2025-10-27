@@ -27,9 +27,9 @@ const AddressLocationSearch = ({ defaultValue, onSelect }) => {
     setInputValue(place.formatted_address);
 
     // Extract structured components for backend/shipping
-    const getComponent = (type) =>
+    const getComponent = (type, nameType = "long_name") =>
       (place.address_components.find((c) => c.types.includes(type)) || {})[
-        type === "country" ? "short_name" : "long_name"
+        nameType
       ] || "";
 
     const locationData = {
@@ -39,7 +39,8 @@ const AddressLocationSearch = ({ defaultValue, onSelect }) => {
         streetName: getComponent("route"),
         city: getComponent("locality"),
         state: getComponent("administrative_area_level_1"),
-        country: getComponent("country"),
+        country: getComponent("country", "long_name"), // Full country name like "Ireland"
+        countryCode: getComponent("country", "short_name"), // Country code like "IE"
         postalCode: getComponent("postal_code"),
       },
     };

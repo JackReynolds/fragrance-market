@@ -1529,7 +1529,7 @@ const NewListing = () => {
                           <Upload className="h-10 w-10 text-muted-foreground mb-4" />
                           <h3 className="font-medium mb-1">Upload Images</h3>
                           <p className="text-sm text-muted-foreground mb-4">
-                            Drag and drop or click to upload (max 5 images)
+                            Click to upload (max 5 images)
                           </p>
                           <Button
                             type="button"

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import CountrySelect from "@/components/countrySelect";
+import { cn } from "@/lib/utils";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -41,6 +42,19 @@ export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
 
   const auth = getAuth(app);
+  const passwordsFilled =
+    formData.password.length > 0 && formData.confirmPassword.length > 0;
+  const passwordsMatch =
+    passwordsFilled && formData.password === formData.confirmPassword;
+  const hasPasswordValidationError =
+    Boolean(errors.password) || Boolean(errors.confirmPassword);
+  const passwordFeedbackClass = passwordsFilled
+    ? passwordsMatch && !hasPasswordValidationError
+      ? "border-emerald-500 focus-visible:ring-emerald-500"
+      : !passwordsMatch
+      ? "border-red-500 focus-visible:ring-red-500"
+      : ""
+    : "";
 
   // Redirect to dashboard if user is already logged in
   useEffect(() => {
@@ -274,7 +288,7 @@ export default function SignUp() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>Buy, sell and discover fragrances</span>
+                    <span>Swap your fragrances with other users</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <svg
@@ -290,7 +304,7 @@ export default function SignUp() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>Connect with other enthusiasts</span>
+                    <span>Buy and sell fragrances</span>
                   </li>
                   <li className="flex items-center space-x-2">
                     <svg
@@ -387,7 +401,12 @@ export default function SignUp() {
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={handleChange}
-                        className={errors.password ? "border-destructive" : ""}
+                        className={cn(
+                          errors.password && "border-destructive",
+                          passwordFeedbackClass &&
+                            !errors.password &&
+                            passwordFeedbackClass
+                        )}
                       />
                       {errors.password && (
                         <p className="text-sm text-destructive">
@@ -405,9 +424,12 @@ export default function SignUp() {
                         placeholder="••••••••"
                         value={formData.confirmPassword}
                         onChange={handleChange}
-                        className={
-                          errors.confirmPassword ? "border-destructive" : ""
-                        }
+                        className={cn(
+                          errors.confirmPassword && "border-destructive",
+                          passwordFeedbackClass &&
+                            !errors.confirmPassword &&
+                            passwordFeedbackClass
+                        )}
                       />
                       {errors.confirmPassword && (
                         <p className="text-sm text-destructive">
@@ -467,7 +489,7 @@ export default function SignUp() {
                     <Button
                       type="submit"
                       className="w-full hover:cursor-pointer"
-                      disabled={isLoading}
+                      disabled={isLoading || !formData.agreeTerms}
                     >
                       {isLoading ? "Creating Account..." : "Create Account"}
                     </Button>

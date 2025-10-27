@@ -238,7 +238,7 @@ export default function Profile() {
   const userStats = {
     itemsSold: 15,
     rating: 4.8,
-    status: profileDoc?.isPremium ? "Premium" : "Standard",
+    accountType: profileDoc?.isPremium ? "Premium" : "Standard",
   };
 
   // Display star rating
@@ -459,9 +459,11 @@ export default function Profile() {
                     {/* Status */}
                     <div className="w-full space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Status</span>
+                        <span className="text-sm font-medium">
+                          Account Type
+                        </span>
                         <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                          {userStats.status}
+                          {userStats.accountType}
                         </span>
                       </div>
 

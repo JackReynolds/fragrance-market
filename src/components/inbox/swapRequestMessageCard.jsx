@@ -9,6 +9,7 @@ import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import profilePicturePlaceholder from "/public/profilePicturePlaceholder.png";
 
 const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   const [isRejecting, setIsRejecting] = useState(false);
@@ -178,11 +179,26 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
       <div className="flex flex-col w-full items-start justify-start gap-3 mb-4">
         {/* Offered item */}
         <div className="w-full">
-          <p className="text-xs text-muted-foreground mb-2">
-            {isOfferedByUser
-              ? "You're offering:"
-              : `${message.offeredBy.username} is offering:`}
-          </p>
+          <div className="flex items-center align-center gap-2 mb-2">
+            <Image
+              src={
+                message.offeredBy.profilePictureURL || profilePicturePlaceholder
+              }
+              alt="Profile Picture"
+              width={32}
+              height={32}
+              className="rounded-full hover:cursor-pointer hover:opacity-80"
+              onClick={() => {
+                router.push(`/users/${message.offeredBy.uid}`);
+              }}
+            />
+
+            <p className="text-xs md:text-sm text-muted-foreground">
+              {isOfferedByUser
+                ? "You're offering:"
+                : `${message.offeredBy.username} is offering:`}
+            </p>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <div
               className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border hover:cursor-pointer"
