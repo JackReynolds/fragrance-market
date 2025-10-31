@@ -18,6 +18,7 @@ export async function POST(request) {
     }
 
     let stripeAccountId = profileDoc.data().stripeAccountId;
+    let username = profileDoc.data().username;
 
     // If Stripe account ID doesn't exist, create a new account
     if (!stripeAccountId) {
@@ -32,7 +33,7 @@ export async function POST(request) {
         },
         email: email,
         business_profile: {
-          url: `https://thefragrancemarket.com/users/${uid}`,
+          url: `https://thefragrancemarket.com/users/${username}`,
         },
         settings: {
           payouts: {

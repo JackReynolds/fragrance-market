@@ -117,20 +117,28 @@ export default function SignUp() {
   const validate = async () => {
     const newErrors = {};
 
+    // Check if username is empty FIRST
     if (!formData.username.trim()) {
       newErrors.username = "Username is required";
     } else {
-      // Check username availability
-      try {
-        const isAvailable = await checkUsernameAvailability(
-          formData.username.trim()
-        );
-        if (!isAvailable) {
-          newErrors.username = "Username is already taken";
+      // Then check the pattern
+      const usernamePattern = /^[a-zA-Z0-9_-]+$/;
+      if (!usernamePattern.test(formData.username.trim())) {
+        newErrors.username =
+          "Username can only contain letters, numbers, hyphens, and underscores";
+      } else {
+        // Finally check availability (only if pattern is valid)
+        try {
+          const isAvailable = await checkUsernameAvailability(
+            formData.username.trim()
+          );
+          if (!isAvailable) {
+            newErrors.username = "Username is already taken";
+          }
+        } catch (error) {
+          console.error("Username availability check failed:", error);
+          newErrors.username = "Could not verify username availability";
         }
-      } catch (error) {
-        console.error("Username availability check failed:", error);
-        newErrors.username = "Could not verify username availability";
       }
     }
 
