@@ -29,6 +29,7 @@ import {
   MessageSquare,
   Loader2,
   User,
+  CheckCircle,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -83,6 +84,8 @@ export default function Profile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [userListings, setUserListings] = useState([]);
+  const [completedSwaps, setCompletedSwaps] = useState([]);
+  const [completedSwapsLoading, setCompletedSwapsLoading] = useState(true);
   const { profileDoc } = useProfileDoc();
   const [editingAddress, setEditingAddress] = useState(false);
   const [formattedAddress, setFormattedAddress] = useState(
@@ -97,6 +100,14 @@ export default function Profile() {
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const getTimestampMillis = (value) => {
+    if (!value) return 0;
+    if (typeof value.toMillis === "function") return value.toMillis();
+    if (value instanceof Date) return value.getTime();
+    if (typeof value === "number") return value;
+    return 0;
+  };
+
   // Redirect to sign in if not authenticated
   useEffect(() => {
     if (!authLoading && !authUser) {
@@ -109,6 +120,58 @@ export default function Profile() {
       fetchUserListings();
     }
   }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser?.uid) {
+      setCompletedSwaps([]);
+      setCompletedSwapsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchCompletedSwaps = async () => {
+      setCompletedSwapsLoading(true);
+      try {
+        const swapsRef = collection(db, "completed_swaps");
+        const swapsQuery = query(
+          swapsRef,
+          where("participants", "array-contains", authUser.uid)
+        );
+        const snapshot = await getDocs(swapsQuery);
+
+        const fetchedSwaps = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+
+        fetchedSwaps.sort(
+          (a, b) =>
+            getTimestampMillis(b.completedAt) -
+            getTimestampMillis(a.completedAt)
+        );
+
+        if (isMounted) {
+          setCompletedSwaps(fetchedSwaps);
+        }
+      } catch (error) {
+        console.error("Error fetching completed swaps:", error);
+        if (isMounted) {
+          toast.error("Failed to load completed swaps");
+        }
+      } finally {
+        if (isMounted) {
+          setCompletedSwapsLoading(false);
+        }
+      }
+    };
+
+    fetchCompletedSwaps();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authUser?.uid]);
 
   // Load Cloudinary widget script
   useEffect(() => {
@@ -599,6 +662,13 @@ export default function Profile() {
                       My Listings
                     </TabsTrigger>
                     <TabsTrigger
+                      value="completed-swaps"
+                      className="px-4 hover:cursor-pointer"
+                    >
+                      <CheckCircle size={16} className="mr-2 " />
+                      Completed Swaps
+                    </TabsTrigger>
+                    <TabsTrigger
                       value="reviews"
                       className="px-4 hover:cursor-pointer"
                     >
@@ -648,72 +718,209 @@ export default function Profile() {
                   )}
                 </TabsContent>
 
+                {/* Completed swaps */}
+                <TabsContent value="completed-swaps" className="space-y-6">
+                  <h2 className="text-2xl font-bold">Completed Swaps</h2>
+
+                  {completedSwapsLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : completedSwaps.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-8 text-center">
+                      <h3 className="mb-2 text-lg font-semibold">
+                        No completed swaps yet
+                      </h3>
+                      <p className="mb-4 text-sm text-muted-foreground">
+                        You haven&apos;t completed any swaps yet. Start swapping
+                        your fragrances today!
+                      </p>
+                      <Button onClick={() => router.push("/marketplace")}>
+                        Browse Marketplace
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {completedSwaps.map((swap) => {
+                        const otherUser =
+                          swap.offeredBy?.uid === authUser.uid
+                            ? swap.requestedFrom
+                            : swap.offeredBy;
+
+                        const myListing =
+                          swap.offeredBy?.uid === authUser.uid
+                            ? swap.offeredListingSnapshot || swap.offeredListing
+                            : swap.requestedListingSnapshot ||
+                              swap.requestedListing;
+
+                        const theirListing =
+                          swap.offeredBy?.uid === authUser.uid
+                            ? swap.requestedListingSnapshot ||
+                              swap.requestedListing
+                            : swap.offeredListingSnapshot ||
+                              swap.offeredListing;
+
+                        const myTrackingNumber =
+                          swap.trackingNumbers?.[authUser.uid];
+                        const theirTrackingNumber =
+                          swap.trackingNumbers?.[otherUser?.uid];
+
+                        return (
+                          <Card key={swap.id}>
+                            <CardContent className="p-6">
+                              {/* Swap Header */}
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h3 className="font-semibold text-lg">
+                                    Swap with{" "}
+                                    {otherUser?.displayName ||
+                                      otherUser?.username ||
+                                      "Unknown User"}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    Completed on{" "}
+                                    {swap.completedAt
+                                      ?.toDate?.()
+                                      .toLocaleDateString() || "Unknown date"}
+                                  </p>
+                                </div>
+                                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+                                  Completed
+                                </span>
+                              </div>
+
+                              <Separator className="my-4" />
+
+                              {/* Swap Details Grid */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Your Fragrance */}
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium text-muted-foreground">
+                                    You Sent
+                                  </h4>
+                                  <div className="flex gap-3 items-center">
+                                    {myListing?.imageUrls?.[0] && (
+                                      <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                                        <Image
+                                          src={myListing.imageUrls[0]}
+                                          alt={
+                                            myListing.fragranceName ||
+                                            "Fragrance"
+                                          }
+                                          fill
+                                          className="object-cover"
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-semibold truncate">
+                                        {myListing?.fragranceName ||
+                                          "Unknown Fragrance"}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground truncate">
+                                        {myListing?.brandName ||
+                                          "Unknown Brand"}
+                                      </p>
+                                      {myTrackingNumber && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          Tracking: {myTrackingNumber}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Their Fragrance */}
+                                <div className="space-y-2">
+                                  <h4 className="text-sm font-medium text-muted-foreground">
+                                    You Received
+                                  </h4>
+                                  <div className="flex gap-3 items-center">
+                                    {theirListing?.imageUrls?.[0] && (
+                                      <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                                        <Image
+                                          src={theirListing.imageUrls[0]}
+                                          alt={
+                                            theirListing.fragranceName ||
+                                            "Fragrance"
+                                          }
+                                          fill
+                                          className="object-cover"
+                                        />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-semibold truncate">
+                                        {theirListing?.fragranceName ||
+                                          "Unknown Fragrance"}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground truncate">
+                                        {theirListing?.brandName ||
+                                          "Unknown Brand"}
+                                      </p>
+                                      {theirTrackingNumber && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          Tracking: {theirTrackingNumber}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Optional: View Details Button */}
+                              <div className="mt-4 pt-4 border-t">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    router.push(`/users/${otherUser?.uid}`)
+                                  }
+                                  className="w-full md:w-auto"
+                                >
+                                  View {otherUser?.displayName || "User"}&apos;s
+                                  Profile
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Rating Summary - Optional: Keep if you implement reviews later */}
+                  {completedSwaps.length > 0 && (
+                    <Card className="mt-6">
+                      <CardHeader>
+                        <CardTitle className="text-lg">
+                          Future: Leave Reviews
+                        </CardTitle>
+                        <CardDescription>
+                          Review functionality coming soon! You&apos;ll be able
+                          to rate your swap partners.
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  )}
+                </TabsContent>
+
                 {/* Reviews */}
                 <TabsContent value="reviews" className="space-y-6">
                   <h2 className="text-2xl font-bold">Reviews</h2>
 
-                  <div className="flex items-center space-x-4 p-4 bg-primary/5 rounded-lg mb-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold">
-                        {userStats.rating.toFixed(1)}
-                      </div>
-                      <StarRating rating={userStats.rating} />
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {SAMPLE_REVIEWS.length} reviews
-                      </div>
-                    </div>
-                    <Separator orientation="vertical" className="h-14" />
-                    <div className="flex-1">
-                      <div className="space-y-1">
-                        {[5, 4, 3, 2, 1].map((star) => {
-                          const count = SAMPLE_REVIEWS.filter(
-                            (r) => Math.floor(r.rating) === star
-                          ).length;
-                          const percentage =
-                            (count / SAMPLE_REVIEWS.length) * 100;
-                          return (
-                            <div
-                              key={star}
-                              className="flex items-center text-sm"
-                            >
-                              <span className="w-5">{star}</span>
-                              <Star
-                                size={12}
-                                className="mr-2 fill-yellow-400 text-yellow-400"
-                              />
-                              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-yellow-400 rounded-full"
-                                  style={{ width: `${percentage}%` }}
-                                />
-                              </div>
-                              <span className="ml-2 w-10 text-xs">
-                                {percentage.toFixed(0)}%
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {SAMPLE_REVIEWS.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between mb-2">
-                            <div className="font-semibold">
-                              {review.reviewer}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {review.date}
-                            </div>
-                          </div>
-                          <StarRating rating={review.rating} />
-                          <p className="mt-2">{review.comment}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="rounded-lg border border-dashed p-8 text-center">
+                    <MessageSquare
+                      size={48}
+                      className="mx-auto mb-4 text-muted-foreground"
+                    />
+                    <h3 className="mb-2 text-lg font-semibold">
+                      No reviews yet
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      You haven&apos;t received any reviews yet. Complete swaps
+                      to start building your reputation!
+                    </p>
                   </div>
                 </TabsContent>
 

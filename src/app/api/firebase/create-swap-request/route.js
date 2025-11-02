@@ -4,6 +4,12 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import sgMail from "@sendgrid/mail";
 
+const ACTIVE_SWAP_STATUSES = new Set([
+  "swap_request",
+  "swap_accepted",
+  "pending_shipment",
+]);
+
 const sendGridApiKey = process.env.SENDGRID_API_KEY;
 const swapRequestTemplateId = process.env.SENDGRID_SWAP_REQUEST_TEMPLATE_ID;
 
@@ -63,6 +69,13 @@ export async function POST(request) {
       );
     }
 
+    if (requestedListing.ownerUid === currentUserUid) {
+      return NextResponse.json(
+        { error: "You cannot initiate a swap with your own listing" },
+        { status: 400 }
+      );
+    }
+
     if (offeredListing.type !== "swap" || offeredListing.status !== "active") {
       return NextResponse.json(
         { error: "Offered listing is not available for swap" },
@@ -74,6 +87,48 @@ export async function POST(request) {
       return NextResponse.json(
         { error: "Requested listing is no longer active" },
         { status: 400 }
+      );
+    }
+
+    const [requestedListingConflicts, offeredListingConflicts] =
+      await Promise.all([
+        db
+          .collection("swap_requests")
+          .where("requestedListing.id", "==", requestedListing.id)
+          .get(),
+        db
+          .collection("swap_requests")
+          .where("offeredListing.id", "==", offeredListing.id)
+          .get(),
+      ]);
+
+    const requestedListingHasActiveSwap = requestedListingConflicts.docs.some(
+      (docSnap) => ACTIVE_SWAP_STATUSES.has(docSnap.data().status)
+    );
+
+    if (requestedListingHasActiveSwap) {
+      return NextResponse.json(
+        {
+          error:
+            "Requested listing is already involved in another active swap request",
+        },
+        { status: 409 }
+      );
+    }
+
+    const offeredListingHasActiveSwap = offeredListingConflicts.docs.some(
+      (docSnap) =>
+        ACTIVE_SWAP_STATUSES.has(docSnap.data().status) &&
+        docSnap.data().offeredBy?.uid === currentUserUid
+    );
+
+    if (offeredListingHasActiveSwap) {
+      return NextResponse.json(
+        {
+          error:
+            "You already have an active swap request using this listing. Complete or cancel it before creating a new one.",
+        },
+        { status: 409 }
       );
     }
 

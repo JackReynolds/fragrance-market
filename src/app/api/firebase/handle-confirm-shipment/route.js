@@ -2,6 +2,110 @@ import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 
+const ACTIVE_SWAP_STATUSES = new Set([
+  "swap_request",
+  "swap_accepted",
+  "pending_shipment",
+]);
+
+async function deleteSubcollection(path, batchSize = 50) {
+  let snapshot = await db
+    .collection(path)
+    .orderBy("__name__")
+    .limit(batchSize)
+    .get();
+
+  while (!snapshot.empty) {
+    const batch = db.batch();
+    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+
+    if (snapshot.size < batchSize) {
+      break;
+    }
+
+    snapshot = await db
+      .collection(path)
+      .orderBy("__name__")
+      .limit(batchSize)
+      .get();
+  }
+}
+
+async function deleteSwapRequestCascade(swapRequestId) {
+  const messagesPath = `swap_requests/${swapRequestId}/messages`;
+  const presencePath = `swap_requests/${swapRequestId}/presence`;
+
+  try {
+    await deleteSubcollection(messagesPath);
+  } catch (error) {
+    console.warn(
+      `Failed deleting messages subcollection for ${swapRequestId}:`,
+      error
+    );
+  }
+
+  try {
+    await deleteSubcollection(presencePath);
+  } catch (error) {
+    console.warn(
+      `Failed deleting presence subcollection for ${swapRequestId}:`,
+      error
+    );
+  }
+
+  await db.collection("swap_requests").doc(swapRequestId).delete();
+}
+
+async function cleanupConflictingSwapRequests(listingIds, activeSwapRequestId) {
+  const candidateIds = new Set();
+
+  for (const listingId of listingIds) {
+    if (!listingId) continue;
+
+    const [offeredSnapshot, requestedSnapshot] = await Promise.all([
+      db
+        .collection("swap_requests")
+        .where("offeredListing.id", "==", listingId)
+        .get(),
+      db
+        .collection("swap_requests")
+        .where("requestedListing.id", "==", listingId)
+        .get(),
+    ]);
+
+    offeredSnapshot.forEach((doc) => {
+      if (doc.id === activeSwapRequestId) return;
+      const data = doc.data();
+      if (ACTIVE_SWAP_STATUSES.has(data.status)) {
+        candidateIds.add(doc.id);
+      }
+    });
+
+    requestedSnapshot.forEach((doc) => {
+      if (doc.id === activeSwapRequestId) return;
+      const data = doc.data();
+      if (ACTIVE_SWAP_STATUSES.has(data.status)) {
+        candidateIds.add(doc.id);
+      }
+    });
+  }
+
+  for (const candidateId of candidateIds) {
+    try {
+      await deleteSwapRequestCascade(candidateId);
+      console.log(
+        `Removed conflicting swap request ${candidateId} after completion of ${activeSwapRequestId}`
+      );
+    } catch (error) {
+      console.error(
+        `Failed to remove conflicting swap request ${candidateId}:`,
+        error
+      );
+    }
+  }
+}
+
 export async function POST(request) {
   try {
     const { swapRequestId, userUid, trackingNumber, messageId } =
@@ -81,10 +185,21 @@ export async function POST(request) {
         [userUid]: confirmationTimestamp,
       };
 
+      // Merge tracking numbers
+      const currentTrackingNumbers = swapData.trackingNumbers || {};
+      const trimmedTrackingNumber = trackingNumber?.trim();
+      const updatedTrackingNumbers = trimmedTrackingNumber
+        ? {
+            ...currentTrackingNumbers,
+            [userUid]: trimmedTrackingNumber,
+          }
+        : currentTrackingNumbers;
+
       // Prepare update data for swap request
       const swapUpdateData = {
         shipmentStatus: updatedShipmentStatus,
         confirmationTimestamps: updatedConfirmationTimestamps,
+        trackingNumbers: updatedTrackingNumbers,
         updatedAt: confirmationTimestamp,
         lastUpdatedBy: userUid,
       };
@@ -93,16 +208,10 @@ export async function POST(request) {
         createdAt: confirmationTimestamp,
         shipmentStatus: updatedShipmentStatus,
         confirmationTimestamps: updatedConfirmationTimestamps,
+        trackingNumbers: updatedTrackingNumbers,
         readBy: [userUid],
         senderUid: userUid,
       };
-
-      // Add tracking number if provided
-      if (trackingNumber && trackingNumber.trim()) {
-        swapUpdateData[`trackingNumbers.${userUid}`] = trackingNumber.trim();
-        swapMessageUpdateData[`trackingNumbers.${userUid}`] =
-          trackingNumber.trim();
-      }
 
       // Update swap request with shipment status
       transaction.update(swapRequestRef, swapUpdateData);
@@ -119,6 +228,9 @@ export async function POST(request) {
           ? swapData.requestedFrom?.uid
           : swapData.offeredBy?.uid;
 
+      const offeredListingId = swapData.offeredListing?.id || null;
+      const requestedListingId = swapData.requestedListing?.id || null;
+
       // Check if both users have now shipped
       const bothShipped =
         updatedShipmentStatus[userUid] && updatedShipmentStatus[otherUserUid];
@@ -130,12 +242,14 @@ export async function POST(request) {
         transaction.update(swapRequestRef, {
           status: "swap_completed",
           completedAt: confirmationTimestamp,
+          trackingNumbers: updatedTrackingNumbers,
         });
 
         // Update message type to swap_completed
         transaction.update(messageRef, {
           type: "swap_completed",
           completedAt: confirmationTimestamp,
+          trackingNumbers: updatedTrackingNumbers,
           readBy: [userUid],
         });
 
@@ -146,6 +260,69 @@ export async function POST(request) {
         transaction.update(db.doc(`profiles/${otherUserUid}`), {
           swapCount: FieldValue.increment(1),
         });
+
+        if (!offeredListingId || !requestedListingId) {
+          throw new Error("Swap listings are missing required identifiers");
+        }
+
+        const offeredListingRef = db.doc(`listings/${offeredListingId}`);
+        const requestedListingRef = db.doc(`listings/${requestedListingId}`);
+
+        const offeredListingDoc = await transaction.get(offeredListingRef);
+        const requestedListingDoc = await transaction.get(requestedListingRef);
+
+        const offeredListingSnapshot = offeredListingDoc.exists
+          ? { id: offeredListingDoc.id, ...offeredListingDoc.data() }
+          : null;
+        const requestedListingSnapshot = requestedListingDoc.exists
+          ? { id: requestedListingDoc.id, ...requestedListingDoc.data() }
+          : null;
+
+        const offeredListingArchiveUpdate = {
+          status: "inactive",
+          swappedAt: confirmationTimestamp,
+          swappedWithListingId: requestedListingId,
+          swappedWithUserUid: swapData.requestedFrom?.uid || null,
+          swapRequestId,
+          updatedAt: confirmationTimestamp,
+        };
+
+        const requestedListingArchiveUpdate = {
+          status: "inactive",
+          swappedAt: confirmationTimestamp,
+          swappedWithListingId: offeredListingId,
+          swappedWithUserUid: swapData.offeredBy?.uid || null,
+          swapRequestId,
+          updatedAt: confirmationTimestamp,
+        };
+
+        transaction.update(offeredListingRef, offeredListingArchiveUpdate);
+        transaction.update(requestedListingRef, requestedListingArchiveUpdate);
+
+        const completedSwapRef = db.doc(`completed_swaps/${swapRequestId}`);
+
+        const completedSwapData = {
+          id: swapRequestId,
+          status: "swap_completed",
+          completedAt: confirmationTimestamp,
+          createdAt: confirmationTimestamp,
+          participants:
+            swapData.participants ||
+            [swapData.offeredBy?.uid, swapData.requestedFrom?.uid].filter(
+              Boolean
+            ),
+          offeredBy: swapData.offeredBy,
+          requestedFrom: swapData.requestedFrom,
+          offeredListing: swapData.offeredListing,
+          requestedListing: swapData.requestedListing,
+          shipmentStatus: updatedShipmentStatus,
+          confirmationTimestamps: updatedConfirmationTimestamps,
+          trackingNumbers: updatedTrackingNumbers,
+          offeredListingSnapshot,
+          requestedListingSnapshot,
+        };
+
+        transaction.set(completedSwapRef, completedSwapData, { merge: true });
 
         swapCompleted = true;
         console.log(
@@ -160,6 +337,10 @@ export async function POST(request) {
         shipmentStatus: updatedShipmentStatus,
         confirmationTimestamps: updatedConfirmationTimestamps,
         newStatus: bothShipped ? "swap_completed" : "pending_shipment",
+        affectedListingIds:
+          swapCompleted && offeredListingId && requestedListingId
+            ? [offeredListingId, requestedListingId]
+            : [],
       };
     });
 
@@ -167,6 +348,20 @@ export async function POST(request) {
       `Shipment confirmed for profile ${userUid} in swap ${swapRequestId}`,
       result
     );
+
+    if (result.swapCompleted && result.affectedListingIds?.length) {
+      try {
+        await cleanupConflictingSwapRequests(
+          result.affectedListingIds,
+          swapRequestId
+        );
+      } catch (cleanupError) {
+        console.error(
+          `Failed to clean up conflicting swap requests for ${swapRequestId}:`,
+          cleanupError
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,
