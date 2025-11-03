@@ -27,6 +27,8 @@ import {
   Loader2,
   User,
   CheckCircle,
+  ShoppingBag,
+  DollarSign,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -47,6 +49,8 @@ import VerificationBadges from "@/components/ui/verificationBadges";
 import DeleteAccountModal from "@/components/profile/deleteAccountModal";
 import AccountTab from "@/components/profile/accountTab";
 import MyListingsTab from "@/components/profile/myListingsTab";
+import SalesTab from "@/components/profile/salesTab";
+import PurchasesTab from "@/components/profile/purchasesTab";
 import CompletedSwapsTab from "@/components/profile/completedSwapsTab";
 import ReviewsTab from "@/components/profile/reviewsTab";
 
@@ -55,8 +59,17 @@ export default function Profile() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [userListings, setUserListings] = useState([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
+  const [listingsLoaded, setListingsLoaded] = useState(false);
+  const [sales, setSales] = useState([]);
+  const [salesLoading, setSalesLoading] = useState(false);
+  const [salesLoaded, setSalesLoaded] = useState(false);
+  const [purchases, setPurchases] = useState([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+  const [purchasesLoaded, setPurchasesLoaded] = useState(false);
   const [completedSwaps, setCompletedSwaps] = useState([]);
-  const [completedSwapsLoading, setCompletedSwapsLoading] = useState(true);
+  const [completedSwapsLoading, setCompletedSwapsLoading] = useState(false);
+  const [completedSwapsLoaded, setCompletedSwapsLoaded] = useState(false);
   const { profileDoc } = useProfileDoc();
   const [editingAddress, setEditingAddress] = useState(false);
   const [showEnterAddressManually, setShowEnterAddressManually] =
@@ -83,63 +96,154 @@ export default function Profile() {
     }
   }, [authUser, authLoading, router]);
 
-  useEffect(() => {
-    if (authUser) {
-      fetchUserListings();
-    }
-  }, [authUser]);
+  // Lazy load data only when tabs are accessed
+  // Fetch user listings (only when listings tab is active)
+  const fetchUserListingsIfNeeded = async () => {
+    if (listingsLoaded || listingsLoading || !authUser?.uid) return;
 
-  useEffect(() => {
-    if (!authUser?.uid) {
-      setCompletedSwaps([]);
+    setListingsLoading(true);
+    try {
+      const listingsRef = collection(db, "listings");
+      const q = query(listingsRef, where("ownerUid", "==", authUser.uid));
+      const querySnapshot = await getDocs(q);
+      const listings = [];
+      querySnapshot.forEach((doc) => {
+        listings.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+      setUserListings(listings);
+      setListingsLoaded(true);
+    } catch (error) {
+      console.error("Error fetching listings:", error);
+      toast.error("Failed to load listings");
+    } finally {
+      setListingsLoading(false);
+    }
+  };
+
+  // Fetch sales (only when sales tab is active)
+  const fetchSalesIfNeeded = async () => {
+    if (salesLoaded || salesLoading || !authUser?.uid) return;
+
+    setSalesLoading(true);
+    try {
+      const ordersRef = collection(db, "orders");
+      const salesQuery = query(
+        ordersRef,
+        where("sellerUid", "==", authUser.uid)
+      );
+      const snapshot = await getDocs(salesQuery);
+
+      const fetchedSales = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      fetchedSales.sort(
+        (a, b) =>
+          getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)
+      );
+
+      setSales(fetchedSales);
+      setSalesLoaded(true);
+    } catch (error) {
+      console.error("Error fetching sales:", error);
+      toast.error("Failed to load sales");
+    } finally {
+      setSalesLoading(false);
+    }
+  };
+
+  // Fetch purchases (only when purchases tab is active)
+  const fetchPurchasesIfNeeded = async () => {
+    if (purchasesLoaded || purchasesLoading || !authUser?.uid) return;
+
+    setPurchasesLoading(true);
+    try {
+      const ordersRef = collection(db, "orders");
+      const purchasesQuery = query(
+        ordersRef,
+        where("buyerUid", "==", authUser.uid)
+      );
+      const snapshot = await getDocs(purchasesQuery);
+
+      const fetchedPurchases = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      fetchedPurchases.sort(
+        (a, b) =>
+          getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt)
+      );
+
+      setPurchases(fetchedPurchases);
+      setPurchasesLoaded(true);
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+      toast.error("Failed to load purchases");
+    } finally {
+      setPurchasesLoading(false);
+    }
+  };
+
+  // Fetch completed swaps (only when swaps tab is active)
+  const fetchCompletedSwapsIfNeeded = async () => {
+    if (completedSwapsLoaded || completedSwapsLoading || !authUser?.uid) return;
+
+    setCompletedSwapsLoading(true);
+    try {
+      const swapsRef = collection(db, "completed_swaps");
+      const swapsQuery = query(
+        swapsRef,
+        where("participants", "array-contains", authUser.uid)
+      );
+      const snapshot = await getDocs(swapsQuery);
+
+      const fetchedSwaps = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+
+      fetchedSwaps.sort(
+        (a, b) =>
+          getTimestampMillis(b.completedAt) - getTimestampMillis(a.completedAt)
+      );
+
+      setCompletedSwaps(fetchedSwaps);
+      setCompletedSwapsLoaded(true);
+    } catch (error) {
+      console.error("Error fetching completed swaps:", error);
+      toast.error("Failed to load completed swaps");
+    } finally {
       setCompletedSwapsLoading(false);
-      return;
     }
+  };
 
-    let isMounted = true;
+  // Watch for tab changes and fetch data on-demand
+  useEffect(() => {
+    if (!authUser?.uid) return;
 
-    const fetchCompletedSwaps = async () => {
-      setCompletedSwapsLoading(true);
-      try {
-        const swapsRef = collection(db, "completed_swaps");
-        const swapsQuery = query(
-          swapsRef,
-          where("participants", "array-contains", authUser.uid)
-        );
-        const snapshot = await getDocs(swapsQuery);
-
-        const fetchedSwaps = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        }));
-
-        fetchedSwaps.sort(
-          (a, b) =>
-            getTimestampMillis(b.completedAt) -
-            getTimestampMillis(a.completedAt)
-        );
-
-        if (isMounted) {
-          setCompletedSwaps(fetchedSwaps);
-        }
-      } catch (error) {
-        console.error("Error fetching completed swaps:", error);
-        if (isMounted) {
-          toast.error("Failed to load completed swaps");
-        }
-      } finally {
-        if (isMounted) {
-          setCompletedSwapsLoading(false);
-        }
-      }
-    };
-
-    fetchCompletedSwaps();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [authUser?.uid]);
+    switch (activeTab) {
+      case "listings":
+        fetchUserListingsIfNeeded();
+        break;
+      case "sales":
+        fetchSalesIfNeeded();
+        break;
+      case "purchases":
+        fetchPurchasesIfNeeded();
+        break;
+      case "completed-swaps":
+        fetchCompletedSwapsIfNeeded();
+        break;
+      default:
+        // Account and Reviews tabs don't need data fetching
+        break;
+    }
+  }, [activeTab, authUser?.uid]);
 
   // Load Cloudinary widget script
   useEffect(() => {
@@ -248,21 +352,6 @@ export default function Profile() {
       // Don't show error to user since this is background operation
       // Could implement retry logic here
     }
-  };
-
-  // Function to fetch users listings
-  const fetchUserListings = async () => {
-    const listingsRef = collection(db, "listings");
-    const q = query(listingsRef, where("ownerUid", "==", authUser.uid));
-    const querySnapshot = await getDocs(q);
-    const listings = [];
-    querySnapshot.forEach((doc) => {
-      listings.push({
-        id: doc.id,
-        ...doc.data(),
-      });
-    });
-    setUserListings(listings);
   };
 
   // Sample stats - in a real app, these would come from your database
@@ -614,36 +703,63 @@ export default function Profile() {
                 onValueChange={setActiveTab}
               >
                 <div className="flex flex-col md:flex-row justify-center md:justify-between items-start md:items-center mb-6 gap-3 w-full">
-                  {/* Full-width tabs for mobile, auto-width for desktop */}
+                  {/* Full-width grid tabs for mobile (3x2), inline for desktop */}
                   <div className="w-full md:w-auto">
-                    <TabsList className="w-full md:w-auto grid grid-cols-4 md:inline-flex h-auto">
+                    <TabsList className="w-full md:w-auto grid grid-cols-3 md:inline-flex h-auto gap-1">
                       <TabsTrigger
                         value="account"
-                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                        className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
-                        <Edit size={16} />
-                        <span className="text-[10px] md:text-sm">Account</span>
+                        <Edit size={14} className="md:w-4 md:h-4" />
+                        <span className="text-[9px] md:text-sm leading-tight">
+                          Account
+                        </span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="listings"
-                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                        className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
-                        <Package size={16} />
-                        <span className="text-[10px] md:text-sm">Listings</span>
+                        <Package size={14} className="md:w-4 md:h-4" />
+                        <span className="text-[9px] md:text-sm leading-tight">
+                          Listings
+                        </span>
                       </TabsTrigger>
+
                       <TabsTrigger
                         value="completed-swaps"
-                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                        className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
-                        <CheckCircle size={16} />
-                        <span className="text-[10px] md:text-sm">Swaps</span>
+                        <CheckCircle size={14} className="md:w-4 md:h-4" />
+                        <span className="text-[9px] md:text-sm leading-tight">
+                          Swaps
+                        </span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="sales"
+                        className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                      >
+                        <DollarSign size={14} className="md:w-4 md:h-4" />
+                        <span className="text-[9px] md:text-sm leading-tight">
+                          Sales
+                        </span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="purchases"
+                        className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                      >
+                        <ShoppingBag size={14} className="md:w-4 md:h-4" />
+                        <span className="text-[9px] md:text-sm leading-tight">
+                          Purchases
+                        </span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="reviews"
-                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                        className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
-                        <MessageSquare size={16} />
-                        <span className="text-[10px] md:text-sm">Reviews</span>
+                        <MessageSquare size={14} className="md:w-4 md:h-4" />
+                        <span className="text-[9px] md:text-sm leading-tight">
+                          Reviews
+                        </span>
                       </TabsTrigger>
                     </TabsList>
                   </div>
@@ -657,12 +773,32 @@ export default function Profile() {
                 </div>
 
                 {/* Listings */}
-                <MyListingsTab userListings={userListings} router={router} />
+                <MyListingsTab
+                  userListings={userListings}
+                  listingsLoading={listingsLoading}
+                  router={router}
+                />
 
                 {/* Completed swaps */}
                 <CompletedSwapsTab
                   completedSwaps={completedSwaps}
                   completedSwapsLoading={completedSwapsLoading}
+                  authUser={authUser}
+                  router={router}
+                />
+
+                {/* Sales */}
+                <SalesTab
+                  sales={sales}
+                  salesLoading={salesLoading}
+                  authUser={authUser}
+                  router={router}
+                />
+
+                {/* Purchases */}
+                <PurchasesTab
+                  purchases={purchases}
+                  purchasesLoading={purchasesLoading}
                   authUser={authUser}
                   router={router}
                 />

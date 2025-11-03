@@ -169,6 +169,11 @@ async function handlePaymentSucceeded(paymentIntent) {
           .substr(2, 9)
           .toUpperCase()}`,
 
+        // Top-level UIDs for easy querying (like completed_swaps.participants)
+        participants: [buyerUid, ownerUid],
+        buyerUid: buyerUid,
+        sellerUid: ownerUid,
+
         // Listing details
         listingId: listingId,
         listing: {
@@ -177,12 +182,17 @@ async function handlePaymentSucceeded(paymentIntent) {
           fragrance: listing.fragrance,
           amountLeft: listing.amountLeft,
           imageURL: listing.imageURLs?.[0] || null,
+          size: listing.size || null,
+          sizeUnit: listing.sizeUnit || null,
+          type: listing.type || "sell",
         },
 
         // Buyer details
         buyer: {
           uid: buyerUid,
           username: buyer.username || buyerName || "Unknown",
+          displayName:
+            buyer.displayName || buyer.username || buyerName || "Unknown",
           email: buyer.email || buyerEmail,
           profilePictureURL: buyer.profilePictureURL || null,
         },
@@ -191,6 +201,7 @@ async function handlePaymentSucceeded(paymentIntent) {
         seller: {
           uid: ownerUid,
           username: seller.username || "Unknown",
+          displayName: seller.displayName || seller.username || "Unknown",
           email: seller.email,
           profilePictureURL: seller.profilePictureURL || null,
         },
@@ -207,6 +218,15 @@ async function handlePaymentSucceeded(paymentIntent) {
           stripePaymentIntentId: paymentIntent.id,
           paymentStatus: paymentIntent.status,
           paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
+        },
+
+        // Shipping tracking (for later updates)
+        shipping: {
+          trackingNumber: null,
+          carrier: null,
+          shippedAt: null,
+          deliveredAt: null,
+          estimatedDelivery: null,
         },
 
         // Order status

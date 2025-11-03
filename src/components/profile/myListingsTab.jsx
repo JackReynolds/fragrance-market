@@ -3,14 +3,23 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
+import { Loader2 } from "lucide-react";
 import ListingCard from "@/components/listingCard";
 
-export default function MyListingsTab({ userListings, router }) {
+export default function MyListingsTab({
+  userListings,
+  listingsLoading,
+  router,
+}) {
   return (
     <TabsContent value="listings" className="space-y-6">
       <h2 className="text-2xl font-bold">My Listings</h2>
 
-      {userListings.length === 0 ? (
+      {listingsLoading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : userListings.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
           <h3 className="mb-2 text-lg font-semibold">No listings yet</h3>
           <p className="mb-4 text-sm text-muted-foreground">
