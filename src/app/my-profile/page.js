@@ -613,40 +613,43 @@ export default function Profile() {
                 value={activeTab}
                 onValueChange={setActiveTab}
               >
-                <div className="flex justify-center md:justify-between items-center mb-6 gap-3">
-                  <TabsList>
-                    <TabsTrigger
-                      value="account"
-                      className="px-4 hover:cursor-pointer"
-                    >
-                      <Edit size={16} className="mr-2 " />
-                      Account
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="listings"
-                      className="px-4 hover:cursor-pointer"
-                    >
-                      <Package size={16} className="mr-2 " />
-                      My Listings
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="completed-swaps"
-                      className="px-4 hover:cursor-pointer"
-                    >
-                      <CheckCircle size={16} className="mr-2 " />
-                      Completed Swaps
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="reviews"
-                      className="px-4 hover:cursor-pointer"
-                    >
-                      <MessageSquare size={16} className="mr-2 " />
-                      Reviews
-                    </TabsTrigger>
-                  </TabsList>
+                <div className="flex flex-col md:flex-row justify-center md:justify-between items-start md:items-center mb-6 gap-3 w-full">
+                  {/* Full-width tabs for mobile, auto-width for desktop */}
+                  <div className="w-full md:w-auto">
+                    <TabsList className="w-full md:w-auto grid grid-cols-4 md:inline-flex h-auto">
+                      <TabsTrigger
+                        value="account"
+                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                      >
+                        <Edit size={16} />
+                        <span className="text-[10px] md:text-sm">Account</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="listings"
+                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                      >
+                        <Package size={16} />
+                        <span className="text-[10px] md:text-sm">Listings</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="completed-swaps"
+                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                      >
+                        <CheckCircle size={16} />
+                        <span className="text-[10px] md:text-sm">Swaps</span>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="reviews"
+                        className="px-2 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
+                      >
+                        <MessageSquare size={16} />
+                        <span className="text-[10px] md:text-sm">Reviews</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
 
                   <Button
-                    className="hidden md:block hover:cursor-pointer hover:bg-primary/80 shadow-md"
+                    className="hidden md:block hover:cursor-pointer hover:bg-primary/80 shadow-md flex-shrink-0"
                     onClick={() => router.push("/new-listing")}
                   >
                     Add New Listing

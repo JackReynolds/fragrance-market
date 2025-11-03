@@ -42,21 +42,27 @@ export default function CompletedSwapsTab({
       ) : (
         <div className="space-y-4">
           {completedSwaps.map((swap) => {
-            const otherUser =
-              swap.offeredBy?.uid === authUser.uid
-                ? swap.requestedFrom
-                : swap.offeredBy;
+            // Determine if current user is the one who offered or requested
+            const isOfferer = swap.offeredBy?.uid === authUser.uid;
 
-            const myListing =
-              swap.offeredBy?.uid === authUser.uid
-                ? swap.offeredListingSnapshot || swap.offeredListing
-                : swap.requestedListingSnapshot || swap.requestedListing;
+            // Get the other user
+            const otherUser = isOfferer ? swap.requestedFrom : swap.offeredBy;
 
-            const theirListing =
-              swap.offeredBy?.uid === authUser.uid
-                ? swap.requestedListingSnapshot || swap.requestedListing
-                : swap.offeredListingSnapshot || swap.offeredListing;
+            // Get listings - ONLY use basic listing data (not snapshots for privacy)
+            // Snapshots contain full listing details including sensitive information
+            const myListing = isOfferer
+              ? swap.offeredListing
+              : swap.requestedListing;
 
+            const theirListing = isOfferer
+              ? swap.requestedListing
+              : swap.offeredListing;
+
+            // Get image - basic listings use imageURL (singular)
+            const myImage = myListing?.imageURL;
+            const theirImage = theirListing?.imageURL;
+
+            // Get tracking numbers
             const myTrackingNumber = swap.trackingNumbers?.[authUser.uid];
             const theirTrackingNumber = swap.trackingNumbers?.[otherUser?.uid];
 
@@ -93,11 +99,11 @@ export default function CompletedSwapsTab({
                         You Sent
                       </h4>
                       <div className="flex gap-3 items-center">
-                        {myListing?.imageUrls?.[0] && (
+                        {myImage && (
                           <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                             <Image
-                              src={myListing.imageUrls[0]}
-                              alt={myListing.fragranceName || "Fragrance"}
+                              src={myImage}
+                              alt={myListing?.title || "Fragrance"}
                               fill
                               className="object-cover"
                             />
@@ -105,13 +111,16 @@ export default function CompletedSwapsTab({
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">
-                            {myListing?.fragranceName || "Unknown Fragrance"}
+                            {myListing?.title || "Unknown Fragrance"}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
-                            {myListing?.brandName || "Unknown Brand"}
+                            {myListing?.brand || "Unknown Brand"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {myListing?.fragrance || ""}
                           </p>
                           {myTrackingNumber && (
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-muted-foreground mt-1 font-medium">
                               Tracking: {myTrackingNumber}
                             </p>
                           )}
@@ -125,11 +134,11 @@ export default function CompletedSwapsTab({
                         You Received
                       </h4>
                       <div className="flex gap-3 items-center">
-                        {theirListing?.imageUrls?.[0] && (
+                        {theirImage && (
                           <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                             <Image
-                              src={theirListing.imageUrls[0]}
-                              alt={theirListing.fragranceName || "Fragrance"}
+                              src={theirImage}
+                              alt={theirListing?.title || "Fragrance"}
                               fill
                               className="object-cover"
                             />
@@ -137,13 +146,16 @@ export default function CompletedSwapsTab({
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">
-                            {theirListing?.fragranceName || "Unknown Fragrance"}
+                            {theirListing?.title || "Unknown Fragrance"}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
-                            {theirListing?.brandName || "Unknown Brand"}
+                            {theirListing?.brand || "Unknown Brand"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {theirListing?.fragrance || ""}
                           </p>
                           {theirTrackingNumber && (
-                            <p className="text-xs text-muted-foreground mt-1">
+                            <p className="text-xs text-muted-foreground mt-1 font-medium">
                               Tracking: {theirTrackingNumber}
                             </p>
                           )}
@@ -155,10 +167,10 @@ export default function CompletedSwapsTab({
                   {/* Optional: View Details Button */}
                   <div className="mt-4 pt-4 border-t">
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       onClick={() => router.push(`/users/${otherUser?.uid}`)}
-                      className="w-full md:w-auto"
+                      className="w-full md:w-auto hover:cursor-pointer"
                     >
                       View {otherUser?.displayName || "User"}&apos;s Profile
                     </Button>
