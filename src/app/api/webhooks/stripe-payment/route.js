@@ -234,7 +234,7 @@ async function handlePaymentSucceeded(paymentIntent) {
         orderHistory: [
           {
             status: "payment_completed",
-            timestamp: FieldValue.serverTimestamp(),
+            timestamp: Timestamp.now(), // Use Timestamp.now() for arrays (serverTimestamp not allowed in arrays)
             note: "Payment successfully processed",
           },
         ],
