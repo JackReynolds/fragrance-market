@@ -136,6 +136,30 @@ export async function POST(request) {
 
       const swapData = swapRequestDoc.data();
 
+      // READ LISTINGS EARLY - Move this up here before any writes
+      const offeredListingId = swapData.offeredListing?.id || null;
+      const requestedListingId = swapData.requestedListing?.id || null;
+
+      let offeredListingDoc = null;
+      let requestedListingDoc = null;
+      let offeredListingSnapshot = null;
+      let requestedListingSnapshot = null;
+
+      if (offeredListingId && requestedListingId) {
+        const offeredListingRef = db.doc(`listings/${offeredListingId}`);
+        const requestedListingRef = db.doc(`listings/${requestedListingId}`);
+
+        offeredListingDoc = await transaction.get(offeredListingRef);
+        requestedListingDoc = await transaction.get(requestedListingRef);
+
+        offeredListingSnapshot = offeredListingDoc.exists
+          ? { id: offeredListingDoc.id, ...offeredListingDoc.data() }
+          : null;
+        requestedListingSnapshot = requestedListingDoc.exists
+          ? { id: requestedListingDoc.id, ...requestedListingDoc.data() }
+          : null;
+      }
+
       // Validate user is part of this swap
       const isValidUser =
         swapData.offeredBy?.uid === userUid ||
@@ -228,9 +252,6 @@ export async function POST(request) {
           ? swapData.requestedFrom?.uid
           : swapData.offeredBy?.uid;
 
-      const offeredListingId = swapData.offeredListing?.id || null;
-      const requestedListingId = swapData.requestedListing?.id || null;
-
       // Check if both users have now shipped
       const bothShipped =
         updatedShipmentStatus[userUid] && updatedShipmentStatus[otherUserUid];
@@ -268,18 +289,8 @@ export async function POST(request) {
         const offeredListingRef = db.doc(`listings/${offeredListingId}`);
         const requestedListingRef = db.doc(`listings/${requestedListingId}`);
 
-        const offeredListingDoc = await transaction.get(offeredListingRef);
-        const requestedListingDoc = await transaction.get(requestedListingRef);
-
-        const offeredListingSnapshot = offeredListingDoc.exists
-          ? { id: offeredListingDoc.id, ...offeredListingDoc.data() }
-          : null;
-        const requestedListingSnapshot = requestedListingDoc.exists
-          ? { id: requestedListingDoc.id, ...requestedListingDoc.data() }
-          : null;
-
         const offeredListingArchiveUpdate = {
-          status: "inactive",
+          status: "swapped",
           swappedAt: confirmationTimestamp,
           swappedWithListingId: requestedListingId,
           swappedWithUserUid: swapData.requestedFrom?.uid || null,
@@ -288,7 +299,7 @@ export async function POST(request) {
         };
 
         const requestedListingArchiveUpdate = {
-          status: "inactive",
+          status: "swapped",
           swappedAt: confirmationTimestamp,
           swappedWithListingId: offeredListingId,
           swappedWithUserUid: swapData.offeredBy?.uid || null,

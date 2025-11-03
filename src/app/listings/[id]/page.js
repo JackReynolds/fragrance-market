@@ -151,6 +151,8 @@ const ListingDetailPage = () => {
   const isOwner =
     authUser?.uid && listing?.ownerUid && authUser.uid === listing.ownerUid;
 
+  const isSwapped = listing?.status === "swapped";
+
   // Handle sharing listing
   const handleShare = () => {
     const url = window.location.href;
@@ -166,7 +168,13 @@ const ListingDetailPage = () => {
 
   // Toggle listing active status
   const toggleListingStatus = async () => {
-    if (!isOwner || !listing) return;
+    if (!isOwner || !listing || isSwapped) return;
+
+    // Don't allow status changes for swapped listings
+    if (isSwapped) {
+      toast.error("Swapped listings cannot be modified");
+      return;
+    }
 
     const newStatus = listing.status === "active" ? "inactive" : "active";
 
@@ -275,7 +283,15 @@ const ListingDetailPage = () => {
   // Handle delete listing
   const handleDeleteListing = async () => {
     try {
-      if (!isOwner || !listing) return;
+      if (!isOwner || !listing || isSwapped) return;
+
+      if (isSwapped) {
+        toast.error(
+          "Swapped listings cannot be deleted. They are kept as transaction records."
+        );
+        return;
+      }
+
       if (!authUser) {
         toast.error("Please sign in");
         return;
@@ -397,6 +413,61 @@ const ListingDetailPage = () => {
             <ChevronLeft className="mr-1 h-4 w-4" /> Back
           </button>
 
+          {/* ADD SWAPPED BANNER - Show prominently at the top */}
+          {isSwapped && (
+            <div className="mb-6 rounded-lg border-2 border-green-600 bg-green-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-6 w-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-green-900">
+                    This listing has been swapped
+                  </h3>
+                  <p className="mt-1 text-sm text-green-800">
+                    {isOwner ? (
+                      <>
+                        This fragrance was swapped on{" "}
+                        {listing.swappedAt
+                          ? new Date(
+                              listing.swappedAt.seconds * 1000
+                            ).toLocaleDateString()
+                          : "an unknown date"}
+                        . Swapped listings are kept as transaction records and
+                        cannot be edited or deleted.
+                        {listing.swappedWithUserUid && (
+                          <span>
+                            {" "}
+                            <Link
+                              href={`/users/${listing.swappedWithUserUid}`}
+                              className="underline font-medium hover:text-green-900"
+                            >
+                              View swap partner
+                            </Link>
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      "This fragrance has been swapped and is no longer available."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
             {/* Main content area */}
             <div className="space-y-8">
@@ -443,134 +514,151 @@ const ListingDetailPage = () => {
                   <h1 className="text-2xl font-bold md:text-3xl">
                     {listing.title}
                   </h1>
-                  <div className="flex space-x-2 sm:space-x-3">
-                    {isOwner ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={handleShare}
-                          title="Share listing"
-                          className="hover:cursor-pointer px-2 sm:px-3"
-                          size="sm"
-                        >
-                          <Share2 className="h-4 w-4" />
-                          <span className="hidden sm:ml-1 sm:inline">
-                            Share
-                          </span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            router.push(`/edit-listing/${listing.id}`)
-                          }
-                          title="Edit listing"
-                          className="hover:cursor-pointer px-2 sm:px-3"
-                          size="sm"
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span className="hidden sm:ml-1 sm:inline">Edit</span>
-                        </Button>
-                        <Button
-                          variant={
-                            listing.status === "active" ? "outline" : "default"
-                          }
-                          onClick={toggleListingStatus}
-                          title={
-                            listing.status === "active"
-                              ? "Deactivate listing"
-                              : "Activate listing"
-                          }
-                          className="hover:cursor-pointer px-2 sm:px-3"
-                          size="sm"
-                        >
-                          {listing.status === "active" ? (
-                            <>
-                              <EyeOff className="h-4 w-4" />
-                              <span className="hidden sm:ml-1 sm:inline">
-                                Deactivate
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Eye className="h-4 w-4" />
-                              <span className="hidden sm:ml-2 sm:inline">
-                                Activate
-                              </span>
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={handleDeleteListing}
-                          title="Delete listing"
-                          className="hover:cursor-pointer px-2 sm:px-3"
-                          disabled={isDeleting}
-                          size="sm"
-                        >
-                          {isDeleting ? (
-                            <>
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                              <span className="hidden sm:ml-1 sm:inline">
-                                Deleting...
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Trash2 className="h-4 w-4" />
-                              <span className="hidden sm:inline">Delete</span>
-                            </>
-                          )}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          className="hover:cursor-pointer px-2 sm:px-3"
-                          onClick={handleShare}
-                          title="Share listing"
-                          size="sm"
-                        >
-                          <Share2 className="h-4 w-4" />
-                          <span className="hidden sm:ml-1 sm:inline">
-                            Share
-                          </span>
-                        </Button>
 
-                        <Button
-                          variant="outline"
-                          className="hover:cursor-pointer px-2 sm:px-3"
-                          onClick={handleToggleFavourite}
-                          title={
-                            isFavourited
-                              ? "Remove from favourites"
-                              : "Add to favourites"
-                          }
-                          disabled={isTogglingFavourite}
-                          size="sm"
-                        >
-                          {isTogglingFavourite ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Heart
-                              className={`h-4 w-4 ${
-                                isFavourited ? "fill-current text-red-500" : ""
-                              }`}
-                            />
-                          )}
-                          <span className="hidden sm:ml-1 sm:inline">
-                            {isFavourited ? "Unfavourite" : "Favourite"}
-                          </span>
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                  {/* Button Logic: Show NO buttons if swapped */}
+                  {!isSwapped && (
+                    <div className="flex space-x-2 sm:space-x-3">
+                      {isOwner ? (
+                        <>
+                          {/* Owner buttons: Share, Edit, Activate/Deactivate, Delete */}
+                          <Button
+                            variant="outline"
+                            onClick={handleShare}
+                            title="Share listing"
+                            className="hover:cursor-pointer px-2 sm:px-3"
+                            size="sm"
+                          >
+                            <Share2 className="h-4 w-4" />
+                            <span className="hidden sm:ml-1 sm:inline">
+                              Share
+                            </span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              router.push(`/edit-listing/${listing.id}`)
+                            }
+                            title="Edit listing"
+                            className="hover:cursor-pointer px-2 sm:px-3"
+                            size="sm"
+                          >
+                            <Edit className="h-4 w-4" />
+                            <span className="hidden sm:ml-1 sm:inline">
+                              Edit
+                            </span>
+                          </Button>
+                          <Button
+                            variant={
+                              listing.status === "active"
+                                ? "outline"
+                                : "default"
+                            }
+                            onClick={toggleListingStatus}
+                            title={
+                              listing.status === "active"
+                                ? "Deactivate listing"
+                                : "Activate listing"
+                            }
+                            className="hover:cursor-pointer px-2 sm:px-3"
+                            size="sm"
+                          >
+                            {listing.status === "active" ? (
+                              <>
+                                <EyeOff className="h-4 w-4" />
+                                <span className="hidden sm:ml-1 sm:inline">
+                                  Deactivate
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4" />
+                                <span className="hidden sm:ml-2 sm:inline">
+                                  Activate
+                                </span>
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={handleDeleteListing}
+                            title="Delete listing"
+                            className="hover:cursor-pointer px-2 sm:px-3"
+                            disabled={isDeleting}
+                            size="sm"
+                          >
+                            {isDeleting ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span className="hidden sm:ml-1 sm:inline">
+                                  Deleting...
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Delete</span>
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {/* Non-owner buttons: Share, Favourite */}
+                          <Button
+                            variant="outline"
+                            className="hover:cursor-pointer px-2 sm:px-3"
+                            onClick={handleShare}
+                            title="Share listing"
+                            size="sm"
+                          >
+                            <Share2 className="h-4 w-4" />
+                            <span className="hidden sm:ml-1 sm:inline">
+                              Share
+                            </span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="hover:cursor-pointer px-2 sm:px-3"
+                            onClick={handleToggleFavourite}
+                            title={
+                              isFavourited
+                                ? "Remove from favourites"
+                                : "Add to favourites"
+                            }
+                            disabled={isTogglingFavourite}
+                            size="sm"
+                          >
+                            {isTogglingFavourite ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Heart
+                                className={`h-4 w-4 ${
+                                  isFavourited
+                                    ? "fill-current text-red-500"
+                                    : ""
+                                }`}
+                              />
+                            )}
+                            <span className="hidden sm:ml-1 sm:inline">
+                              {isFavourited ? "Unfavourite" : "Favourite"}
+                            </span>
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Status badge */}
-                {listing.status === "inactive" && (
+                {/* Update Status badges to include swapped status */}
+                {listing.status === "inactive" && !isSwapped && (
                   <div className="mt-2 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
                     Inactive Listing
+                  </div>
+                )}
+
+                {isSwapped && (
+                  <div className="mt-2 inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                    ✓ Swapped
                   </div>
                 )}
 
@@ -666,8 +754,8 @@ const ListingDetailPage = () => {
                 </Tabs>
               </div>
 
-              {/* Call to action */}
-              {!isOwner && (
+              {/* Call to action - Hide for swapped listings */}
+              {!isOwner && !isSwapped && (
                 <div className="mt-8 space-y-4">
                   {listing.type === "sell" ? (
                     <Button

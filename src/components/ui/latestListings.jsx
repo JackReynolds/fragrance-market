@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { getDocs, collection, query, orderBy, limit } from "firebase/firestore";
+import {
+  getDocs,
+  collection,
+  query,
+  orderBy,
+  limit,
+  where,
+} from "firebase/firestore";
 import { db } from "@/firebase.config.js";
 import ListingCard from "@/components/listingCard";
 
@@ -16,6 +23,7 @@ const LatestListings = () => {
         const listingsQuery = query(
           collection(db, "listings"),
           orderBy("createdAt", "desc"),
+          where("status", "==", "active"),
           limit(8)
         );
 

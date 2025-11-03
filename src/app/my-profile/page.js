@@ -4,14 +4,11 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button.jsx";
-import { Input } from "@/components/ui/input.jsx";
-import { Label } from "@/components/ui/label.jsx";
 import { toast } from "sonner";
 import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
 } from "@/components/ui/card.jsx";
 import {
@@ -46,38 +43,12 @@ import { db } from "../../firebase.config";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
 import ManualAddressForm from "@/components/profile/manualAddressForm";
 import GoogleLocationSearch from "@/components/googleLocationSearch";
-import ListingCard from "@/components/listingCard";
-import GoPremiumButton from "@/components/goPremiumButton";
-import SellerAccountStatus from "@/components/profile/sellerAccountStatus";
-import IDVerificationCard from "@/components/profile/idVerificationCard";
 import VerificationBadges from "@/components/ui/verificationBadges";
-import { Textarea } from "@/components/ui/textarea";
-import PremiumAccountSubscription from "@/components/profile/premiumAccountSubscription";
 import DeleteAccountModal from "@/components/profile/deleteAccountModal";
-
-const SAMPLE_REVIEWS = [
-  {
-    id: "1",
-    rating: 5,
-    reviewer: "Emily K.",
-    comment: "Great seller, fast shipping and product exactly as described!",
-    date: "2023-09-15",
-  },
-  {
-    id: "2",
-    rating: 4,
-    reviewer: "Michael T.",
-    comment: "Good communication, item arrived in good condition.",
-    date: "2023-10-05",
-  },
-  {
-    id: "3",
-    rating: 5,
-    reviewer: "Sarah L.",
-    comment: "Excellent packaging and fast delivery. Would buy from again!",
-    date: "2023-11-12",
-  },
-];
+import AccountTab from "@/components/profile/accountTab";
+import MyListingsTab from "@/components/profile/myListingsTab";
+import CompletedSwapsTab from "@/components/profile/completedSwapsTab";
+import ReviewsTab from "@/components/profile/reviewsTab";
 
 export default function Profile() {
   const { authUser, authLoading } = useAuth();
@@ -88,9 +59,6 @@ export default function Profile() {
   const [completedSwapsLoading, setCompletedSwapsLoading] = useState(true);
   const { profileDoc } = useProfileDoc();
   const [editingAddress, setEditingAddress] = useState(false);
-  const [formattedAddress, setFormattedAddress] = useState(
-    profileDoc?.formattedAddress || ""
-  );
   const [showEnterAddressManually, setShowEnterAddressManually] =
     useState(false);
   const [uploadingProfilePicture, setUploadingProfilePicture] = useState(false);
@@ -686,488 +654,34 @@ export default function Profile() {
                 </div>
 
                 {/* Listings */}
-                <TabsContent value="listings" className="space-y-6">
-                  <h2 className="text-2xl font-bold">My Listings</h2>
-
-                  {userListings.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
-                      <h3 className="mb-2 text-lg font-semibold">
-                        No listings yet
-                      </h3>
-                      <p className="mb-4 text-sm text-muted-foreground">
-                        You haven&apos;t created any listings yet. Start selling
-                        or swapping your fragrances today!
-                      </p>
-                      <Button onClick={() => router.push("/new-listing")}>
-                        Create Your First Listing
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex justify-center">
-                      <div className="w-full grid gap-3 md:gap-6 grid-cols-2 lg:grid-cols-4">
-                        {userListings &&
-                          userListings.map((listing) => (
-                            <ListingCard
-                              key={listing.id}
-                              listing={listing}
-                              showUserInfo={false}
-                            />
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </TabsContent>
+                <MyListingsTab userListings={userListings} router={router} />
 
                 {/* Completed swaps */}
-                <TabsContent value="completed-swaps" className="space-y-6">
-                  <h2 className="text-2xl font-bold">Completed Swaps</h2>
-
-                  {completedSwapsLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  ) : completedSwaps.length === 0 ? (
-                    <div className="rounded-lg border border-dashed p-8 text-center">
-                      <h3 className="mb-2 text-lg font-semibold">
-                        No completed swaps yet
-                      </h3>
-                      <p className="mb-4 text-sm text-muted-foreground">
-                        You haven&apos;t completed any swaps yet. Start swapping
-                        your fragrances today!
-                      </p>
-                      <Button onClick={() => router.push("/marketplace")}>
-                        Browse Marketplace
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {completedSwaps.map((swap) => {
-                        const otherUser =
-                          swap.offeredBy?.uid === authUser.uid
-                            ? swap.requestedFrom
-                            : swap.offeredBy;
-
-                        const myListing =
-                          swap.offeredBy?.uid === authUser.uid
-                            ? swap.offeredListingSnapshot || swap.offeredListing
-                            : swap.requestedListingSnapshot ||
-                              swap.requestedListing;
-
-                        const theirListing =
-                          swap.offeredBy?.uid === authUser.uid
-                            ? swap.requestedListingSnapshot ||
-                              swap.requestedListing
-                            : swap.offeredListingSnapshot ||
-                              swap.offeredListing;
-
-                        const myTrackingNumber =
-                          swap.trackingNumbers?.[authUser.uid];
-                        const theirTrackingNumber =
-                          swap.trackingNumbers?.[otherUser?.uid];
-
-                        return (
-                          <Card key={swap.id}>
-                            <CardContent className="p-6">
-                              {/* Swap Header */}
-                              <div className="flex justify-between items-start mb-4">
-                                <div>
-                                  <h3 className="font-semibold text-lg">
-                                    Swap with{" "}
-                                    {otherUser?.displayName ||
-                                      otherUser?.username ||
-                                      "Unknown User"}
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    Completed on{" "}
-                                    {swap.completedAt
-                                      ?.toDate?.()
-                                      .toLocaleDateString() || "Unknown date"}
-                                  </p>
-                                </div>
-                                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-                                  Completed
-                                </span>
-                              </div>
-
-                              <Separator className="my-4" />
-
-                              {/* Swap Details Grid */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Your Fragrance */}
-                                <div className="space-y-2">
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    You Sent
-                                  </h4>
-                                  <div className="flex gap-3 items-center">
-                                    {myListing?.imageUrls?.[0] && (
-                                      <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                                        <Image
-                                          src={myListing.imageUrls[0]}
-                                          alt={
-                                            myListing.fragranceName ||
-                                            "Fragrance"
-                                          }
-                                          fill
-                                          className="object-cover"
-                                        />
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-semibold truncate">
-                                        {myListing?.fragranceName ||
-                                          "Unknown Fragrance"}
-                                      </p>
-                                      <p className="text-sm text-muted-foreground truncate">
-                                        {myListing?.brandName ||
-                                          "Unknown Brand"}
-                                      </p>
-                                      {myTrackingNumber && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                          Tracking: {myTrackingNumber}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Their Fragrance */}
-                                <div className="space-y-2">
-                                  <h4 className="text-sm font-medium text-muted-foreground">
-                                    You Received
-                                  </h4>
-                                  <div className="flex gap-3 items-center">
-                                    {theirListing?.imageUrls?.[0] && (
-                                      <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                                        <Image
-                                          src={theirListing.imageUrls[0]}
-                                          alt={
-                                            theirListing.fragranceName ||
-                                            "Fragrance"
-                                          }
-                                          fill
-                                          className="object-cover"
-                                        />
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-semibold truncate">
-                                        {theirListing?.fragranceName ||
-                                          "Unknown Fragrance"}
-                                      </p>
-                                      <p className="text-sm text-muted-foreground truncate">
-                                        {theirListing?.brandName ||
-                                          "Unknown Brand"}
-                                      </p>
-                                      {theirTrackingNumber && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                          Tracking: {theirTrackingNumber}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Optional: View Details Button */}
-                              <div className="mt-4 pt-4 border-t">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    router.push(`/users/${otherUser?.uid}`)
-                                  }
-                                  className="w-full md:w-auto"
-                                >
-                                  View {otherUser?.displayName || "User"}&apos;s
-                                  Profile
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Rating Summary - Optional: Keep if you implement reviews later */}
-                  {completedSwaps.length > 0 && (
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle className="text-lg">
-                          Future: Leave Reviews
-                        </CardTitle>
-                        <CardDescription>
-                          Review functionality coming soon! You&apos;ll be able
-                          to rate your swap partners.
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
-                  )}
-                </TabsContent>
+                <CompletedSwapsTab
+                  completedSwaps={completedSwaps}
+                  completedSwapsLoading={completedSwapsLoading}
+                  authUser={authUser}
+                  router={router}
+                />
 
                 {/* Reviews */}
-                <TabsContent value="reviews" className="space-y-6">
-                  <h2 className="text-2xl font-bold">Reviews</h2>
-
-                  <div className="rounded-lg border border-dashed p-8 text-center">
-                    <MessageSquare
-                      size={48}
-                      className="mx-auto mb-4 text-muted-foreground"
-                    />
-                    <h3 className="mb-2 text-lg font-semibold">
-                      No reviews yet
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      You haven&apos;t received any reviews yet. Complete swaps
-                      to start building your reputation!
-                    </p>
-                  </div>
-                </TabsContent>
+                <ReviewsTab />
 
                 {/* Account Settings */}
-                <TabsContent value="account" className="space-y-6">
-                  <h2 className="text-2xl font-bold">Account Settings</h2>
-
-                  {/* Seller Account */}
-                  {profileDoc?.isPremium ? (
-                    <SellerAccountStatus profileDoc={profileDoc} />
-                  ) : null}
-
-                  <PremiumAccountSubscription />
-
-                  {/* Personal Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        Personal Information
-                      </CardTitle>
-                      <CardDescription>
-                        Update your personal details
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="username">Username</Label>
-                        <Input
-                          id="username"
-                          defaultValue={
-                            authUser?.displayName || profileDoc?.username || ""
-                          }
-                          disabled={true}
-                          placeholder="Your username"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          defaultValue={authUser?.email}
-                          disabled
-                        />
-                        {/* {!authUser?.emailVerified && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-1"
-                            onClick={() =>
-                              toast.info("Verification email sent!")
-                            }
-                          >
-                            Verify Email
-                          </Button>
-                        )} */}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                          id="phone"
-                          value={personalInfo.phoneNumber || ""}
-                          onChange={(e) =>
-                            setPersonalInfo({
-                              ...personalInfo,
-                              phoneNumber: e.target.value,
-                            })
-                          }
-                          placeholder="Your phone number"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="bio">Bio</Label>
-                        <Textarea
-                          id="bio"
-                          value={personalInfo.bio || ""}
-                          onChange={(e) =>
-                            setPersonalInfo({
-                              ...personalInfo,
-                              bio: e.target.value,
-                            })
-                          }
-                          placeholder="Add some info about yourself..."
-                          rows={4}
-                        />
-                      </div>
-
-                      <Button
-                        className="mt-2 hover:cursor-pointer hover:bg-primary/80"
-                        onClick={handleSaveChanges}
-                      >
-                        Save Changes
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  {/* Show ID verification if user is premium */}
-                  {profileDoc?.isPremium ? <IDVerificationCard /> : null}
-
-                  {/* Address Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">
-                        Address Information
-                      </CardTitle>
-                      <CardDescription>
-                        Update your address information to be used for shipping
-                        your fragrances
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="formattedAddress">Address</Label>
-                        {!editingAddress ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              id="formattedAddress"
-                              value={formattedAddress}
-                              disabled
-                              className="flex-1"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingAddress(true)}
-                            >
-                              Change
-                            </Button>
-                          </div>
-                        ) : showEnterAddressManually ? (
-                          <ManualAddressForm
-                            onSave={(data) => {
-                              handleSaveAddress(data);
-                            }}
-                            onCancel={() => setShowEnterAddressManually(false)}
-                          />
-                        ) : (
-                          <div>
-                            <GoogleLocationSearch
-                              defaultValue={formattedAddress}
-                              onSelect={(locationData) => {
-                                handleSaveAddress(locationData);
-                              }}
-                            />
-                            <div className="flex items-center mt-4 gap-2">
-                              <Button
-                                variant="destructive"
-                                className="hover:cursor-pointer hover:bg-destructive/80"
-                                onClick={() => setEditingAddress(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                className="hover:cursor-pointer hover:bg-primary/80"
-                                onClick={() =>
-                                  setShowEnterAddressManually(true)
-                                }
-                              >
-                                Enter address manually
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Password */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Password</CardTitle>
-                      <CardDescription>Change your password</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="current-password">
-                          Current Password
-                        </Label>
-                        <Input
-                          id="current-password"
-                          type="password"
-                          placeholder="••••••••"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-password">New Password</Label>
-                        <Input
-                          id="new-password"
-                          type="password"
-                          placeholder="••••••••"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-password">
-                          Confirm New Password
-                        </Label>
-                        <Input
-                          id="confirm-password"
-                          type="password"
-                          placeholder="••••••••"
-                        />
-                      </div>
-
-                      <Button
-                        className="mt-2 hover:cursor-pointer hover:bg-primary/80 shadow-md"
-                        onClick={() =>
-                          toast.success("Password update coming soon!")
-                        }
-                      >
-                        Update Password
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-destructive/50">
-                    <CardHeader>
-                      <CardTitle className="text-lg text-destructive">
-                        Danger Zone
-                      </CardTitle>
-                      <CardDescription>
-                        Actions to delete or deactivate your account
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="rounded-lg border border-dashed border-destructive/50 p-4">
-                        <h4 className="font-semibold text-destructive">
-                          Delete Account
-                        </h4>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          This will permanently delete your account and all
-                          associated data.
-                        </p>
-                        <Button
-                          variant="destructive"
-                          className="mt-4 hover:cursor-pointer hover:bg-destructive/80"
-                          onClick={() => setShowDeleteModal(true)}
-                        >
-                          Delete Account
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                <AccountTab
+                  authUser={authUser}
+                  profileDoc={profileDoc}
+                  personalInfo={personalInfo}
+                  setPersonalInfo={setPersonalInfo}
+                  handleSaveChanges={handleSaveChanges}
+                  editingAddress={editingAddress}
+                  setEditingAddress={setEditingAddress}
+                  formattedAddress={profileDoc?.formattedAddress || ""}
+                  showEnterAddressManually={showEnterAddressManually}
+                  setShowEnterAddressManually={setShowEnterAddressManually}
+                  handleSaveAddress={handleSaveAddress}
+                  setShowDeleteModal={setShowDeleteModal}
+                />
               </Tabs>
             </div>
           </div>
