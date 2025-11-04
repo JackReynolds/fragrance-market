@@ -16,6 +16,7 @@ export async function POST(request) {
       amount,
       listingId,
       currency,
+      shippingAddress, // CRITICAL: Capture full shipping address from checkout
     } = await request.json();
 
     // Validate required inputs
@@ -39,6 +40,14 @@ export async function POST(request) {
     if (!emailRegex.test(buyerEmail)) {
       return NextResponse.json(
         { error: "Invalid email address" },
+        { status: 400 }
+      );
+    }
+
+    // Validate shipping address
+    if (!shippingAddress || !shippingAddress.address) {
+      return NextResponse.json(
+        { error: "Shipping address is required" },
         { status: 400 }
       );
     }
@@ -129,6 +138,7 @@ export async function POST(request) {
           title: listing.title.substring(0, 500),
           brand: listing.brand || "",
           fragrance: listing.fragrance || "",
+          shippingAddress: JSON.stringify(shippingAddress).substring(0, 500),
         },
       },
       {

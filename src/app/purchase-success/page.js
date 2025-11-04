@@ -1,12 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, Package, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 
-export default function PurchaseSuccess() {
+// Separate component that uses useSearchParams (must be wrapped in Suspense)
+function PurchaseSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authUser } = useAuth();
@@ -156,5 +157,32 @@ export default function PurchaseSuccess() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Export wrapper component with Suspense boundary
+export default function PurchaseSuccess() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-green-50 via-gray-50 to-blue-50 flex items-center justify-center px-4">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-green-600 animate-spin" />
+                </div>
+                <h2 className="text-xl font-bold">Loading...</h2>
+                <p className="text-muted-foreground">
+                  Please wait while we confirm your payment.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <PurchaseSuccessContent />
+    </Suspense>
   );
 }

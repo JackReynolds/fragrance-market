@@ -131,31 +131,51 @@ async function handlePaymentSucceeded(paymentIntent) {
       const buyer = buyerDoc.data();
       const seller = sellerDoc.data();
 
-      // 3. Parse shipping address from metadata or Stripe shipping object
-      let shippingAddress = null;
+      // 3. Extract shipping information from metadata (as entered during checkout)
+      let shippingInfo = null;
       try {
         if (metadata.shippingAddress) {
-          shippingAddress = JSON.parse(metadata.shippingAddress);
+          const addressData = JSON.parse(metadata.shippingAddress);
+
+          // Process the Stripe AddressElement format
+          shippingInfo = {
+            // Customer details (as entered in checkout - CRITICAL for shipping label)
+            recipientName: addressData.name || metadata.buyerName,
+            email: metadata.buyerEmail,
+            phone: addressData.phone || metadata.buyerPhone || null,
+
+            // Address details
+            addressLine1: addressData.address?.line1 || "",
+            addressLine2: addressData.address?.line2 || null,
+            city: addressData.address?.city || "",
+            state: addressData.address?.state || null,
+            postalCode: addressData.address?.postal_code || "",
+            country:
+              getCountryName(addressData.address?.country, "en") ||
+              addressData.address?.country,
+            countryCode: addressData.address?.country,
+
+            // Formatted for display
+            formattedAddress: [
+              addressData.address?.line1,
+              addressData.address?.line2,
+              addressData.address?.city,
+              addressData.address?.state,
+              addressData.address?.postal_code,
+              getCountryName(addressData.address?.country, "en") ||
+                addressData.address?.country,
+            ]
+              .filter(Boolean)
+              .join(", "),
+          };
         }
       } catch (e) {
-        console.warn("Failed to parse shipping address from metadata:", e);
+        console.error("Failed to parse shipping address from metadata:", e);
+        throw new Error("Invalid shipping address data");
       }
 
-      if (!shippingAddress && paymentIntent.shipping) {
-        shippingAddress = {
-          formattedAddress: `${paymentIntent.shipping.address.line1}, ${paymentIntent.shipping.address.city}, ${paymentIntent.shipping.address.state} ${paymentIntent.shipping.address.postal_code}, ${paymentIntent.shipping.address.country}`,
-          addressComponents: {
-            streetAddress: paymentIntent.shipping.address.line1,
-            city: paymentIntent.shipping.address.city,
-            state: paymentIntent.shipping.address.state,
-            postalCode: paymentIntent.shipping.address.postal_code,
-            country: getCountryName(
-              paymentIntent.shipping.address.country,
-              "en"
-            ),
-            countryCode: paymentIntent.shipping.address.country,
-          },
-        };
+      if (!shippingInfo) {
+        throw new Error("Shipping address is required for order fulfillment");
       }
 
       // 4. Calculate amounts
@@ -164,23 +184,31 @@ async function handlePaymentSucceeded(paymentIntent) {
       const platformFee = paymentIntent.application_fee_amount || 0;
       const sellerAmount = totalAmount - platformFee;
 
-      // 5. Create order record
+      // 5. Create order record with clean, organized structure
       const orderRef = db.collection("orders").doc();
       const orderData = {
+        // ============================================
+        // ORDER BASICS
+        // ============================================
         orderId: orderRef.id,
         orderNumber: `ORD-${Date.now()}-${Math.random()
           .toString(36)
           .substr(2, 9)
           .toUpperCase()}`,
+        status: "payment_completed", // Next: awaiting_shipment -> shipped -> delivered
 
-        // Top-level UIDs for easy querying (like completed_swaps.participants)
+        // ============================================
+        // PARTICIPANTS (for querying)
+        // ============================================
         participants: [buyerUid, ownerUid],
         buyerUid: buyerUid,
         sellerUid: ownerUid,
 
-        // Listing details
+        // ============================================
+        // ITEM/LISTING DETAILS
+        // ============================================
         listingId: listingId,
-        listing: {
+        item: {
           title: listing.title,
           brand: listing.brand,
           fragrance: listing.fragrance,
@@ -188,20 +216,45 @@ async function handlePaymentSucceeded(paymentIntent) {
           imageURL: listing.imageURLs?.[0] || null,
           size: listing.size || null,
           sizeUnit: listing.sizeUnit || null,
-          type: listing.type || "sell",
+          price: listing.price || 0,
         },
 
-        // Buyer details
+        // ============================================
+        // SHIPPING INFORMATION (CRITICAL - as entered during checkout)
+        // This is what the seller needs to create the shipping label
+        // ============================================
+        shippingTo: {
+          // Recipient details
+          name: shippingInfo.recipientName,
+          email: shippingInfo.email,
+          phone: shippingInfo.phone,
+
+          // Address
+          addressLine1: shippingInfo.addressLine1,
+          addressLine2: shippingInfo.addressLine2,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          postalCode: shippingInfo.postalCode,
+          country: shippingInfo.country,
+          countryCode: shippingInfo.countryCode,
+
+          // Formatted for display
+          formattedAddress: shippingInfo.formattedAddress,
+        },
+
+        // ============================================
+        // BUYER REFERENCE (for display/communication in app)
+        // ============================================
         buyer: {
           uid: buyerUid,
-          username: buyer.username || buyerName || "Unknown",
-          displayName:
-            buyer.displayName || buyer.username || buyerName || "Unknown",
-          email: buyer.email || buyerEmail,
+          username: buyer.username || "Unknown",
+          displayName: buyer.displayName || buyer.username || "Unknown",
           profilePictureURL: buyer.profilePictureURL || null,
         },
 
-        // Seller details
+        // ============================================
+        // SELLER REFERENCE (for display/communication in app)
+        // ============================================
         seller: {
           uid: ownerUid,
           username: seller.username || "Unknown",
@@ -210,10 +263,9 @@ async function handlePaymentSucceeded(paymentIntent) {
           profilePictureURL: seller.profilePictureURL || null,
         },
 
-        // Shipping details
-        shippingAddress: shippingAddress,
-
-        // Payment details
+        // ============================================
+        // PAYMENT DETAILS
+        // ============================================
         payment: {
           totalAmount: totalAmount,
           currency: currency,
@@ -222,28 +274,30 @@ async function handlePaymentSucceeded(paymentIntent) {
           stripePaymentIntentId: paymentIntent.id,
           paymentStatus: paymentIntent.status,
           paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
+          paidAt: FieldValue.serverTimestamp(),
         },
 
-        // Shipping tracking (for future updates when seller ships)
-        shipping: {
+        // ============================================
+        // SHIPPING TRACKING (updated when seller ships item)
+        // ============================================
+        shipment: {
           trackingNumber: null,
           carrier: null,
           shippedAt: null,
-          deliveredAt: null,
           estimatedDelivery: null,
+          deliveredAt: null,
         },
 
-        // Order status
-        status: "payment_completed", // Next: awaiting_shipment
+        // ============================================
+        // ORDER HISTORY & TIMESTAMPS
+        // ============================================
         orderHistory: [
           {
             status: "payment_completed",
-            timestamp: Timestamp.now(), // Use Timestamp.now() for arrays (serverTimestamp not allowed in arrays)
+            timestamp: Timestamp.now(),
             note: "Payment successfully processed",
           },
         ],
-
-        // Timestamps
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       };
@@ -392,20 +446,20 @@ async function sendOrderConfirmationEmails(
  * TODO: Implement with SendGrid
  */
 async function sendBuyerReceipt(order) {
-  console.log(`[TODO] Send buyer receipt to: ${order.buyer.email}`);
+  console.log(`[TODO] Send buyer receipt to: ${order.shippingTo.email}`);
 
   // Placeholder for SendGrid implementation
   const emailData = {
-    to: order.buyer.email,
+    to: order.shippingTo.email,
     template: "buyer_receipt",
     data: {
-      buyerName: order.buyer.username,
+      buyerName: order.shippingTo.name,
       orderNumber: order.orderNumber,
-      itemTitle: order.listing.title,
-      itemBrand: order.listing.brand,
+      itemTitle: order.item.title,
+      itemBrand: order.item.brand,
       amount: (order.payment.totalAmount / 100).toFixed(2),
       currency: order.payment.currency.toUpperCase(),
-      shippingAddress: order.shippingAddress?.formattedAddress,
+      shippingAddress: order.shippingTo.formattedAddress,
       sellerName: order.seller.username,
       orderDate: new Date().toLocaleDateString(),
     },
@@ -431,11 +485,14 @@ async function sendSellerNotification(order) {
     data: {
       sellerName: order.seller.username,
       orderNumber: order.orderNumber,
-      itemTitle: order.listing.title,
+      itemTitle: order.item.title,
       amount: (order.payment.sellerAmount / 100).toFixed(2),
       currency: order.payment.currency.toUpperCase(),
-      buyerName: order.buyer.username,
-      shippingAddress: order.shippingAddress?.formattedAddress,
+      // Include full shipping details for the seller
+      recipientName: order.shippingTo.name,
+      recipientEmail: order.shippingTo.email,
+      recipientPhone: order.shippingTo.phone,
+      shippingAddress: order.shippingTo.formattedAddress,
       orderDate: new Date().toLocaleDateString(),
     },
   };

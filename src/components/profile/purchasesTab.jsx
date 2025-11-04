@@ -109,9 +109,9 @@ export default function PurchasesTab({
         <div className="space-y-4">
           {purchases.map((order) => {
             const seller = order.seller;
-            const listing = order.listing;
+            const item = order.item;
             const payment = order.payment;
-            const shippingAddress = order.shippingAddress;
+            const shippingTo = order.shippingTo;
 
             return (
               <Card key={order.orderId}>
@@ -142,24 +142,24 @@ export default function PurchasesTab({
                 <CardContent className="space-y-4">
                   {/* Item Details */}
                   <div className="flex gap-4">
-                    {listing?.imageURL && (
+                    {item?.imageURL && (
                       <div className="relative w-20 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                         <Image
-                          src={listing.imageURL}
-                          alt={listing.title || "Item"}
+                          src={item.imageURL}
+                          alt={item.title || "Item"}
                           fill
                           className="object-cover"
                         />
                       </div>
                     )}
                     <div className="flex-1">
-                      <h4 className="font-semibold">{listing?.title}</h4>
+                      <h4 className="font-semibold">{item?.title}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {listing?.brand} - {listing?.fragrance}
+                        {item?.brand} - {item?.fragrance}
                       </p>
-                      {listing?.amountLeft && (
+                      {item?.amountLeft && (
                         <p className="text-sm text-muted-foreground">
-                          {listing.amountLeft}% full
+                          {item.amountLeft}% full
                         </p>
                       )}
                     </div>
@@ -195,36 +195,39 @@ export default function PurchasesTab({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <MapPin className="h-4 w-4" />
-                      <span>Shipping Address</span>
+                      <span>Shipping To</span>
                     </div>
-                    {shippingAddress ? (
+                    {shippingTo ? (
                       <div className="pl-6 space-y-1">
-                        {shippingAddress.name && (
-                          <p className="text-sm font-medium">
-                            {shippingAddress.name}
-                          </p>
-                        )}
-                        <p className="text-sm text-muted-foreground">
-                          {shippingAddress.address?.line1}
-                        </p>
-                        {shippingAddress.address?.line2 && (
+                        <p className="text-sm font-medium">{shippingTo.name}</p>
+                        {shippingTo.email && (
                           <p className="text-sm text-muted-foreground">
-                            {shippingAddress.address.line2}
+                            {shippingTo.email}
                           </p>
                         )}
-                        <p className="text-sm text-muted-foreground">
-                          {shippingAddress.address?.city},{" "}
-                          {shippingAddress.address?.state}{" "}
-                          {shippingAddress.address?.postal_code}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {shippingAddress.address?.country}
-                        </p>
-                        {shippingAddress.phone && (
+                        {shippingTo.phone && (
                           <p className="text-sm text-muted-foreground">
-                            Phone: {shippingAddress.phone}
+                            Phone: {shippingTo.phone}
                           </p>
                         )}
+                        <div className="pt-2">
+                          <p className="text-sm text-muted-foreground">
+                            {shippingTo.addressLine1}
+                          </p>
+                          {shippingTo.addressLine2 && (
+                            <p className="text-sm text-muted-foreground">
+                              {shippingTo.addressLine2}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            {shippingTo.city}
+                            {shippingTo.state && `, ${shippingTo.state}`}{" "}
+                            {shippingTo.postalCode}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {shippingTo.country}
+                          </p>
+                        </div>
                       </div>
                     ) : (
                       <p className="pl-6 text-sm text-muted-foreground">
