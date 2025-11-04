@@ -10,7 +10,18 @@ const endpointSecret =
   process.env.STRIPE_PAYMENT_WEBHOOK_SECRET ||
   process.env.STRIPE_TEST_WEBHOOK_SECRET;
 
-export const runtime = "nodejs";
+function getCountryName(code, locale = "en") {
+  try {
+    // Create an instance of Intl.DisplayNames
+    const regionNames = new Intl.DisplayNames([locale], { type: "region" });
+
+    // Use the .of() method to get the name
+    return regionNames.of(code.toUpperCase());
+  } catch (error) {
+    console.error("Error converting country code:", error);
+    return undefined;
+  }
+}
 
 export async function POST(request) {
   console.log("PAYMENT WEBHOOK HIT! Timestamp:", new Date().toISOString());
@@ -69,17 +80,8 @@ async function handlePaymentSucceeded(paymentIntent) {
   console.log("Processing successful payment:", paymentIntent.id);
 
   const metadata = paymentIntent.metadata || {};
-  const {
-    listingId,
-    buyerUid,
-    buyerName,
-    buyerEmail,
-    ownerUid,
-    type,
-    title,
-    brand,
-    fragrance,
-  } = metadata;
+  const { listingId, buyerUid, buyerName, buyerEmail, ownerUid, type } =
+    metadata;
 
   // Validate this is a fragrance purchase
   if (type !== "fragrance_purchase") {
@@ -139,7 +141,6 @@ async function handlePaymentSucceeded(paymentIntent) {
         console.warn("Failed to parse shipping address from metadata:", e);
       }
 
-      // Fallback to Stripe shipping object
       if (!shippingAddress && paymentIntent.shipping) {
         shippingAddress = {
           formattedAddress: `${paymentIntent.shipping.address.line1}, ${paymentIntent.shipping.address.city}, ${paymentIntent.shipping.address.state} ${paymentIntent.shipping.address.postal_code}, ${paymentIntent.shipping.address.country}`,
@@ -148,7 +149,10 @@ async function handlePaymentSucceeded(paymentIntent) {
             city: paymentIntent.shipping.address.city,
             state: paymentIntent.shipping.address.state,
             postalCode: paymentIntent.shipping.address.postal_code,
-            country: paymentIntent.shipping.address.country,
+            country: getCountryName(
+              paymentIntent.shipping.address.country,
+              "en"
+            ),
             countryCode: paymentIntent.shipping.address.country,
           },
         };
@@ -157,7 +161,7 @@ async function handlePaymentSucceeded(paymentIntent) {
       // 4. Calculate amounts
       const totalAmount = paymentIntent.amount; // in cents
       const currency = paymentIntent.currency;
-      const platformFee = paymentIntent.application_fee_amount || 0; // ← Use Stripe's value
+      const platformFee = paymentIntent.application_fee_amount || 0;
       const sellerAmount = totalAmount - platformFee;
 
       // 5. Create order record
@@ -220,7 +224,7 @@ async function handlePaymentSucceeded(paymentIntent) {
           paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
         },
 
-        // Shipping tracking (for later updates)
+        // Shipping tracking (for future updates when seller ships)
         shipping: {
           trackingNumber: null,
           carrier: null,

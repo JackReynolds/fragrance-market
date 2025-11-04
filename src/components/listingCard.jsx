@@ -44,12 +44,13 @@ const ListingCard = ({
   // Check if current user owns this listing
   const isOwnListing = authUser?.uid === data.ownerUid;
 
-  // Check if listing is swapped
+  // Check if listing is swapped or sold
   const isSwapped = data.status === "swapped";
+  const isSold = data.status === "sold";
 
-  // Determine if we should show the favorite button (also hide for swapped)
+  // Determine if we should show the favorite button (hide for swapped or sold)
   const shouldShowFavorite =
-    showFavoriteButton && authUser && !isOwnListing && !isSwapped;
+    showFavoriteButton && authUser && !isOwnListing && !isSwapped && !isSold;
 
   // Check if listing is favorited
   useEffect(() => {
@@ -125,7 +126,7 @@ const ListingCard = ({
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className={`object-contain transition-transform duration-300 group-hover:scale-105 ${
-            isSwapped ? "opacity-60 grayscale-[30%]" : ""
+            isSwapped || isSold ? "opacity-60 grayscale-[30%]" : ""
           }`}
           onClick={handleCardClick}
         />
@@ -133,7 +134,10 @@ const ListingCard = ({
         {/* Swapped Overlay - Only show if listing is swapped */}
         {isSwapped && (
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 flex items-center justify-center pointer-events-none">
-            <div className="bg-green-600/95 backdrop-blur-sm text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg transform -rotate-3">
+            <div
+              className="backdrop-blur-sm text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg transform -rotate-3"
+              style={{ backgroundColor: "#1E7C62" }}
+            >
               <div className="flex items-center gap-2">
                 <svg
                   className="w-5 h-5 sm:w-6 sm:h-6"
@@ -156,6 +160,35 @@ const ListingCard = ({
           </div>
         )}
 
+        {/* Sold Overlay - Only show if listing is sold */}
+        {isSold && (
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 flex items-center justify-center pointer-events-none">
+            <div
+              className="backdrop-blur-sm text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg transform rotate-2"
+              style={{ backgroundColor: "#F5B900" }}
+            >
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="font-bold text-sm sm:text-lg tracking-wide">
+                  SOLD
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Listing Type Badge - Responsive sizing */}
         <div className="absolute top-1.5 left-1.5 sm:top-3 sm:left-3">
           <div className="scale-75 sm:scale-100 origin-top-left">
@@ -163,8 +196,8 @@ const ListingCard = ({
           </div>
         </div>
 
-        {/* Amount Left Badge - Responsive sizing - Hide if swapped */}
-        {!isSwapped && (
+        {/* Amount Left Badge - Responsive sizing - Hide if swapped or sold */}
+        {!isSwapped && !isSold && (
           <div className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3">
             <span className="inline-flex items-center px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-200/70 text-black backdrop-blur-sm">
               {data.amountLeft}% full
@@ -196,7 +229,7 @@ const ListingCard = ({
       {/* Content Section - Flex grow to fill remaining space */}
       <CardContent
         className={`p-2 sm:p-4 pb-12 sm:pb-14 flex flex-col flex-grow ${
-          isSwapped ? "opacity-75" : ""
+          isSwapped || isSold ? "opacity-75" : ""
         }`}
         onClick={handleCardClick}
       >

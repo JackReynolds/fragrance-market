@@ -152,6 +152,7 @@ const ListingDetailPage = () => {
     authUser?.uid && listing?.ownerUid && authUser.uid === listing.ownerUid;
 
   const isSwapped = listing?.status === "swapped";
+  const isSold = listing?.status === "sold";
 
   // Handle sharing listing
   const handleShare = () => {
@@ -168,11 +169,16 @@ const ListingDetailPage = () => {
 
   // Toggle listing active status
   const toggleListingStatus = async () => {
-    if (!isOwner || !listing || isSwapped) return;
+    if (!isOwner || !listing || isSwapped || isSold) return;
 
-    // Don't allow status changes for swapped listings
+    // Don't allow status changes for swapped or sold listings
     if (isSwapped) {
       toast.error("Swapped listings cannot be modified");
+      return;
+    }
+
+    if (isSold) {
+      toast.error("Sold listings cannot be modified");
       return;
     }
 
@@ -283,11 +289,18 @@ const ListingDetailPage = () => {
   // Handle delete listing
   const handleDeleteListing = async () => {
     try {
-      if (!isOwner || !listing || isSwapped) return;
+      if (!isOwner || !listing || isSwapped || isSold) return;
 
       if (isSwapped) {
         toast.error(
           "Swapped listings cannot be deleted. They are kept as transaction records."
+        );
+        return;
+      }
+
+      if (isSold) {
+        toast.error(
+          "Sold listings cannot be deleted. They are kept as transaction records."
         );
         return;
       }
@@ -415,11 +428,15 @@ const ListingDetailPage = () => {
 
           {/* ADD SWAPPED BANNER - Show prominently at the top */}
           {isSwapped && (
-            <div className="mb-6 rounded-lg border-2 border-green-600 bg-green-50 p-4">
+            <div
+              className="mb-6 rounded-lg border-2 p-4"
+              style={{ borderColor: "#1E7C62", backgroundColor: "#E8F5F1" }}
+            >
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-6 w-6 text-green-600"
+                    className="h-6 w-6"
+                    style={{ color: "#1E7C62" }}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -433,10 +450,10 @@ const ListingDetailPage = () => {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-green-900">
+                  <h3 className="font-semibold" style={{ color: "#0F4C3A" }}>
                     This listing has been swapped
                   </h3>
-                  <p className="mt-1 text-sm text-green-800">
+                  <p className="mt-1 text-sm" style={{ color: "#155C49" }}>
                     {isOwner ? (
                       <>
                         This fragrance was swapped on{" "}
@@ -452,7 +469,14 @@ const ListingDetailPage = () => {
                             {" "}
                             <Link
                               href={`/users/${listing.swappedWithUserUid}`}
-                              className="underline font-medium hover:text-green-900"
+                              className="underline font-medium"
+                              style={{ color: "inherit" }}
+                              onMouseEnter={(e) =>
+                                (e.target.style.color = "#0F4C3A")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.color = "inherit")
+                              }
                             >
                               View swap partner
                             </Link>
@@ -461,6 +485,72 @@ const ListingDetailPage = () => {
                       </>
                     ) : (
                       "This fragrance has been swapped and is no longer available."
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ADD SOLD BANNER - Show prominently at the top */}
+          {isSold && (
+            <div
+              className="mb-6 rounded-lg border-2 p-4"
+              style={{ borderColor: "#F5B900", backgroundColor: "#FEF7E0" }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-6 w-6"
+                    style={{ color: "#F5B900" }}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold" style={{ color: "#8B6F00" }}>
+                    This listing has been sold
+                  </h3>
+                  <p className="mt-1 text-sm" style={{ color: "#A38400" }}>
+                    {isOwner ? (
+                      <>
+                        This fragrance was sold on{" "}
+                        {listing.soldAt
+                          ? new Date(
+                              listing.soldAt.seconds * 1000
+                            ).toLocaleDateString()
+                          : "an unknown date"}
+                        . Sold listings are kept as transaction records and
+                        cannot be edited or deleted.
+                        {listing.soldTo && (
+                          <span>
+                            {" "}
+                            <Link
+                              href={`/users/${listing.soldTo}`}
+                              className="underline font-medium"
+                              style={{ color: "inherit" }}
+                              onMouseEnter={(e) =>
+                                (e.target.style.color = "#8B6F00")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.target.style.color = "inherit")
+                              }
+                            >
+                              View buyer
+                            </Link>
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      "This fragrance has been sold and is no longer available."
                     )}
                   </p>
                 </div>
@@ -515,8 +605,8 @@ const ListingDetailPage = () => {
                     {listing.title}
                   </h1>
 
-                  {/* Button Logic: Show NO buttons if swapped */}
-                  {!isSwapped && (
+                  {/* Button Logic: Show NO buttons if swapped or sold */}
+                  {!isSwapped && !isSold && (
                     <div className="flex space-x-2 sm:space-x-3">
                       {isOwner ? (
                         <>
@@ -649,16 +739,28 @@ const ListingDetailPage = () => {
                   )}
                 </div>
 
-                {/* Update Status badges to include swapped status */}
-                {listing.status === "inactive" && !isSwapped && (
+                {/* Update Status badges to include swapped and sold status */}
+                {listing.status === "inactive" && !isSwapped && !isSold && (
                   <div className="mt-2 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
                     Inactive Listing
                   </div>
                 )}
 
                 {isSwapped && (
-                  <div className="mt-2 inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  <div
+                    className="mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    style={{ backgroundColor: "#E8F5F1", color: "#1E7C62" }}
+                  >
                     ✓ Swapped
+                  </div>
+                )}
+
+                {isSold && (
+                  <div
+                    className="mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium"
+                    style={{ backgroundColor: "#FEF7E0", color: "#F5B900" }}
+                  >
+                    ✓ Sold
                   </div>
                 )}
 
@@ -754,8 +856,8 @@ const ListingDetailPage = () => {
                 </Tabs>
               </div>
 
-              {/* Call to action - Hide for swapped listings */}
-              {!isOwner && !isSwapped && (
+              {/* Call to action - Hide for swapped or sold listings */}
+              {!isOwner && !isSwapped && !isSold && (
                 <div className="mt-8 space-y-4">
                   {listing.type === "sell" ? (
                     <Button

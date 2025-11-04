@@ -43,8 +43,8 @@ const MarketplaceContent = () => {
           hitsPerPage={12}
           filters={
             listingTypeFilter === "all"
-              ? undefined
-              : `type:"${listingTypeFilter}"`
+              ? 'status:"active"'
+              : `status:"active" AND type:"${listingTypeFilter}"`
           }
         />
 
