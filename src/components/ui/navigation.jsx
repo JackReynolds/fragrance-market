@@ -12,6 +12,7 @@ import {
   Repeat,
   HelpCircle,
   LogIn,
+  PlusCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -77,8 +78,9 @@ const Navigation = () => {
     },
     {
       href: "/new-listing",
-      label: "Swap or Sell",
-      icon: <Repeat className="h-4 w-4 mr-2" />,
+      label: "Add a Listing",
+      icon: <PlusCircle className="h-4 w-4 mr-2" />,
+      highlighted: true, // Special flag for styling
     },
     {
       href: "/how-it-works",
@@ -110,15 +112,26 @@ const Navigation = () => {
         {/* Center section - Main Navigation (desktop) */}
         <div className="hidden md:flex flex-1 justify-center">
           <nav className="flex items-center space-x-6">
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-sm font-medium hover:text-primary/70 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navigationLinks.map((link) =>
+              link.highlighted ? (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                >
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  {link.label}
+                </Link>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium hover:text-primary/70 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </nav>
         </div>
 
@@ -209,7 +222,11 @@ const Navigation = () => {
                     <SheetClose asChild key={link.href}>
                       <Link
                         href={link.href}
-                        className="flex items-center py-2 px-3 rounded-md hover:bg-muted transition-colors"
+                        className={
+                          link.highlighted
+                            ? "flex items-center py-2 px-3 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+                            : "flex items-center py-2 px-3 rounded-md hover:bg-muted transition-colors"
+                        }
                       >
                         {link.icon}
                         {link.label}
