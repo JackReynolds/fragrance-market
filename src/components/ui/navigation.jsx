@@ -9,10 +9,10 @@ import {
   User,
   LogOut,
   ShoppingBag,
-  Repeat,
   HelpCircle,
   LogIn,
   PlusCircle,
+  Heart,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -261,6 +261,15 @@ const Navigation = () => {
                         >
                           <User className="h-4 w-4 mr-2" />
                           Profile
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link
+                          href="/favourites"
+                          className="flex items-center py-2 px-3 rounded-md hover:bg-muted transition-colors"
+                        >
+                          <Heart className="h-4 w-4 mr-2" />
+                          Favourites
                         </Link>
                       </SheetClose>
                       <button

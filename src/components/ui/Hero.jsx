@@ -11,10 +11,6 @@ const Hero = () => {
       {/* Hero background image */}
       <div className="absolute inset-0 z-0">
         <div
-          // style={{
-          //   background:
-          //     "linear-gradient(269deg, oklch(39.1% 0.09 240.876) 0%, oklch(29.3% 0.066 243.157) 80%, rgba(29, 35, 45, 1) 100%)",
-          // }}
           style={{
             background:
               "linear-gradient(269deg, rgba(31, 114, 90, 1) 0%, rgba(22, 102, 79, 1) 41%, rgba(29, 35, 45, 1) 100%)",
@@ -33,26 +29,19 @@ const Hero = () => {
             scents, connect with collectors, and trade with confidence.
           </p>
 
-          {/* Simple static buttons using Link */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-center sm:items-start justify-center sm:justify-start mb-6 sm:mb-8">
+          {/* Single CTA button */}
+          <div className="flex justify-center sm:justify-start mb-6 sm:mb-8">
             <Button
               asChild
               variant="secondary"
-              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 w-full sm:w-auto text-sm sm:text-base shadow-md"
+              size="lg"
+              className="py-4 px-8 sm:py-5 sm:px-10 lg:py-6 lg:px-12 text-base sm:text-lg shadow-lg min-w-[240px] sm:min-w-[260px]"
             >
               <Link href="/marketplace">Browse Fragrances</Link>
             </Button>
-
-            <Button
-              asChild
-              variant="default"
-              className="py-3 px-6 sm:py-4 sm:px-8 lg:py-6 hover:bg-primary/80 w-full sm:w-auto text-sm sm:text-base shadow-md"
-            >
-              <Link href="/new-listing">Swap or Sell</Link>
-            </Button>
           </div>
 
-          {/* Only the search bar needs to be client-side */}
+          {/* Search bar */}
           <HeroSearchBar />
         </div>
       </div>

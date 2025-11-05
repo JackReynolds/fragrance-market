@@ -86,8 +86,6 @@ export default function SalesTab({ sales, salesLoading, authUser, router }) {
             const payment = order.payment;
             const shippingTo = order.shippingTo;
 
-            console.log(order);
-
             return (
               <Card key={order.orderId}>
                 <CardHeader>

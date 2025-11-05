@@ -711,7 +711,7 @@ export default function Profile() {
                         className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
                         <Edit size={14} className="md:w-4 md:h-4" />
-                        <span className="text-[9px] md:text-sm leading-tight">
+                        <span className="text-sm md:text-md leading-tight">
                           Account
                         </span>
                       </TabsTrigger>
@@ -720,7 +720,7 @@ export default function Profile() {
                         className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
                         <Package size={14} className="md:w-4 md:h-4" />
-                        <span className="text-[9px] md:text-sm leading-tight">
+                        <span className="text-sm md:text-md leading-tight">
                           Listings
                         </span>
                       </TabsTrigger>
@@ -730,7 +730,7 @@ export default function Profile() {
                         className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
                         <CheckCircle size={14} className="md:w-4 md:h-4" />
-                        <span className="text-[9px] md:text-sm leading-tight">
+                        <span className="text-sm md:text-md leading-tight">
                           Swaps
                         </span>
                       </TabsTrigger>
@@ -739,7 +739,7 @@ export default function Profile() {
                         className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
                         <DollarSign size={14} className="md:w-4 md:h-4" />
-                        <span className="text-[9px] md:text-sm leading-tight">
+                        <span className="text-sm md:text-md leading-tight">
                           Sales
                         </span>
                       </TabsTrigger>
@@ -748,7 +748,7 @@ export default function Profile() {
                         className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
                         <ShoppingBag size={14} className="md:w-4 md:h-4" />
-                        <span className="text-[9px] md:text-sm leading-tight">
+                        <span className="text-sm md:text-md leading-tight">
                           Purchases
                         </span>
                       </TabsTrigger>
@@ -757,7 +757,7 @@ export default function Profile() {
                         className="px-1 py-3 md:px-4 hover:cursor-pointer flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2"
                       >
                         <MessageSquare size={14} className="md:w-4 md:h-4" />
-                        <span className="text-[9px] md:text-sm leading-tight">
+                        <span className="text-sm md:text-md leading-tight">
                           Reviews
                         </span>
                       </TabsTrigger>
