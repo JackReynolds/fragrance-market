@@ -58,7 +58,6 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import profanityList from "@/data/profanityList";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
 import { generateSlug } from "@/utils/generateSlug";
 import {
@@ -881,9 +880,28 @@ const NewListing = () => {
       return;
     }
 
-    if (formData.type === "sell" && !formData.currency) {
-      toast.error("Please choose a currency.");
-      return;
+    // Validate sell listing requirements
+    if (formData.type === "sell") {
+      if (!profileDoc.isPremium) {
+        toast.error("Premium membership required to sell fragrances.");
+        return;
+      }
+      if (!profileDoc.isIdVerified) {
+        toast.error(
+          "ID verification required to sell fragrances. Please verify your identity in your profile."
+        );
+        return;
+      }
+      if (profileDoc.stripeAccountStatus?.statusCode !== 1) {
+        toast.error(
+          "Complete Stripe setup required to sell fragrances. Please set up payments in your profile."
+        );
+        return;
+      }
+      if (!formData.currency) {
+        toast.error("Please choose a currency.");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -1332,19 +1350,29 @@ const NewListing = () => {
                                 <span>Swap</span>
                               </div>
                             </SelectItem>
-                            {/* Only showcase sell option if the user is premium */}
-                            {profileDoc?.isPremium ? (
+                            {/* Check all requirements for selling */}
+                            {profileDoc?.isPremium &&
+                            profileDoc?.isIdVerified &&
+                            profileDoc?.stripeAccountStatus?.statusCode ===
+                              1 ? (
                               <SelectItem value="sell">
                                 <div className="flex items-center">
                                   <EuroIcon className="mr-2 h-4 w-4" />
                                   <span>Sell</span>
                                 </div>
                               </SelectItem>
-                            ) : (
+                            ) : !profileDoc?.isPremium ? (
                               <SelectItem value="sell" disabled>
                                 <div className="flex items-center text-muted-foreground">
                                   <EuroIcon className="mr-2 h-4 w-4" />
                                   <span>Sell (Premium Only)</span>
+                                </div>
+                              </SelectItem>
+                            ) : (
+                              <SelectItem value="sell">
+                                <div className="flex items-center text-muted-foreground">
+                                  <EuroIcon className="mr-2 h-4 w-4" />
+                                  <span>Sell (Complete setup to enable)</span>
                                 </div>
                               </SelectItem>
                             )}
@@ -1355,6 +1383,188 @@ const NewListing = () => {
                             {errors.type}
                           </p>
                         )}
+
+                        {/* Show simple upgrade message for non-premium users */}
+                        {!profileDoc?.isPremium && (
+                          <div className="mt-3 p-4 border border-primary/20 bg-primary/5 rounded-md">
+                            <h4 className="font-semibold text-sm mb-2">
+                              Want to sell fragrances?
+                            </h4>
+                            <p className="text-xs text-muted-foreground mb-3">
+                              Upgrade to Premium to unlock the ability to sell
+                              your fragrances directly on the marketplace.
+                            </p>
+                            <Button
+                              size="sm"
+                              className="w-full hover:cursor-pointer"
+                              onClick={() => router.push("/premium")}
+                              type="button"
+                            >
+                              View Premium Benefits
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Show detailed requirements card for premium users missing other requirements */}
+                        {profileDoc?.isPremium &&
+                          !(
+                            profileDoc?.isIdVerified &&
+                            profileDoc?.stripeAccountStatus?.statusCode === 1
+                          ) && (
+                            <div className="mt-3 p-4 border border-blue-200 bg-blue-50 rounded-md">
+                              <h4 className="font-semibold text-sm mb-2 text-blue-900">
+                                Complete setup to start selling
+                              </h4>
+                              <p className="text-xs text-blue-800 mb-3">
+                                You&apos;re almost there! Complete these steps:
+                              </p>
+                              <ul className="space-y-1 mb-3">
+                                <li className="text-xs text-blue-800 flex items-center gap-1">
+                                  {profileDoc?.isIdVerified ? (
+                                    <Check className="h-3 w-3 text-green-600" />
+                                  ) : (
+                                    <span className="w-3 h-3 border border-blue-400 rounded-sm inline-block" />
+                                  )}
+                                  <span
+                                    className={
+                                      profileDoc?.isIdVerified
+                                        ? "line-through"
+                                        : ""
+                                    }
+                                  >
+                                    ID verification
+                                  </span>
+                                </li>
+                                <li className="text-xs text-blue-800 flex items-center gap-1">
+                                  {profileDoc?.stripeAccountStatus
+                                    ?.statusCode === 1 ? (
+                                    <Check className="h-3 w-3 text-green-600" />
+                                  ) : (
+                                    <span className="w-3 h-3 border border-blue-400 rounded-sm inline-block" />
+                                  )}
+                                  <span
+                                    className={
+                                      profileDoc?.stripeAccountStatus
+                                        ?.statusCode === 1
+                                        ? "line-through"
+                                        : ""
+                                    }
+                                  >
+                                    Payment setup
+                                  </span>
+                                </li>
+                              </ul>
+                              <Button
+                                size="sm"
+                                className="w-full hover:cursor-pointer"
+                                onClick={() => router.push("/my-profile")}
+                                type="button"
+                              >
+                                Complete Setup in Profile
+                              </Button>
+                            </div>
+                          )}
+
+                        {/* Show requirements card if sell is selected but requirements aren't met */}
+                        {formData.type === "sell" &&
+                          !(
+                            profileDoc?.isPremium &&
+                            profileDoc?.isIdVerified &&
+                            profileDoc?.stripeAccountStatus?.statusCode === 1
+                          ) && (
+                            <div className="mt-3 p-4 border border-amber-200 bg-amber-50 rounded-md">
+                              <h4 className="font-semibold text-sm mb-3 text-amber-900">
+                                ⚠️ Complete these requirements to create sell
+                                listings:
+                              </h4>
+                              <div className="space-y-3">
+                                {/* Premium Check */}
+                                {!profileDoc?.isPremium && (
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <p className="text-sm text-amber-800 font-medium">
+                                        • Premium Membership Required
+                                      </p>
+                                      <p className="text-xs text-amber-700 mt-1">
+                                        Upgrade to premium to unlock selling
+                                        features
+                                      </p>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="hover:cursor-pointer shrink-0"
+                                      onClick={() => router.push("/premium")}
+                                      type="button"
+                                    >
+                                      Upgrade
+                                    </Button>
+                                  </div>
+                                )}
+
+                                {/* ID Verification Check */}
+                                {profileDoc?.isPremium &&
+                                  !profileDoc?.isIdVerified && (
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <p className="text-sm text-amber-800 font-medium">
+                                          • ID Verification Required
+                                        </p>
+                                        <p className="text-xs text-amber-700 mt-1">
+                                          Verify your identity to sell
+                                          fragrances
+                                        </p>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="hover:cursor-pointer shrink-0"
+                                        onClick={() =>
+                                          router.push("/my-profile")
+                                        }
+                                        type="button"
+                                      >
+                                        Verify ID
+                                      </Button>
+                                    </div>
+                                  )}
+
+                                {/* Stripe Onboarding Check */}
+                                {profileDoc?.isPremium &&
+                                  profileDoc?.isIdVerified &&
+                                  profileDoc?.stripeAccountStatus
+                                    ?.statusCode !== 1 && (
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <p className="text-sm text-amber-800 font-medium">
+                                          • Stripe Payment Setup Required
+                                        </p>
+                                        <p className="text-xs text-amber-700 mt-1">
+                                          {profileDoc?.stripeAccountStatus
+                                            ?.statusCode === 2
+                                            ? "Complete remaining Stripe requirements"
+                                            : profileDoc?.stripeAccountStatus
+                                                ?.statusCode === 3
+                                            ? "Complete your Stripe onboarding"
+                                            : "Set up payment processing"}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="hover:cursor-pointer shrink-0"
+                                        onClick={() =>
+                                          router.push("/my-profile")
+                                        }
+                                        type="button"
+                                      >
+                                        Set Up
+                                      </Button>
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                          )}
                       </div>
 
                       <div className="space-y-2">

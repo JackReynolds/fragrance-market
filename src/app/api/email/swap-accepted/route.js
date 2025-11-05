@@ -37,7 +37,7 @@ const sendSwapAcceptedEmail = async (
 export async function POST(request) {
   try {
     const {
-      offeredByEmail,
+      offeredByUid,
       offeredByUsername,
       offeredListingTitle,
       requestedFromUsername,
@@ -45,7 +45,7 @@ export async function POST(request) {
     } = await request.json();
 
     if (
-      !offeredByEmail ||
+      !offeredByUid ||
       !offeredByUsername ||
       !offeredListingTitle ||
       !requestedFromUsername ||
@@ -55,6 +55,22 @@ export async function POST(request) {
         { error: "Missing required parameters" },
         { status: 400 }
       );
+    }
+
+    // Fetch the offeredBy user's email from profiles collection
+    const { db } = await import("@/lib/firebaseAdmin");
+    const offeredByProfileDoc = await db
+      .collection("profiles")
+      .doc(offeredByUid)
+      .get();
+
+    if (!offeredByProfileDoc.exists) {
+      throw new Error("User profile not found");
+    }
+
+    const offeredByEmail = offeredByProfileDoc.data()?.email;
+    if (!offeredByEmail) {
+      throw new Error("User email not found");
     }
 
     await sendSwapAcceptedEmail(

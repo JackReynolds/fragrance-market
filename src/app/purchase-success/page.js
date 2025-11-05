@@ -136,7 +136,7 @@ function PurchaseSuccessContent() {
           <Button
             onClick={handleViewPurchases}
             size="lg"
-            className="flex-1 hover:cursor-pointer"
+            className="flex-1 py-2 hover:cursor-pointer"
           >
             View My Purchases
             <ArrowRight className="ml-2 h-4 w-4" />
@@ -145,7 +145,7 @@ function PurchaseSuccessContent() {
             onClick={handleContinueShopping}
             variant="outline"
             size="lg"
-            className="flex-1 hover:cursor-pointer"
+            className="flex-1 py-2 hover:cursor-pointer"
           >
             Continue Shopping
           </Button>

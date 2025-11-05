@@ -78,24 +78,52 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   // Helper function to send swap accepted email (don't throw errors)
   const sendSwapAcceptedEmail = async () => {
     try {
+      // Use swapRequest data instead of message data for complete user info
+      const offeredBy = swapRequest?.offeredBy || message?.offeredBy;
+      const requestedFrom =
+        swapRequest?.requestedFrom || message?.requestedFrom;
+      const offeredListing =
+        swapRequest?.offeredListing || message?.offeredListing;
+      const requestedListing =
+        swapRequest?.requestedListing || message?.requestedListing;
+
+      // Validate we have all required data before sending (use UID instead of email)
+      if (
+        !offeredBy?.uid ||
+        !offeredBy?.username ||
+        !offeredListing?.title ||
+        !requestedFrom?.username ||
+        !requestedListing?.title
+      ) {
+        console.error("Missing required data for swap accepted email:", {
+          hasOfferedByUid: !!offeredBy?.uid,
+          hasOfferedByUsername: !!offeredBy?.username,
+          hasOfferedListingTitle: !!offeredListing?.title,
+          hasRequestedFromUsername: !!requestedFrom?.username,
+          hasRequestedListingTitle: !!requestedListing?.title,
+        });
+        return; // Don't send email if data is missing
+      }
+
       const response = await fetch("/api/email/swap-accepted", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          offeredByEmail: message.offeredBy.email,
-          offeredByUsername: message.offeredBy.username,
-          offeredListingTitle: message.offeredListing.title,
-          requestedFromUsername: message.requestedFrom.username,
-          requestedListingTitle: message.requestedListing.title,
+          offeredByUid: offeredBy.uid,
+          offeredByUsername: offeredBy.username,
+          offeredListingTitle: offeredListing.title,
+          requestedFromUsername: requestedFrom.username,
+          requestedListingTitle: requestedListing.title,
         }),
       });
 
       if (!response.ok) {
-        console.log("Email failed to send, but swap was accepted");
+        const errorData = await response.json();
+        console.error("Email failed to send:", errorData);
       }
     } catch (error) {
       console.error("Error sending swap accepted email:", error);
-      toast.error("Error sending swap accepted email");
+      // Don't show toast error to user since swap was already accepted
     }
   };
 
