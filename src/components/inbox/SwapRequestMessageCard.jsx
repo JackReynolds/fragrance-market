@@ -30,23 +30,23 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     });
   };
 
-  // Helper function to decerement unread message count
-  const decrementUnreadMessageCount = async (userUid) => {
+  // Helper function to mark conversation as read for a user
+  const markConversationAsRead = async (userUid, swapId) => {
     try {
       const response = await fetch(
         "/api/firebase/decrement-unread-message-count",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userUid }),
+          body: JSON.stringify({ userUid, swapId }),
         }
       );
       if (!response.ok) {
-        console.log("Failed to decrement unread message count");
+        console.log("Failed to mark conversation as read");
       }
     } catch (error) {
-      console.error("Error decrementing unread message count:", error);
-      toast.error("Error decrementing unread message count");
+      console.error("Error marking conversation as read:", error);
+      toast.error("Error marking conversation as read");
     }
   };
 
@@ -168,9 +168,9 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
       // delete swap request and messages collection
       await deleteSwapRequestAndMessages();
 
-      // If the requested from user has not yet seen the message, decrement their unreadMessageCount
+      // If the requested from user has not yet seen the message, mark conversation as read
       if (!message.readBy.includes(message.requestedFrom.uid)) {
-        decrementUnreadMessageCount(message.requestedFrom.uid);
+        markConversationAsRead(message.requestedFrom.uid, swapRequest.id);
       }
 
       toast.success(

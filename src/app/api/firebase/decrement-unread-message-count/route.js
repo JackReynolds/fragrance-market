@@ -2,58 +2,65 @@ import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 
-// Function to decrement unread message count for a user
+// Function to remove a conversation from user's unread conversations array
 
 export async function POST(request) {
   try {
-    const { userUid } = await request.json();
+    const { userUid, swapId } = await request.json();
 
     // Validate required fields
-    if (!userUid) {
+    if (!userUid || !swapId) {
       return NextResponse.json({
         success: false,
-        error: "Missing required field (userUid)",
+        error: "Missing required fields (userUid, swapId)",
       });
     }
 
     const profileRef = db.doc(`profiles/${userUid}`);
 
-    // Get current count to ensure we don't go below 0
+    // Check if profile exists
     const profileDoc = await profileRef.get();
-    const currentCount = profileDoc.data()?.unreadMessageCount || 0;
-
-    if (currentCount <= 0) {
+    if (!profileDoc.exists) {
       return NextResponse.json({
-        success: true,
-        message: "No unread messages to decrement",
+        success: false,
+        error: "Profile not found",
       });
     }
 
-    // Update user document with unread message count
+    const unreadConversations = profileDoc.data()?.unreadConversations || [];
+
+    // Check if conversation is in unread array
+    if (!unreadConversations.includes(swapId)) {
+      return NextResponse.json({
+        success: true,
+        message: "Conversation already marked as read",
+      });
+    }
+
+    // Remove conversation from unread array
     const updateData = {
-      unreadMessageCount: FieldValue.increment(-1),
+      unreadConversations: FieldValue.arrayRemove(swapId),
       updatedAt: FieldValue.serverTimestamp(),
     };
 
     await profileRef.update(updateData);
 
-    console.log(`Unread message count decremented for profile ${userUid}`);
+    console.log(
+      `Removed conversation ${swapId} from unreadConversations for profile ${userUid}`
+    );
 
     return NextResponse.json({
       success: true,
-      message: "Unread message count decremented successfully",
+      message: "Conversation marked as read successfully",
     });
   } catch (error) {
-    console.error(
-      "Error decrementing unread message count for profile:",
-      error
-    );
+    console.error("Error removing conversation from unread array:", error);
 
     // Handle specific Firestore errors
     if (error.code === "not-found") {
       return NextResponse.json({
         success: false,
-        error: "Profile not found or no unread messages",
+        error: "Profile not found",
       });
     }
 

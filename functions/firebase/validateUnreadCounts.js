@@ -7,35 +7,53 @@ initializeApp();
 
 const db = getFirestore();
 
-async function validateUserUnreadCount(userProfileDoc) {
+async function validateUserUnreadConversations(userProfileDoc, stats) {
   const userProfileData = userProfileDoc.data();
   const userProfileUid = userProfileDoc.id;
-  const currentCount = userProfileData.unreadMessageCount || 0;
+  const currentUnreadConversations = userProfileData.unreadConversations || [];
 
-  // Calculate actual unread messages for this user
-  const actualUnreadCount = await calculateActualUnreadCount(userProfileUid);
+  // Calculate actual unread conversations for this user
+  const actualUnreadConversations = await calculateActualUnreadConversations(
+    userProfileUid
+  );
 
-  if (currentCount !== actualUnreadCount) {
-    const discrepancy = currentCount - actualUnreadCount;
-    totalDiscrepancy += Math.abs(discrepancy);
-    correctedUsers++;
+  // Sort for comparison
+  const currentSorted = [...currentUnreadConversations].sort();
+  const actualSorted = [...actualUnreadConversations].sort();
 
-    logger.info(`Correcting unread count for user profile ${userProfileUid}`, {
-      currentCount,
-      actualUnreadCount,
-      discrepancy,
-    });
+  // Check if arrays are different
+  const isDifferent =
+    currentSorted.length !== actualSorted.length ||
+    currentSorted.some((id, index) => id !== actualSorted[index]);
 
-    // Update the user's unread count
+  if (isDifferent) {
+    const discrepancy = Math.abs(
+      currentUnreadConversations.length - actualUnreadConversations.length
+    );
+    stats.totalDiscrepancy += discrepancy;
+    stats.correctedUsers++;
+
+    logger.info(
+      `Correcting unread conversations for user profile ${userProfileUid}`,
+      {
+        currentCount: currentUnreadConversations.length,
+        actualCount: actualUnreadConversations.length,
+        currentConversations: currentUnreadConversations,
+        actualConversations: actualUnreadConversations,
+        discrepancy,
+      }
+    );
+
+    // Update the user's unread conversations array
     await db.doc(`profiles/${userProfileUid}`).update({
-      unreadMessageCount: actualUnreadCount,
+      unreadConversations: actualUnreadConversations,
       lastCountValidation: new Date(),
     });
   }
 }
 
-async function calculateActualUnreadCount(userProfileUid) {
-  let totalUnread = 0;
+async function calculateActualUnreadConversations(userProfileUid) {
+  const unreadConversations = [];
 
   // Get all swap requests where user is a participant
   const swapRequestsQuery = db
@@ -44,7 +62,7 @@ async function calculateActualUnreadCount(userProfileUid) {
 
   const swapRequestsSnapshot = await swapRequestsQuery.get();
 
-  // For each swap request, count unread messages
+  // For each swap request, check if there are unread messages
   for (const swapDoc of swapRequestsSnapshot.docs) {
     const swapId = swapDoc.id;
 
@@ -53,21 +71,28 @@ async function calculateActualUnreadCount(userProfileUid) {
 
     const messagesSnapshot = await messagesQuery.get();
 
+    let hasUnreadMessages = false;
     for (const messageDoc of messagesSnapshot.docs) {
       const messageData = messageDoc.data();
       const readBy = messageData.readBy || [];
       const senderUid = messageData.senderUid;
 
-      // Count as unread if:
+      // Check if unread:
       // 1. User is not the sender
       // 2. User hasn't read it (not in readBy array)
       if (senderUid !== userProfileUid && !readBy.includes(userProfileUid)) {
-        totalUnread++;
+        hasUnreadMessages = true;
+        break;
       }
+    }
+
+    // If conversation has unread messages, add to array
+    if (hasUnreadMessages) {
+      unreadConversations.push(swapId);
     }
   }
 
-  return totalUnread;
+  return unreadConversations;
 }
 
 exports.validateUnreadCounts = onSchedule(
@@ -82,11 +107,13 @@ exports.validateUnreadCounts = onSchedule(
     // timeoutSeconds: 540,
 
     try {
-      logger.info("Starting unread count validation for all users");
+      logger.info("Starting unread conversations validation for all users");
 
-      let processedUsers = 0;
-      let correctedUsers = 0;
-      let totalDiscrepancy = 0;
+      const stats = {
+        processedUsers: 0,
+        correctedUsers: 0,
+        totalDiscrepancy: 0,
+      };
 
       // Get all users in batches
       const userProfilesRef = db.collection("profiles");
@@ -112,8 +139,8 @@ exports.validateUnreadCounts = onSchedule(
           await Promise.all(
             batch.map(async (userProfileDoc) => {
               try {
-                await validateUserUnreadCount(userProfileDoc);
-                processedUsers++;
+                await validateUserUnreadConversations(userProfileDoc, stats);
+                stats.processedUsers++;
               } catch (error) {
                 logger.error(
                   `Error validating user ${userProfileDoc.id}:`,
@@ -127,11 +154,7 @@ exports.validateUnreadCounts = onSchedule(
         lastDoc = usersBatch.docs[usersBatch.docs.length - 1];
       } while (lastDoc);
 
-      logger.info("Unread count validation completed", {
-        processedUsers,
-        correctedUsers,
-        totalDiscrepancy,
-      });
+      logger.info("Unread conversations validation completed", stats);
     } catch (error) {
       logger.error("Error in validateUnreadCounts function:", error);
       throw error;

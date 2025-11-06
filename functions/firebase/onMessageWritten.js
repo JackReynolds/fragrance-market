@@ -113,7 +113,7 @@ exports.onMessageWritten = onDocumentWritten(
             // Simple check: if active = true, they're in the chat
             if (presenceData.active === true) {
               logger.info(
-                `Recipient ${recipientUid} is currently active in chat, skipping counter increment`
+                `Recipient ${recipientUid} is currently active in chat, skipping conversation marking`
               );
               continue;
             }
@@ -125,19 +125,22 @@ exports.onMessageWritten = onDocumentWritten(
           );
         }
 
-        // Increment counter for this recipient
-        logger.info(`Incrementing unread count for user ${recipientUid}`, {
-          reason: isNewDocument
-            ? "new_message"
-            : hasSignificantChange
-            ? "significant_change"
-            : "unknown",
-          messageType: afterData.type,
-        });
+        // Add conversation to unread array for this recipient
+        logger.info(
+          `Marking conversation ${swapId} as unread for user ${recipientUid}`,
+          {
+            reason: isNewDocument
+              ? "new_message"
+              : hasSignificantChange
+              ? "significant_change"
+              : "unknown",
+            messageType: afterData.type,
+          }
+        );
 
         const userProfileRef = db.doc(`profiles/${recipientUid}`);
         batch.update(userProfileRef, {
-          unreadMessageCount: FieldValue.increment(1),
+          unreadConversations: FieldValue.arrayUnion(swapId),
         });
       }
 

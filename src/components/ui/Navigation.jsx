@@ -60,9 +60,10 @@ const Navigation = () => {
     }
   }, []);
 
-  // assume userDoc.unreadCount is kept up-to-date by your Cloud Function
-  const unreadCount = profileDoc?.unreadMessageCount || 0;
-  const hasUnreadMessages = profileDoc?.unreadMessageCount > 0;
+  // Get unread conversation count from array
+  const unreadConversations = profileDoc?.unreadConversations || [];
+  const unreadCount = unreadConversations.length;
+  const hasUnreadMessages = unreadCount > 0;
 
   const handleSignOut = () => {
     signOut(auth);

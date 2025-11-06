@@ -1,8 +1,8 @@
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { logger } = require("firebase-functions");
-const { getFirestore } = require("firebase-admin/firestore");
+const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 
-// Server-side (functions/firebase/onMessageRead.js) - Handles counter decrement
+// Server-side (functions/firebase/onMessageRead.js) - Removes conversation from unread array when all messages are read
 exports.onMessageRead = onDocumentUpdated(
   {
     document: "swap_requests/{swapId}/messages/{msgId}",
@@ -12,6 +12,7 @@ exports.onMessageRead = onDocumentUpdated(
     try {
       const beforeData = event.data.before.data();
       const afterData = event.data.after.data();
+      const { swapId } = event.params;
 
       // Skip if readBy wasn't changed
       if (!beforeData.readBy && !afterData.readBy) return;
@@ -28,27 +29,34 @@ exports.onMessageRead = onDocumentUpdated(
 
       const db = getFirestore();
 
-      // Update counter for each user that newly read the message
+      // For each user that read this message, check if they have any remaining unread messages in this conversation
       for (const uid of newReaders) {
-        const userProfileRef = db.doc(`profiles/${uid}`);
+        // Query all messages in this conversation that are unread by this user
+        const messagesRef = db.collection(`swap_requests/${swapId}/messages`);
+        const unreadMessagesQuery = await messagesRef.get();
 
-        // Use transaction to ensure accurate count
-        await db.runTransaction(async (transaction) => {
-          const userProfileDoc = await transaction.get(userProfileRef);
+        let hasUnreadMessages = false;
+        unreadMessagesQuery.forEach((doc) => {
+          const msgData = doc.data();
+          const readBy = msgData.readBy || [];
+          const senderUid = msgData.senderUid;
 
-          if (userProfileDoc.exists) {
-            const currentCount = userProfileDoc.data().unreadMessageCount || 0;
-            // Only decrement if count is positive
-            if (currentCount > 0) {
-              transaction.update(userProfileRef, {
-                unreadMessageCount: currentCount - 1,
-              });
-              logger.info(
-                `Decremented unreadMessageCount for user profile ${uid}`
-              );
-            }
+          // Check if this message is unread by this user
+          if (senderUid !== uid && !readBy.includes(uid)) {
+            hasUnreadMessages = true;
           }
         });
+
+        // If no more unread messages, remove conversation from unread array
+        if (!hasUnreadMessages) {
+          const userProfileRef = db.doc(`profiles/${uid}`);
+          await userProfileRef.update({
+            unreadConversations: FieldValue.arrayRemove(swapId),
+          });
+          logger.info(
+            `Removed conversation ${swapId} from unreadConversations for user ${uid}`
+          );
+        }
       }
     } catch (error) {
       logger.error("Error handling message read event:", error);

@@ -63,7 +63,7 @@ export async function POST(request) {
       swapCount: 0,
       isPremium: false,
       isIdVerified: false,
-      unreadMessageCount: 0,
+      unreadConversations: [],
       createdAt: FieldValue.serverTimestamp(),
     });
 
