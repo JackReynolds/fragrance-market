@@ -126,11 +126,27 @@ const PendingShipmentMessageCard = ({ message, swapRequest, authUser }) => {
     try {
       setIsConfirmingShipment(true);
 
+      // Get auth token for API request
+      if (!authUser || typeof authUser.getIdToken !== "function") {
+        throw new Error(
+          "Authentication error - please refresh the page and try again"
+        );
+      }
+
+      const token = await authUser.getIdToken(true);
+
+      if (!token) {
+        throw new Error(
+          "Failed to get authentication token - please refresh the page"
+        );
+      }
+
       // Call the cloud function
       const response = await fetch("/api/firebase/handle-confirm-shipment", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           swapRequestId: swapRequest.id,

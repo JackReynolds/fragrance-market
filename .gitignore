@@ -55,3 +55,4 @@ functions/.runtimeconfig.json
 # Optional build artifacts (if you compile TS)
 functions/lib/
 
+ARCHITECTURE.md

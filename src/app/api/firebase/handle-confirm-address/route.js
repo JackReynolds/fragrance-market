@@ -1,13 +1,55 @@
 import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 export async function POST(request) {
   try {
+    // 1. AUTHENTICATE USER
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized - Missing or invalid token" },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split("Bearer ")[1];
+    let authenticatedUserUid;
+
+    try {
+      const decodedToken = await getAuth().verifyIdToken(token);
+      authenticatedUserUid = decodedToken.uid;
+    } catch (error) {
+      console.error("Token verification failed:", error.message);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized - Invalid token",
+        },
+        { status: 401 }
+      );
+    }
+
+    // 2. PARSE REQUEST BODY
     const { swapRequestId, userUid, address, userRole, messageId } =
       await request.json();
 
-    // Validate required fields
+    // 3. VERIFY USER IS ACTING ON THEIR OWN BEHALF
+    if (authenticatedUserUid !== userUid) {
+      console.error(
+        `Auth mismatch: ${authenticatedUserUid} attempted to act as ${userUid}`
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden - Cannot act on behalf of another user",
+        },
+        { status: 403 }
+      );
+    }
+
+    // 4. VALIDATE REQUIRED FIELDS
     if (!swapRequestId || !userUid || !address || !userRole || !messageId) {
       console.error("Missing required fields", {
         swapRequestId,

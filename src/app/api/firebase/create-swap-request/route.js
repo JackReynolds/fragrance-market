@@ -164,6 +164,36 @@ export async function POST(request) {
     const currentUser = currentUserDoc.data();
     const targetUser = targetUserDoc.data();
 
+    // 3.5. CHECK SWAP LIMIT (server-side enforcement)
+    // Get current user's profile to check swap count
+    const currentUserProfileDoc = await db
+      .collection("profiles")
+      .doc(currentUserUid)
+      .get();
+
+    if (!currentUserProfileDoc.exists) {
+      return NextResponse.json(
+        { error: "User profile not found" },
+        { status: 400 }
+      );
+    }
+
+    const currentUserProfile = currentUserProfileDoc.data();
+    const isPremium = currentUserProfile.isPremium || false;
+    const currentSwapCount = currentUserProfile.swapCount || 0;
+
+    // Non-premium users are limited to 1 swap per month
+    if (!isPremium && currentSwapCount >= 1) {
+      return NextResponse.json(
+        {
+          error:
+            "Monthly swap limit reached. Upgrade to Premium for unlimited swaps.",
+          errorCode: "SWAP_LIMIT_REACHED",
+        },
+        { status: 429 } // 429 Too Many Requests
+      );
+    }
+
     // 4. Create swap request document
     const swapRequestData = {
       offeredBy: {
