@@ -268,7 +268,13 @@ export default function ChatWindow({
           />
         );
       default:
-        return <StandardMessage message={message} authUser={authUser} />;
+        return (
+          <StandardMessage
+            message={message}
+            authUser={authUser}
+            swapRequest={swapRequest}
+          />
+        );
     }
   };
 

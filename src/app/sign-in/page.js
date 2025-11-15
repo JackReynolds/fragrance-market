@@ -89,7 +89,7 @@ export default function SignIn() {
         formData.password
       );
       toast.success("Signed in successfully");
-      router.push("/my-profile");
+      router.push("/");
     } catch (error) {
       console.error("Error signing in:", error);
 

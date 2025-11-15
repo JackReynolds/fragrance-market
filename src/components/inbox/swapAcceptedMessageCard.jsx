@@ -268,8 +268,6 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
 
       // Then confirm the address for the swap
       await handleConfirmAddress(true, locationData.formattedAddress);
-
-      toast.success("Address saved and confirmed!");
     } catch (error) {
       console.error("Error in handleSaveAddress:", error);
       toast.error("Failed to save address. Please try again.");
