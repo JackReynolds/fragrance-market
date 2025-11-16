@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { sendPurchaseConfirmationEmails } from "@/app/api/email/fragrance-purchase-emails/route";
 
 const stripe = new Stripe(
   process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY
@@ -402,7 +403,6 @@ async function handlePaymentCanceled(paymentIntent) {
 
 /**
  * Send order confirmation emails to buyer and seller
- * This is a placeholder - implement with SendGrid later
  */
 async function sendOrderConfirmationEmails(
   listingId,
@@ -428,77 +428,10 @@ async function sendOrderConfirmationEmails(
 
     const order = orderQuery.docs[0].data();
 
-    // Send buyer receipt
-    await sendBuyerReceipt(order);
-
-    // Send seller notification
-    await sendSellerNotification(order);
-
-    console.log("Order confirmation emails sent");
+    // Directly call the email function (no HTTP request needed)
+    await sendPurchaseConfirmationEmails(order);
   } catch (error) {
     console.error("Failed to send confirmation emails:", error);
     throw error;
   }
-}
-
-/**
- * Send purchase receipt to buyer
- * TODO: Implement with SendGrid
- */
-async function sendBuyerReceipt(order) {
-  console.log(`[TODO] Send buyer receipt to: ${order.shippingTo.email}`);
-
-  // Placeholder for SendGrid implementation
-  const emailData = {
-    to: order.shippingTo.email,
-    template: "buyer_receipt",
-    data: {
-      buyerName: order.shippingTo.name,
-      orderNumber: order.orderNumber,
-      itemTitle: order.item.title,
-      itemBrand: order.item.brand,
-      amount: (order.payment.totalAmount / 100).toFixed(2),
-      currency: order.payment.currency.toUpperCase(),
-      shippingAddress: order.shippingTo.formattedAddress,
-      sellerName: order.seller.username,
-      orderDate: new Date().toLocaleDateString(),
-    },
-  };
-
-  console.log("Buyer email data prepared:", emailData);
-
-  // TODO: Implement actual SendGrid call
-  // await sendEmail(emailData);
-}
-
-/**
- * Send sale notification to seller
- * TODO: Implement with SendGrid
- */
-async function sendSellerNotification(order) {
-  console.log(`[TODO] Send seller notification to: ${order.seller.email}`);
-
-  // Placeholder for SendGrid implementation
-  const emailData = {
-    to: order.seller.email,
-    template: "seller_notification",
-    data: {
-      sellerName: order.seller.username,
-      orderNumber: order.orderNumber,
-      itemTitle: order.item.title,
-      amount: (order.payment.sellerAmount / 100).toFixed(2),
-      currency: order.payment.currency.toUpperCase(),
-      // Include full shipping details for the seller
-      recipientName: order.shippingTo.name,
-      recipientEmail: order.shippingTo.email,
-      recipientPhone: order.shippingTo.phone,
-      shippingAddress: order.shippingTo.formattedAddress,
-      orderDate: new Date().toLocaleDateString(),
-    },
-  };
-
-  console.log("Seller email data prepared:", emailData);
-
-  // TODO: Implement actual SendGrid call
-  // await sendEmail(emailData);
 }

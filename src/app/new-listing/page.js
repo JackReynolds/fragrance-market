@@ -1384,8 +1384,8 @@ const NewListing = () => {
                           </p>
                         )}
 
-                        {/* Show simple upgrade message for non-premium users */}
-                        {!profileDoc?.isPremium && (
+                        {/* Show upgrade message for non-premium users */}
+                        {!profileDoc?.isPremium && formData.type !== "sell" && (
                           <div className="mt-3 p-4 border border-primary/20 bg-primary/5 rounded-md">
                             <h4 className="font-semibold text-sm mb-2">
                               Want to sell fragrances?
@@ -1405,67 +1405,7 @@ const NewListing = () => {
                           </div>
                         )}
 
-                        {/* Show detailed requirements card for premium users missing other requirements */}
-                        {profileDoc?.isPremium &&
-                          !(
-                            profileDoc?.isIdVerified &&
-                            profileDoc?.stripeAccountStatus?.statusCode === 1
-                          ) && (
-                            <div className="mt-3 p-4 border border-blue-200 bg-blue-50 rounded-md">
-                              <h4 className="font-semibold text-sm mb-2 text-blue-900">
-                                Complete setup to start selling
-                              </h4>
-                              <p className="text-xs text-blue-800 mb-3">
-                                You&apos;re almost there! Complete these steps:
-                              </p>
-                              <ul className="space-y-1 mb-3">
-                                <li className="text-xs text-blue-800 flex items-center gap-1">
-                                  {profileDoc?.isIdVerified ? (
-                                    <Check className="h-3 w-3 text-green-600" />
-                                  ) : (
-                                    <span className="w-3 h-3 border border-blue-400 rounded-sm inline-block" />
-                                  )}
-                                  <span
-                                    className={
-                                      profileDoc?.isIdVerified
-                                        ? "line-through"
-                                        : ""
-                                    }
-                                  >
-                                    ID verification
-                                  </span>
-                                </li>
-                                <li className="text-xs text-blue-800 flex items-center gap-1">
-                                  {profileDoc?.stripeAccountStatus
-                                    ?.statusCode === 1 ? (
-                                    <Check className="h-3 w-3 text-green-600" />
-                                  ) : (
-                                    <span className="w-3 h-3 border border-blue-400 rounded-sm inline-block" />
-                                  )}
-                                  <span
-                                    className={
-                                      profileDoc?.stripeAccountStatus
-                                        ?.statusCode === 1
-                                        ? "line-through"
-                                        : ""
-                                    }
-                                  >
-                                    Payment setup
-                                  </span>
-                                </li>
-                              </ul>
-                              <Button
-                                size="sm"
-                                className="w-full hover:cursor-pointer"
-                                onClick={() => router.push("/my-profile")}
-                                type="button"
-                              >
-                                Complete Setup in Profile
-                              </Button>
-                            </div>
-                          )}
-
-                        {/* Show requirements card if sell is selected but requirements aren't met */}
+                        {/* Show requirements card ONLY when sell is selected and requirements aren't met */}
                         {formData.type === "sell" &&
                           !(
                             profileDoc?.isPremium &&
@@ -1474,20 +1414,21 @@ const NewListing = () => {
                           ) && (
                             <div className="mt-3 p-4 border border-amber-200 bg-amber-50 rounded-md">
                               <h4 className="font-semibold text-sm mb-3 text-amber-900">
-                                ⚠️ Complete these requirements to create sell
-                                listings:
+                                ⚠️ Requirements to Sell
                               </h4>
+                              <p className="text-xs text-amber-700 mb-3">
+                                Complete the following to create sell listings:
+                              </p>
                               <div className="space-y-3">
                                 {/* Premium Check */}
                                 {!profileDoc?.isPremium && (
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
                                       <p className="text-sm text-amber-800 font-medium">
-                                        • Premium Membership Required
+                                        • Premium Membership
                                       </p>
                                       <p className="text-xs text-amber-700 mt-1">
-                                        Upgrade to premium to unlock selling
-                                        features
+                                        Upgrade to unlock selling features
                                       </p>
                                     </div>
                                     <Button
@@ -1508,11 +1449,10 @@ const NewListing = () => {
                                     <div className="flex items-start justify-between gap-2">
                                       <div className="flex-1">
                                         <p className="text-sm text-amber-800 font-medium">
-                                          • ID Verification Required
+                                          • ID Verification
                                         </p>
                                         <p className="text-xs text-amber-700 mt-1">
                                           Verify your identity to sell
-                                          fragrances
                                         </p>
                                       </div>
                                       <Button
@@ -1537,15 +1477,15 @@ const NewListing = () => {
                                     <div className="flex items-start justify-between gap-2">
                                       <div className="flex-1">
                                         <p className="text-sm text-amber-800 font-medium">
-                                          • Stripe Payment Setup Required
+                                          • Payment Setup
                                         </p>
                                         <p className="text-xs text-amber-700 mt-1">
                                           {profileDoc?.stripeAccountStatus
                                             ?.statusCode === 2
-                                            ? "Complete remaining Stripe requirements"
+                                            ? "Complete Stripe requirements"
                                             : profileDoc?.stripeAccountStatus
                                                 ?.statusCode === 3
-                                            ? "Complete your Stripe onboarding"
+                                            ? "Finish Stripe onboarding"
                                             : "Set up payment processing"}
                                         </p>
                                       </div>
