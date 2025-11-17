@@ -245,6 +245,7 @@ async function handlePaymentSucceeded(paymentIntent) {
 
         // ============================================
         // BUYER REFERENCE (for display/communication in app)
+        // Include displayName for seller to use on shipping label
         // ============================================
         buyer: {
           uid: buyerUid,
@@ -255,11 +256,11 @@ async function handlePaymentSucceeded(paymentIntent) {
 
         // ============================================
         // SELLER REFERENCE (for display/communication in app)
+        // Only username - buyer doesn't need seller's full name
         // ============================================
         seller: {
           uid: ownerUid,
           username: seller.username || "Unknown",
-          displayName: seller.displayName || seller.username || "Unknown",
           email: seller.email,
           profilePictureURL: seller.profilePictureURL || null,
         },

@@ -71,6 +71,9 @@ export const sendBuyerReceiptEmail = async (order) => {
       shippingPostalCode: order.shippingTo.postalCode,
       shippingCountry: order.shippingTo.country,
       shippingPhone: order.shippingTo.phone || "",
+
+      // Seller details (username only - buyer doesn't need full name)
+      sellerName: order.seller.username,
       sellerUsername: order.seller.username,
     },
     subject: `Order Confirmation #${order.orderNumber} | The Fragrance Market`,
@@ -96,7 +99,11 @@ export const sendSellerNotificationEmail = async (order) => {
     from: { name: "The Fragrance Market", email: fromEmail },
     templateId: sellerNotificationTemplateId,
     dynamicTemplateData: {
+      // Seller details
+      sellerName: order.seller.username,
       sellerUsername: order.seller.username,
+
+      // Order details
       orderNumber: order.orderNumber,
       orderId: order.orderId,
       orderDate: new Date().toLocaleDateString("en-US", {
@@ -134,18 +141,15 @@ export const sendSellerNotificationEmail = async (order) => {
       shippingPostalCode: order.shippingTo.postalCode,
       shippingCountry: order.shippingTo.country,
       shippingCountryCode: order.shippingTo.countryCode,
+
+      // Buyer details (use displayName for full name, username for reference)
+      buyerName: order.buyer.displayName || order.buyer.username,
       buyerUsername: order.buyer.username,
 
       // Action links
-      viewOrderUrl: `${
-        process.env.NEXT_PUBLIC_APP_URL || "https://thefragrancemarket.com"
-      }/my-profile?tab=sales`,
-      markAsShippedUrl: `${
-        process.env.NEXT_PUBLIC_APP_URL || "https://thefragrancemarket.com"
-      }/my-profile?tab=sales`,
-      contactSupportUrl: `${
-        process.env.NEXT_PUBLIC_APP_URL || "https://thefragrancemarket.com"
-      }/contact`,
+      viewOrderUrl: "https://thefragrancemarket.com/my-profile",
+      markAsShippedUrl: "https://thefragrancemarket.com/my-profile",
+      contactSupportUrl: "https://thefragrancemarket.com/contact",
     },
     subject: `New Sale! Order #${order.orderNumber} | The Fragrance Market`,
   };
