@@ -133,7 +133,7 @@ export const sendSellerNotificationEmail = async (order) => {
       // Buyer/Shipping details (for creating shipping label)
       recipientName: order.shippingTo.name,
       recipientEmail: order.shippingTo.email,
-      recipientPhone: order.shippingTo.phone || "Not provided",
+      recipientPhone: order.shippingTo.phone || "",
       shippingAddressLine1: order.shippingTo.addressLine1,
       shippingAddressLine2: order.shippingTo.addressLine2 || "",
       shippingCity: order.shippingTo.city,
