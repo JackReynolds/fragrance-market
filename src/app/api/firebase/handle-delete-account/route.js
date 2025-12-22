@@ -4,7 +4,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Helper to calculate earliest deletion date from recent swaps
 const calculateEarliestDeletionDate = (swapsSnapshot) => {

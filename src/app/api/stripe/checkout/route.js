@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(request) {
   try {
@@ -21,10 +21,10 @@ export async function POST(request) {
     // Use provided priceId or fall back to your default
     const selectedPriceId =
       currency === "USD"
-        ? "price_1RexTuGfaSbiBr8ZKlzlS9cG"
+        ? process.env.THE_FRAGRANCE_MARKET_PREMIUM_STRIPE_PRICE_USD
         : currency === "GBP"
-        ? "price_1RexSlGfaSbiBr8ZfozqXnpN"
-        : "price_1RexTRGfaSbiBr8ZOzzJMEfi";
+        ? process.env.THE_FRAGRANCE_MARKET_PREMIUM_STRIPE_PRICE_GBP
+        : process.env.THE_FRAGRANCE_MARKET_PREMIUM_STRIPE_PRICE_EUR;
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({

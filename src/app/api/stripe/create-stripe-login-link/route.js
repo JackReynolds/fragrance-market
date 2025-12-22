@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 export async function POST(request) {
-  const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const { stripeAccountId, linkType } = await request.json();
 
   // Predefined set of valid link types
@@ -11,7 +11,7 @@ export async function POST(request) {
 
   try {
     // Retrieve the Stripe secret key from the environment
-    if (!process.env.STRIPE_TEST_SECRET_KEY) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       console.error("Stripe secret key not set");
       return NextResponse.json(
         { error: "Stripe secret key not set correctly" },

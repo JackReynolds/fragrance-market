@@ -12,13 +12,13 @@ const STATUS_CODES = {
 };
 
 export async function POST(request) {
-  const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
     const { uid } = await request.json();
 
     // Retrieve the Stripe secret key from the environment
-    if (!process.env.STRIPE_TEST_SECRET_KEY) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       console.error("Stripe secret key not set");
       return NextResponse.json(
         { error: "Stripe secret key not set correctly" },

@@ -43,10 +43,10 @@ const PremiumMembershipWideCard = () => {
         <div className="mb-6">
           <p className="text-2xl md:text-4xl font-bold mb-2">
             {currency === "USD"
-              ? "$6.99"
+              ? "$5.99"
               : currency === "GBP"
-              ? "£5.99"
-              : "€6.99"}
+              ? "£4.99"
+              : "€5.99"}
             <span className="text-sm font-normal text-muted-foreground">
               /month
             </span>

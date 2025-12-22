@@ -297,10 +297,10 @@ export default function PremiumPage() {
                 </CardTitle>
                 <div className="text-3xl font-bold">
                   {profileDoc?.countryCode === "US"
-                    ? "$6.99"
+                    ? "$5.99"
                     : profileDoc?.countryCode === "GB"
-                    ? "£5.99"
-                    : "€6.99"}
+                    ? "£4.99"
+                    : "€5.99"}
                   <span className="text-base font-normal text-muted-foreground">
                     /month
                   </span>

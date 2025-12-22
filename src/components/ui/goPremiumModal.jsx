@@ -42,7 +42,7 @@ const GoPremiumModal = ({
       : "EUR";
 
   const price =
-    currency === "USD" ? "$6.99" : currency === "GBP" ? "£5.99" : "€6.99";
+    currency === "USD" ? "$5.99" : currency === "GBP" ? "£4.99" : "€5.99";
 
   const triggerContent = {
     swap_limit: {

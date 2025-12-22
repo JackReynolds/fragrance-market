@@ -3,7 +3,7 @@ import { db } from "@/lib/firebaseAdmin";
 import Stripe from "stripe";
 
 export async function POST(request) {
-  const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   try {
     // Retrieve and validate request parameters
     const { uid, accountType, email } = await request.json();

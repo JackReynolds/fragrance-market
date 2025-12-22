@@ -74,7 +74,7 @@ export async function POST(request) {
   let event;
 
   // Initialize Stripe with the secret key
-  const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   // Fix 2: Correct raw body handling for App Router
   let body;
@@ -94,7 +94,7 @@ export async function POST(request) {
     event = stripe.webhooks.constructEvent(
       body, // Use the text body
       sig,
-      process.env.STRIPE_CONNECT_TEST_WEBHOOK_SECRET
+      process.env.STRIPE_CONNECT_WEBHOOK_SECRET
     );
     console.log("Webhook signature verified, event type:", event.type);
   } catch (err) {

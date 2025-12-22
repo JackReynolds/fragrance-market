@@ -4,12 +4,8 @@ import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { sendPurchaseConfirmationEmails } from "@/app/api/email/fragrance-purchase-emails/route";
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY || process.env.STRIPE_TEST_SECRET_KEY
-);
-const endpointSecret =
-  process.env.STRIPE_PAYMENT_WEBHOOK_SECRET ||
-  process.env.STRIPE_TEST_WEBHOOK_SECRET;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const endpointSecret = process.env.STRIPE_PAYMENT_WEBHOOK_SECRET;
 
 function getCountryName(code, locale = "en") {
   try {
