@@ -107,11 +107,14 @@ const PremiumAccountSubscription = () => {
               <Button
                 className="hover:cursor-pointer shadow-md"
                 variant="outline"
-                onClick={() =>
-                  router.push(
-                    `https://billing.stripe.com/p/login/test_eVq6oHdpleEngED1wQbMQ00?prefilled_email=${profileDoc?.email}`
-                  )
-                }
+                onClick={() => {
+                  const billingPortalUrl = `${
+                    process.env.NEXT_PUBLIC_STRIPE_BILLING_PORTAL_URL
+                  }?prefilled_email=${encodeURIComponent(
+                    profileDoc?.email || ""
+                  )}`;
+                  window.open(billingPortalUrl, "_blank");
+                }}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Manage Subscription
