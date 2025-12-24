@@ -7,10 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 
-const GoPremiumButton = ({ authUser, currency }) => {
+const GoPremiumButton = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { authUser } = useAuth();
+  const { profileDoc } = useProfileDoc();
+
+  // Determine currency based on country code
+  const getCurrency = () => {
+    const countryCode = profileDoc?.countryCode;
+    if (countryCode === "US") return "USD";
+    if (countryCode === "GB") return "GBP";
+    return "EUR"; // Default to EUR for EU and other countries
+  };
 
   const createCheckoutSession = async () => {
     setIsLoading(true);
@@ -20,6 +32,8 @@ const GoPremiumButton = ({ authUser, currency }) => {
         router.push("/sign-in");
         return;
       }
+
+      const currency = getCurrency();
 
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
