@@ -119,13 +119,13 @@ const ListingCard = ({
   return (
     <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full relative flex flex-col">
       {/* Image Section - Responsive aspect ratio */}
-      <div className="relative max-h-[300px] aspect-[4/5] w-full overflow-hidden">
+      <div className="relative max-h-[300px] aspect-[3/4] w-full overflow-hidden">
         <Image
           src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
           alt={`${data.fragrance} - ${data.brand}`}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className={`object-contain transition-transform duration-300 group-hover:scale-105 ${
+          className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
             isSwapped || isSold ? "opacity-60 grayscale-[30%]" : ""
           }`}
           onClick={handleCardClick}
@@ -244,7 +244,7 @@ const ListingCard = ({
 
           {/* Fragrance Name - Responsive sizing */}
           <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-2 sm:mb-3">
-            {data.fragrance}
+            {data.fragrance} - {data.brand}
           </h3>
 
           {/* Price Row - Responsive sizing */}
