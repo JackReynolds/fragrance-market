@@ -19,13 +19,10 @@ const CustomHit = ({ hit }) => {
       <div className="border rounded-md overflow-hidden hover:shadow-md max-w-84">
         <img
           src={hit.imageURLs[0]}
-          alt={hit.title}
+          alt={`${hit.fragrance} - ${hit.brand}`}
           className="w-full h-72 object-fit"
         />
         <div className="p-2">
-          <div className="mb-3">
-            <Highlight attribute="title" hit={hit} />
-          </div>
           <div className="flex justify-between mb-3">
             <div>
               <h2 className="font-semibold text-gray-800">

@@ -103,7 +103,7 @@ export default function CompletedSwapsTab({
                           <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                             <Image
                               src={myImage}
-                              alt={myListing?.title || "Fragrance"}
+                              alt={`${myListing?.fragrance} - ${myListing?.brand}`}
                               fill
                               className="object-cover"
                             />
@@ -111,13 +111,10 @@ export default function CompletedSwapsTab({
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">
-                            {myListing?.title || "Unknown Fragrance"}
+                            {myListing?.fragrance || "Unknown Fragrance"}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
                             {myListing?.brand || "Unknown Brand"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {myListing?.fragrance || ""}
                           </p>
                           {myTrackingNumber && (
                             <p className="text-xs text-muted-foreground mt-1 font-medium">
@@ -138,7 +135,7 @@ export default function CompletedSwapsTab({
                           <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
                             <Image
                               src={theirImage}
-                              alt={theirListing?.title || "Fragrance"}
+                              alt={`${theirListing?.fragrance} - ${theirListing?.brand}`}
                               fill
                               className="object-cover"
                             />
@@ -146,13 +143,10 @@ export default function CompletedSwapsTab({
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold truncate">
-                            {theirListing?.title || "Unknown Fragrance"}
+                            {theirListing?.fragrance || "Unknown Fragrance"}
                           </p>
                           <p className="text-sm text-muted-foreground truncate">
                             {theirListing?.brand || "Unknown Brand"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {theirListing?.fragrance || ""}
                           </p>
                           {theirTrackingNumber && (
                             <p className="text-xs text-muted-foreground mt-1 font-medium">

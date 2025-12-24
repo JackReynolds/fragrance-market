@@ -169,7 +169,7 @@ const SwapOfferModal = ({
             <DialogTitle>Swap Request Already Sent</DialogTitle>
             <DialogDescription>
               You already have an active swap request for &quot;
-              {requestedListing?.title}&quot;
+              {requestedListing?.fragrance}&quot;
             </DialogDescription>
           </DialogHeader>
 
@@ -187,18 +187,17 @@ const SwapOfferModal = ({
                         existingRequest.offeredListing.imageURL ||
                         "/placeholder-image.jpg"
                       }
-                      alt={existingRequest.offeredListing.title}
+                      alt={`${existingRequest.offeredListing.fragrance} - ${existingRequest.offeredListing.brand}`}
                       fill
                       className="object-cover rounded"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">
-                      {existingRequest.offeredListing.title}
+                      {existingRequest.offeredListing.fragrance}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {existingRequest.offeredListing.brand} •{" "}
-                      {existingRequest.offeredListing.fragrance}
+                      {existingRequest.offeredListing.brand}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {existingRequest.offeredListing.amountLeft}% full
@@ -286,21 +285,18 @@ const SwapOfferModal = ({
                     <div className="w-16 h-16 relative">
                       <Image
                         src={listing.imageURLs?.[0] || "/placeholder-image.jpg"}
-                        alt={listing.title}
+                        alt={`${listing.fragrance} - ${listing.brand}`}
                         fill
                         className="object-cover rounded-md"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-sm truncate">
-                        {listing.title}
+                        {listing.fragrance}
                       </h3>
                       <div className="flex flex-col mt-1">
                         <p className="text-xs font-semibold text-muted-foreground truncate">
                           {listing.brand}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {listing.fragrance}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
                           {listing.amountLeft}% full

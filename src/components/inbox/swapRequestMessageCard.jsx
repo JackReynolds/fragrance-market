@@ -240,7 +240,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
             >
               <Image
                 src={message.offeredListing.imageURL}
-                alt={message.offeredListing.title}
+                alt={`${message.offeredListing.fragrance} - ${message.offeredListing.brand}`}
                 fill
                 className="object-cover"
               />
@@ -257,13 +257,10 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
                   );
                 }}
               >
-                {message.offeredListing.title}
+                {message.offeredListing.fragrance}
               </p>
               <p className="text-xs text-muted-foreground">
                 {message.offeredListing.brand}
-              </p>
-              <p className="text-xs sm:text-sm">
-                {message.offeredListing.fragrance}
               </p>
               <p className="text-xs sm:text-sm">
                 {message.offeredListing.amountLeft}% full
@@ -292,20 +289,17 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
             <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded overflow-hidden flex-shrink-0 border">
               <Image
                 src={message.requestedListing.imageURL}
-                alt={message.requestedListing.title}
+                alt={`${message.requestedListing.fragrance} - ${message.requestedListing.brand}`}
                 fill
                 className="object-cover"
               />
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-medium text-sm sm:text-base truncate">
-                {message.requestedListing.title}
+                {message.requestedListing.fragrance}
               </p>
               <p className="text-xs text-muted-foreground">
                 {message.requestedListing.brand}
-              </p>
-              <p className="text-xs sm:text-sm">
-                {message.requestedListing.fragrance}
               </p>
               <p className="text-xs sm:text-sm">
                 {message.requestedListing.amountLeft}% full

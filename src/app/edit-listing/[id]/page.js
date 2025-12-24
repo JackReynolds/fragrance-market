@@ -52,7 +52,6 @@ const EditListing = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    title: "",
     type: "sell",
     description: "",
     price: "",
@@ -120,7 +119,6 @@ const EditListing = () => {
 
         // Populate form data
         setFormData({
-          title: data.title || "",
           type: data.type || "sell",
           description: data.description || "",
           price: data.price?.toString() || "",
@@ -234,10 +232,6 @@ const EditListing = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
     if (!formData.brand.trim()) {
       newErrors.brand = "Brand is required";
     }
@@ -291,9 +285,12 @@ const EditListing = () => {
     setIsSaving(true);
 
     try {
+      // Auto-generate title from fragrance and brand
+      const generatedTitle = `${formData.fragrance.trim()} - ${formData.brand.trim()}`;
+
       // Update the listing object
       const updatedListingData = {
-        title: formData.title.trim(),
+        title: generatedTitle,
         type: formData.type,
         description: formData.description.trim(),
         price: formData.type === "sell" ? parseFloat(formData.price) : null,
@@ -401,23 +398,6 @@ const EditListing = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Listing Title</Label>
-                      <Input
-                        id="title"
-                        name="title"
-                        placeholder="E.g., 'Tom Ford Oud Wood 50ml' or 'Creed Aventus Full Bottle'"
-                        value={formData.title}
-                        onChange={handleChange}
-                        className={errors.title ? "border-destructive" : ""}
-                      />
-                      {errors.title && (
-                        <p className="text-sm text-destructive">
-                          {errors.title}
-                        </p>
-                      )}
-                    </div>
-
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="brand">Brand/House</Label>

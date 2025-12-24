@@ -72,11 +72,11 @@ const CancelSwapRequestModal = ({
             <p className="text-sm font-medium mb-2">Swap Request:</p>
             <p className="text-xs text-muted-foreground">
               <span className="font-medium">
-                {swapRequest.offeredListing?.title}
+                {swapRequest.offeredListing?.fragrance}
               </span>{" "}
               for{" "}
               <span className="font-medium">
-                {swapRequest.requestedListing?.title}
+                {swapRequest.requestedListing?.fragrance}
               </span>
             </p>
           </div>

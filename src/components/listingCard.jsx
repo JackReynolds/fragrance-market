@@ -122,7 +122,7 @@ const ListingCard = ({
       <div className="relative max-h-[300px] aspect-[4/5] w-full overflow-hidden">
         <Image
           src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
-          alt={data.title}
+          alt={`${data.fragrance} - ${data.brand}`}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className={`object-contain transition-transform duration-300 group-hover:scale-105 ${
@@ -242,9 +242,9 @@ const ListingCard = ({
             </p>
           </div>
 
-          {/* Title - Responsive sizing */}
+          {/* Fragrance Name - Responsive sizing */}
           <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-2 sm:mb-3">
-            {data.title}
+            {data.fragrance}
           </h3>
 
           {/* Price Row - Responsive sizing */}

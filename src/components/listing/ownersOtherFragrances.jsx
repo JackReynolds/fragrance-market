@@ -121,7 +121,7 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
                 <div className="relative aspect-[4/5] max-h-[250px] w-full ">
                   <Image
                     src={listing.imageURLs?.[0] || "/fragrance-placeholder.jpg"}
-                    alt={listing.title}
+                    alt={`${listing.fragrance} - ${listing.brand}`}
                     fill
                     className="object-contain transition-transform duration-300 group-hover:scale-105"
                     sizes="350px"
@@ -149,9 +149,9 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
                     {listing.brand}
                   </p>
 
-                  {/* Title */}
+                  {/* Fragrance Name */}
                   <h3 className="font-semibold text-sm leading-tight line-clamp-2">
-                    {listing.title}
+                    {listing.fragrance}
                   </h3>
 
                   {/* Price */}

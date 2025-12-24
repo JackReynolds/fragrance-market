@@ -673,7 +673,6 @@ const NewListing = () => {
 
   // Form state
   const [formData, setFormData] = useState({
-    title: "",
     type: "swap",
     description: "",
     price: "",
@@ -827,10 +826,6 @@ const NewListing = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-
     if (!formData.brand.trim()) {
       newErrors.brand = "Brand is required";
     }
@@ -931,11 +926,14 @@ const NewListing = () => {
         return;
       }
 
+      // Auto-generate title from fragrance and brand
+      const generatedTitle = `${formData.fragrance.trim()} - ${formData.brand.trim()}`;
+
       // Generate SEO-friendly slug for the listing
-      const slug = generateSlug(formData.title.trim());
+      const slug = generateSlug(generatedTitle);
 
       const listingData = {
-        title: formData.title.trim(),
+        title: generatedTitle,
         slug,
         type: formData.type,
         description: formData.description.trim(),
@@ -1147,23 +1145,6 @@ const NewListing = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Listing Title</Label>
-                      <Input
-                        id="title"
-                        name="title"
-                        placeholder="E.g., 'Tom Ford Oud Wood 50ml' or 'Creed Aventus Full Bottle'"
-                        value={formData.title}
-                        onChange={handleChange}
-                        className={errors.title ? "border-destructive" : ""}
-                      />
-                      {errors.title && (
-                        <p className="text-sm text-destructive">
-                          {errors.title}
-                        </p>
-                      )}
-                    </div>
-
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="brand">Brand/House</Label>

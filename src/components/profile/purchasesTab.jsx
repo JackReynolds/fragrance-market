@@ -146,16 +146,16 @@ export default function PurchasesTab({
                       <div className="relative w-20 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
                         <Image
                           src={item.imageURL}
-                          alt={item.title || "Item"}
+                          alt={`${item?.fragrance} - ${item?.brand}`}
                           fill
                           className="object-cover"
                         />
                       </div>
                     )}
                     <div className="flex-1">
-                      <h4 className="font-semibold">{item?.title}</h4>
+                      <h4 className="font-semibold">{item?.fragrance}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {item?.brand} - {item?.fragrance}
+                        {item?.brand}
                       </p>
                       {item?.amountLeft && (
                         <p className="text-sm text-muted-foreground">

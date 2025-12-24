@@ -202,17 +202,16 @@ const CheckoutContent = () => {
                     <div className="relative w-24 h-24 rounded-md overflow-hidden bg-muted flex-shrink-0">
                       <Image
                         src={listing.imageURLs[0]}
-                        alt={listing.title}
+                        alt={`${listing.fragrance} - ${listing.brand}`}
                         fill
                         className="object-cover"
                       />
                     </div>
                   )}
                   <div className="flex-1">
-                    <h3 className="font-semibold">{listing.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {listing.brand} - {listing.fragrance}
-                    </p>
+                    <h3 className="font-semibold">
+                      {listing.fragrance} - {listing.brand}
+                    </h3>
                     <p className="text-sm text-muted-foreground">
                       {listing.amountLeft}% full
                     </p>

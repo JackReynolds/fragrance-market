@@ -571,7 +571,9 @@ const ListingDetailPage = () => {
                           <div className="relative h-72 md:h-120 aspect-[4/3] overflow-hidden rounded-lg bg-muted">
                             <Image
                               src={image}
-                              alt={`${listing.title} - Image ${index + 1}`}
+                              alt={`${listing.fragrance} - ${
+                                listing.brand
+                              } - Image ${index + 1}`}
                               fill
                               className="object-contain"
                               priority={index === 0}
@@ -602,7 +604,7 @@ const ListingDetailPage = () => {
               <div>
                 <div className="flex items-center justify-between">
                   <h1 className="text-2xl font-bold md:text-3xl">
-                    {listing.title}
+                    {listing.fragrance} - {listing.brand}
                   </h1>
 
                   {/* Button Logic: Show NO buttons if swapped or sold */}
