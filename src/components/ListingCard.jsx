@@ -243,9 +243,16 @@ const ListingCard = ({
           </div>
 
           {/* Fragrance Name - Responsive sizing */}
-          <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-2 sm:mb-3">
-            {data.fragrance} - {data.brand}
+          <h3 className="font-semibold text-xs sm:text-sm md:text-base leading-tight line-clamp-2 mb-1">
+            {data.fragrance}
           </h3>
+
+          {/* Size - Show if available */}
+          {data.sizeInMl && (
+            <p className="text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3">
+              {data.sizeInMl}ml
+            </p>
+          )}
 
           {/* Price Row - Responsive sizing */}
           {data.price && data.type === "sell" && (

@@ -116,6 +116,11 @@ export default function CompletedSwapsTab({
                           <p className="text-sm text-muted-foreground truncate">
                             {myListing?.brand || "Unknown Brand"}
                           </p>
+                          {myListing?.sizeInMl && (
+                            <p className="text-xs text-muted-foreground">
+                              {myListing.sizeInMl}ml
+                            </p>
+                          )}
                           {myTrackingNumber && (
                             <p className="text-xs text-muted-foreground mt-1 font-medium">
                               Tracking: {myTrackingNumber}
@@ -148,6 +153,11 @@ export default function CompletedSwapsTab({
                           <p className="text-sm text-muted-foreground truncate">
                             {theirListing?.brand || "Unknown Brand"}
                           </p>
+                          {theirListing?.sizeInMl && (
+                            <p className="text-xs text-muted-foreground">
+                              {theirListing.sizeInMl}ml
+                            </p>
+                          )}
                           {theirTrackingNumber && (
                             <p className="text-xs text-muted-foreground mt-1 font-medium">
                               Tracking: {theirTrackingNumber}

@@ -213,6 +213,7 @@ const CheckoutContent = () => {
                       {listing.fragrance} - {listing.brand}
                     </h3>
                     <p className="text-sm text-muted-foreground">
+                      {listing.sizeInMl && `${listing.sizeInMl}ml • `}
                       {listing.amountLeft}% full
                     </p>
                   </div>

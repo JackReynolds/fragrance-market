@@ -157,11 +157,10 @@ export default function PurchasesTab({
                       <p className="text-sm text-muted-foreground">
                         {item?.brand}
                       </p>
-                      {item?.amountLeft && (
-                        <p className="text-sm text-muted-foreground">
-                          {item.amountLeft}% full
-                        </p>
-                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {item?.sizeInMl && `${item.sizeInMl}ml • `}
+                        {item?.amountLeft && `${item.amountLeft}% full`}
+                      </p>
                     </div>
                   </div>
 

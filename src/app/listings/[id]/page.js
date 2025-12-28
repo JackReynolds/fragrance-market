@@ -781,7 +781,7 @@ const ListingDetailPage = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-5">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">
                       Brand
@@ -793,6 +793,14 @@ const ListingDetailPage = () => {
                       Fragrance
                     </h3>
                     <p className="mt-1 font-medium">{listing.fragrance}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Size
+                    </h3>
+                    <p className="mt-1 font-medium">
+                      {listing.sizeInMl ? `${listing.sizeInMl}ml` : "N/A"}
+                    </p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">

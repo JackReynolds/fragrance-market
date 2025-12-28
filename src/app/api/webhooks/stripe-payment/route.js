@@ -211,8 +211,7 @@ async function handlePaymentSucceeded(paymentIntent) {
           fragrance: listing.fragrance,
           amountLeft: listing.amountLeft,
           imageURL: listing.imageURLs?.[0] || null,
-          size: listing.size || null,
-          sizeUnit: listing.sizeUnit || null,
+          sizeInMl: listing.sizeInMl || null,
           price: listing.price || 0,
         },
 

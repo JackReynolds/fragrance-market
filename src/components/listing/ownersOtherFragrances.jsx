@@ -154,6 +154,13 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
                     {listing.fragrance}
                   </h3>
 
+                  {/* Size */}
+                  {listing.sizeInMl && (
+                    <p className="text-xs text-muted-foreground">
+                      {listing.sizeInMl}ml
+                    </p>
+                  )}
+
                   {/* Price */}
                   {listing.price && listing.type === "sell" && (
                     <p className="text-lg font-bold text-emerald-600">

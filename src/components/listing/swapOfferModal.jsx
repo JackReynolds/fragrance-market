@@ -200,6 +200,8 @@ const SwapOfferModal = ({
                       {existingRequest.offeredListing.brand}
                     </p>
                     <p className="text-xs text-muted-foreground">
+                      {existingRequest.offeredListing.sizeInMl &&
+                        `${existingRequest.offeredListing.sizeInMl}ml • `}
                       {existingRequest.offeredListing.amountLeft}% full
                     </p>
                   </div>
@@ -299,6 +301,7 @@ const SwapOfferModal = ({
                           {listing.brand}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
+                          {listing.sizeInMl && `${listing.sizeInMl}ml • `}
                           {listing.amountLeft}% full
                         </p>
                       </div>

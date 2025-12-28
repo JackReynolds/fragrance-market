@@ -46,9 +46,7 @@ export const sendBuyerReceiptEmail = async (order) => {
       itemTitle: order.item.title,
       itemBrand: order.item.brand,
       itemFragrance: order.item.fragrance,
-      itemSize: order.item.size
-        ? `${order.item.size}${order.item.sizeUnit || "ml"}`
-        : null,
+      itemSize: order.item.sizeInMl ? `${order.item.sizeInMl}ml` : null,
       itemAmountLeft: order.item.amountLeft
         ? `${order.item.amountLeft}%`
         : null,
@@ -116,9 +114,7 @@ export const sendSellerNotificationEmail = async (order) => {
       itemTitle: order.item.title,
       itemBrand: order.item.brand,
       itemFragrance: order.item.fragrance,
-      itemSize: order.item.size
-        ? `${order.item.size}${order.item.sizeUnit || "ml"}`
-        : null,
+      itemSize: order.item.sizeInMl ? `${order.item.sizeInMl}ml` : null,
       itemAmountLeft: order.item.amountLeft
         ? `${order.item.amountLeft}%`
         : null,

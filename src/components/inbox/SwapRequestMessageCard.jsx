@@ -263,6 +263,8 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
                 {message.offeredListing.brand}
               </p>
               <p className="text-xs sm:text-sm">
+                {message.offeredListing.sizeInMl &&
+                  `${message.offeredListing.sizeInMl}ml • `}
                 {message.offeredListing.amountLeft}% full
               </p>
             </div>
@@ -302,6 +304,8 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
                 {message.requestedListing.brand}
               </p>
               <p className="text-xs sm:text-sm">
+                {message.requestedListing.sizeInMl &&
+                  `${message.requestedListing.sizeInMl}ml • `}
                 {message.requestedListing.amountLeft}% full
               </p>
             </div>

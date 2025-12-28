@@ -58,6 +58,7 @@ const EditListing = () => {
     amount: "100",
     brand: "",
     fragrance: "",
+    size: "",
     swapPreferences: "",
   });
 
@@ -125,6 +126,7 @@ const EditListing = () => {
           amount: data.amountLeft?.toString() || "100",
           brand: data.brand || "",
           fragrance: data.fragrance || "",
+          size: data.sizeInMl?.toString() || "",
           swapPreferences: data.swapPreferences || "",
         });
 
@@ -240,6 +242,16 @@ const EditListing = () => {
       newErrors.fragrance = "Fragrance name is required";
     }
 
+    const sizeNum = Number(formData.size);
+    if (
+      !formData.size ||
+      !Number.isFinite(sizeNum) ||
+      sizeNum < 1 ||
+      sizeNum > 500
+    ) {
+      newErrors.size = "Please enter a valid bottle size (1-500ml)";
+    }
+
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
@@ -297,6 +309,7 @@ const EditListing = () => {
         amountLeft: formData.amount,
         brand: formData.brand.trim(),
         fragrance: formData.fragrance.trim(),
+        sizeInMl: Number(formData.size),
         swapPreferences:
           formData.type === "swap" ? formData.swapPreferences.trim() : null,
         imageURLs: imageURLs,
@@ -434,6 +447,26 @@ const EditListing = () => {
                           </p>
                         )}
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="size">Bottle Size (ml)</Label>
+                      <Input
+                        id="size"
+                        name="size"
+                        type="number"
+                        min="1"
+                        max="500"
+                        placeholder="E.g., 50, 100, 125"
+                        value={formData.size}
+                        onChange={handleChange}
+                        className={errors.size ? "border-destructive" : ""}
+                      />
+                      {errors.size && (
+                        <p className="text-sm text-destructive">
+                          {errors.size}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
