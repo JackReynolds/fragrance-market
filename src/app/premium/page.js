@@ -31,7 +31,7 @@ export default function PremiumPage() {
       title: "Unlimited Listings",
       description:
         "Create as many fragrance listings as you want. No limits, no restrictions.",
-      standardLimit: "2 listings max",
+      standardLimit: "3 listings max",
       premiumFeature: "Unlimited",
     },
     {
@@ -241,7 +241,7 @@ export default function PremiumPage() {
                   </div>
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-green-500 mr-3" />
-                    <span>Up to 2 active listings</span>
+                    <span>Up to 3 active listings</span>
                   </div>
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-green-500 mr-3" />

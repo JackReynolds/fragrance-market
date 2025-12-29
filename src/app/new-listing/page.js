@@ -1307,6 +1307,8 @@ const NewListing = () => {
                         id="size"
                         name="size"
                         type="number"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         min="1"
                         max="500"
                         placeholder="E.g., 50, 100, 125"
@@ -1410,7 +1412,7 @@ const NewListing = () => {
                             <Button
                               size="sm"
                               className="w-full hover:cursor-pointer"
-                              onClick={() => router.push("/premium")}
+                              onClick={() => window.open("/premium", "_blank")}
                               type="button"
                             >
                               View Premium Benefits
