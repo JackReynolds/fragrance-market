@@ -134,7 +134,82 @@ async function handleCheckoutCompleted(session) {
 
 async function handleSubscriptionCreated(subscription) {
   console.log("Subscription created:", subscription.id);
-  // For now, just log - main logic is in checkout.session.completed
+  console.log("Subscription status:", subscription.status);
+
+  try {
+    // Get the customer to find the Firebase UID from metadata
+    const customer = await stripe.customers.retrieve(subscription.customer);
+    const userUid = customer.metadata?.firebase_uid;
+
+    if (!userUid) {
+      console.log(
+        "No firebase_uid in customer metadata yet - checkout.session.completed will handle this"
+      );
+      return;
+    }
+
+    // Check if user already has this subscription set up (avoid duplicate writes)
+    const profileDoc = await db.collection("profiles").doc(userUid).get();
+    if (
+      profileDoc.exists &&
+      profileDoc.data()?.stripeSubscriptionId === subscription.id
+    ) {
+      console.log(
+        `Subscription ${subscription.id} already set up for user ${userUid}`
+      );
+      return;
+    }
+
+    console.log(`Setting up subscription for user ${userUid}`);
+
+    // Calculate subscription period end
+    const subscriptionCurrentPeriodEnd = subscription.items.data[0]
+      ?.current_period_end
+      ? Timestamp.fromDate(
+          new Date(subscription.items.data[0].current_period_end * 1000)
+        )
+      : null;
+
+    // Prepare subscription data
+    const subscriptionData = {
+      stripeCustomerId: subscription.customer,
+      stripeSubscriptionId: subscription.id,
+      subscriptionStatus: subscription.status,
+      subscriptionCurrentPeriodEnd: subscriptionCurrentPeriodEnd,
+      subscriptionPriceId: subscription.items.data[0]?.price?.id,
+      subscriptionCancelAtPeriodEnd: false,
+      subscriptionCanceledAt: null,
+      subscriptionCancelAt: null,
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    // Determine if user should be premium based on subscription status
+    const isPremium = ["active", "trialing"].includes(subscription.status);
+
+    // Update BOTH collections
+    await Promise.all([
+      // Update profiles (private - has full subscription details)
+      db
+        .collection("profiles")
+        .doc(userUid)
+        .update({
+          isPremium: isPremium,
+          ...subscriptionData,
+        }),
+      // Update users (public - only isPremium flag for display)
+      db.collection("users").doc(userUid).update({
+        isPremium: isPremium,
+        updatedAt: FieldValue.serverTimestamp(),
+      }),
+    ]);
+
+    console.log(
+      `✅ Subscription ${subscription.id} set up for user ${userUid} via handleSubscriptionCreated`
+    );
+  } catch (error) {
+    console.error("Error in handleSubscriptionCreated:", error);
+    console.error("Error stack:", error.stack);
+  }
 }
 
 async function handleSubscriptionUpdated(subscription) {
