@@ -41,7 +41,7 @@ const GoPremiumButton = () => {
         body: JSON.stringify({
           userUid: authUser.uid,
           email: authUser.email,
-          successUrl: `${window.location.origin}/`,
+          successUrl: `${window.location.origin}/premium/welcome`,
           cancelUrl: `${window.location.origin}/how-it-works`,
           currency: currency,
         }),
