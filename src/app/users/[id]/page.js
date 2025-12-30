@@ -353,6 +353,13 @@ const PublicUserProfile = () => {
                         </span>
                       </div>
 
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Swaps</span>
+                        <span className="text-sm font-medium">
+                          {userData.swapCount || 0}
+                        </span>
+                      </div>
+
                       <Separator className="my-3" />
 
                       {/* Verification badges */}

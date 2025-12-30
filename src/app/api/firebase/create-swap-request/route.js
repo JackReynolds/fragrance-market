@@ -180,10 +180,10 @@ export async function POST(request) {
 
     const currentUserProfile = currentUserProfileDoc.data();
     const isPremium = currentUserProfile.isPremium || false;
-    const currentSwapCount = currentUserProfile.swapCount || 0;
+    const monthlySwapCount = currentUserProfile.monthlySwapCount || 0;
 
     // Non-premium users are limited to 1 swap per month
-    if (!isPremium && currentSwapCount >= 1) {
+    if (!isPremium && monthlySwapCount >= 1) {
       return NextResponse.json(
         {
           error:

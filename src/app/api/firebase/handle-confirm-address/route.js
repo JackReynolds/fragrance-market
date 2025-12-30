@@ -180,20 +180,44 @@ export async function POST(request) {
             readBy: [userUid],
           });
 
-          // ✅ INCREMENT SWAP COUNT FOR BOTH USERS
+          // ✅ INCREMENT SWAP COUNTS FOR BOTH USERS IN BOTH COLLECTIONS
           // This is when the swap is truly committed - both addresses confirmed
-          const offeredByUserRef = db.doc(`profiles/${swapData.offeredBy.uid}`);
-          const requestedFromUserRef = db.doc(
+          // swapCount = lifetime total (trust indicator)
+          // monthlySwapCount = monthly count (for free tier limit enforcement)
+          const offeredByProfileRef = db.doc(
+            `profiles/${swapData.offeredBy.uid}`
+          );
+          const requestedFromProfileRef = db.doc(
             `profiles/${swapData.requestedFrom.uid}`
           );
+          const offeredByUserRef = db.doc(`users/${swapData.offeredBy.uid}`);
+          const requestedFromUserRef = db.doc(
+            `users/${swapData.requestedFrom.uid}`
+          );
 
+          // Update profiles collection (private) - both counts
+          transaction.update(offeredByProfileRef, {
+            swapCount: FieldValue.increment(1),
+            monthlySwapCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
+          transaction.update(requestedFromProfileRef, {
+            swapCount: FieldValue.increment(1),
+            monthlySwapCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+
+          // Update users collection (public) - both counts
           transaction.update(offeredByUserRef, {
             swapCount: FieldValue.increment(1),
+            monthlySwapCount: FieldValue.increment(1),
             updatedAt: FieldValue.serverTimestamp(),
           });
 
           transaction.update(requestedFromUserRef, {
             swapCount: FieldValue.increment(1),
+            monthlySwapCount: FieldValue.increment(1),
             updatedAt: FieldValue.serverTimestamp(),
           });
 
