@@ -1,4 +1,5 @@
 // functions/firebase/reduceSwapCountToZero.js
+// Resets monthlySwapCount (NOT lifetime swapCount) on the 1st of each month
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { logger } = require("firebase-functions");
@@ -13,65 +14,106 @@ exports.reduceSwapCountToZero = onSchedule(
   },
   async () => {
     const startTime = Date.now();
+    let processedProfiles = 0;
     let processedUsers = 0;
     let errorCount = 0;
 
-    logger.info("🚀 Starting monthly swap-count reset");
+    logger.info("🚀 Starting monthly swap-count reset (monthlySwapCount only)");
 
-    // 1️⃣  Create a single BulkWriter with an error handler
-    const bulkWriter = db.bulkWriter();
-    bulkWriter.onWriteError((err) => {
+    // 1️⃣  Create BulkWriters for both collections
+    const profilesBulkWriter = db.bulkWriter();
+    const usersBulkWriter = db.bulkWriter();
+
+    profilesBulkWriter.onWriteError((err) => {
       errorCount++;
-      logger.error(`BulkWriter error for document ${err.documentRef.id}`, err);
+      logger.error(`BulkWriter error for profiles/${err.documentRef.id}`, err);
       return true; // continue retries with exponential back-off
     });
 
-    // 2️⃣  Paginate reads to avoid loading all users into memory
+    usersBulkWriter.onWriteError((err) => {
+      errorCount++;
+      logger.error(`BulkWriter error for users/${err.documentRef.id}`, err);
+      return true;
+    });
+
+    // 2️⃣  Reset monthlySwapCount in profiles collection
     const batchSize = 500;
-    let lastDoc = null;
+    let lastProfileDoc = null;
 
     while (true) {
       let q = db
         .collection("profiles")
-        .where("swapCount", ">", 0)
-        .orderBy("swapCount") // required for startAfter with inequality
+        .where("monthlySwapCount", ">", 0)
+        .orderBy("monthlySwapCount")
         .limit(batchSize);
 
-      if (lastDoc) q = q.startAfter(lastDoc);
+      if (lastProfileDoc) q = q.startAfter(lastProfileDoc);
 
       const snap = await q.get();
       if (snap.empty) break;
 
       snap.docs.forEach((doc) => {
-        bulkWriter.update(doc.ref, {
-          swapCount: 0,
-          lastSwapReset: FieldValue.serverTimestamp(),
+        profilesBulkWriter.update(doc.ref, {
+          monthlySwapCount: 0,
+          lastMonthlySwapReset: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+
+      processedProfiles += snap.size;
+      lastProfileDoc = snap.docs[snap.size - 1];
+
+      if (snap.size < batchSize) break;
+    }
+
+    // 3️⃣  Reset monthlySwapCount in users collection
+    let lastUserDoc = null;
+
+    while (true) {
+      let q = db
+        .collection("users")
+        .where("monthlySwapCount", ">", 0)
+        .orderBy("monthlySwapCount")
+        .limit(batchSize);
+
+      if (lastUserDoc) q = q.startAfter(lastUserDoc);
+
+      const snap = await q.get();
+      if (snap.empty) break;
+
+      snap.docs.forEach((doc) => {
+        usersBulkWriter.update(doc.ref, {
+          monthlySwapCount: 0,
+          lastMonthlySwapReset: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         });
       });
 
       processedUsers += snap.size;
-      lastDoc = snap.docs[snap.size - 1];
+      lastUserDoc = snap.docs[snap.size - 1];
 
-      if (snap.size < batchSize) break; // no more pages
+      if (snap.size < batchSize) break;
     }
 
-    // 3️⃣  Flush BulkWriter operations
-    await bulkWriter.close();
+    // 4️⃣  Flush BulkWriter operations
+    await profilesBulkWriter.close();
+    await usersBulkWriter.close();
 
     const duration = Date.now() - startTime;
-    logger.info("✅ Swap-count reset finished", {
+    logger.info("✅ Monthly swap-count reset finished", {
+      processedProfiles,
       processedUsers,
       errorCount,
       durationMs: duration,
     });
 
-    // 4️⃣  Persist run stats
+    // 5️⃣  Persist run stats
     await db
       .collection("system")
-      .doc("swapResetStats")
+      .doc("monthlySwapResetStats")
       .set({
         lastRun: FieldValue.serverTimestamp(),
+        processedProfiles,
         processedUsers,
         errorCount,
         durationMs: duration,
