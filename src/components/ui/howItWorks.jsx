@@ -9,7 +9,7 @@ const steps = [
     icon: ShieldCheck,
     title: "Join for Free",
     description:
-      "Sign up with a free account and start exploring. Upgrade to premium to unlock ID verification and enhanced features.",
+      "Sign up with a free account and start exploring. Upgrade to premium to unlock enhanced features and unlimited swaps.",
   },
   {
     icon: PackageOpen,
@@ -20,8 +20,7 @@ const steps = [
   {
     icon: Repeat,
     title: "Trade & Enjoy",
-    description:
-      "Swap or sell with ease, backed by our secure platform with buyer and seller protection.",
+    description: "Swap fragrances with other collectors worldwide.",
   },
 ];
 
