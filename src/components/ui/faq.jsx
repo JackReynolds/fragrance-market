@@ -60,20 +60,34 @@ const FAQ = () => {
             className="border rounded-lg px-6 bg-card shadow-sm"
           >
             <AccordionTrigger className="text-left hover:no-underline py-6">
-              How many swaps do I get as a standard user?
+              What can I do as a standard (free) user?
             </AccordionTrigger>
             <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
               <p className="mb-3">
-                Standard users receive{" "}
-                <strong className="text-foreground">
-                  3 free swaps per month
-                </strong>
-                . This gives you plenty of opportunity to discover new
-                fragrances and expand your collection.
+                Standard users get access to essential features to start their
+                fragrance journey:
               </p>
-              <p>
-                If you need more swaps, consider upgrading to our Premium
-                membership for unlimited swapping and additional benefits.
+              <ul className="list-disc list-inside space-y-2 ml-4">
+                <li>
+                  <strong className="text-foreground">
+                    Up to 3 active listings
+                  </strong>{" "}
+                  - List your fragrances for swapping
+                </li>
+                <li>
+                  <strong className="text-foreground">1 swap per month</strong>{" "}
+                  - Trade with other community members
+                </li>
+                <li>
+                  <strong className="text-foreground">
+                    Browse &amp; message
+                  </strong>{" "}
+                  - Explore listings and communicate with sellers
+                </li>
+              </ul>
+              <p className="mt-3">
+                Want to sell fragrances, get unlimited swaps, and unlock premium
+                features? Consider upgrading to Premium membership.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -83,46 +97,55 @@ const FAQ = () => {
             className="border rounded-lg px-6 bg-card shadow-sm"
           >
             <AccordionTrigger className="text-left hover:no-underline py-6">
-              What are the benefits of becoming a Premium user?
+              What are the benefits of becoming a Premium member?
             </AccordionTrigger>
             <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
               <p className="mb-3">
-                Premium membership unlocks exclusive benefits:
+                Premium membership unlocks the full potential of The Fragrance
+                Market:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
                 <li>
-                  <strong className="text-foreground">Unlimited swaps</strong> -
-                  No monthly limits
+                  <strong className="text-foreground">
+                    Unlimited listings
+                  </strong>{" "}
+                  - Create as many listings as you want (standard: 3 max)
                 </li>
                 <li>
-                  <strong className="text-foreground">Priority listings</strong>{" "}
-                  - Your fragrances appear higher in search results
+                  <strong className="text-foreground">Unlimited swaps</strong> -
+                  Trade freely with no monthly limits (standard: 1/month)
+                </li>
+                <li>
+                  <strong className="text-foreground">Sell fragrances</strong> -
+                  Monetize your collection with secure Stripe payments (5% fee)
                 </li>
                 <li>
                   <strong className="text-foreground">
-                    Advanced search filters
+                    Priority search ranking
                   </strong>{" "}
-                  - Find exactly what you&apos;re looking for
+                  - Your listings appear higher in search results
                 </li>
                 <li>
                   <strong className="text-foreground">Premium badge</strong> -
-                  Stand out as a trusted member
+                  Stand out with a verified badge on your profile and listings
+                </li>
+                <li>
+                  <strong className="text-foreground">ID verification</strong> -
+                  Access to verify your identity through Veriff for added trust
+                </li>
+                <li>
+                  <strong className="text-foreground">Exclusive Discord</strong>{" "}
+                  - Join our premium community for insider tips and deals
+                </li>
+                <li>
+                  <strong className="text-foreground">Priority support</strong>{" "}
+                  - Get faster responses from our dedicated support team
                 </li>
                 <li>
                   <strong className="text-foreground">Early access</strong> - Be
-                  first to see new listings
-                </li>
-                <li>
-                  <strong className="text-foreground">
-                    Lower selling fees
-                  </strong>{" "}
-                  - Keep more of your profits
+                  first to try new features and exclusive beta releases
                 </li>
               </ul>
-              <p className="mt-3">
-                Premium members also receive priority customer support and
-                exclusive access to special events.
-              </p>
             </AccordionContent>
           </AccordionItem>
 
@@ -135,41 +158,51 @@ const FAQ = () => {
             </AccordionTrigger>
             <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
               <p className="mb-3">
-                Your safety and trust are our top priorities:
+                Trust and safety are built into every aspect of The Fragrance
+                Market:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
                 <li>
-                  <strong className="text-foreground">ID Verification</strong> -
-                  All users can verify their identity through our secure system
-                </li>
-                <li>
-                  <strong className="text-foreground">User Reviews</strong> -
-                  Build and check reputation through our rating system
-                </li>
-                <li>
-                  <strong className="text-foreground">Secure Payments</strong> -
-                  All transactions processed through encrypted Stripe
-                  integration
+                  <strong className="text-foreground">
+                    ID Verification (Premium)
+                  </strong>{" "}
+                  - Premium members can verify their identity through Veriff, a
+                  global leader in identity verification
                 </li>
                 <li>
                   <strong className="text-foreground">
-                    Dispute Resolution
+                    Swap &amp; Transaction History
                   </strong>{" "}
-                  - Our support team helps resolve any issues
+                  - View each user&apos;s completed swap count to gauge their
+                  experience
                 </li>
                 <li>
-                  <strong className="text-foreground">Verified Listings</strong>{" "}
-                  - We monitor for authentic products and remove suspicious
-                  content
+                  <strong className="text-foreground">Secure Payments</strong> -
+                  All purchases processed through Stripe with bank-level
+                  encryption
                 </li>
                 <li>
-                  <strong className="text-foreground">Safe Messaging</strong> -
-                  Built-in chat system with content moderation
+                  <strong className="text-foreground">Premium Badge</strong> -
+                  Easily identify committed community members
+                </li>
+                <li>
+                  <strong className="text-foreground">
+                    Built-in Messaging
+                  </strong>{" "}
+                  - Communicate directly within the platform for full
+                  transparency
+                </li>
+                <li>
+                  <strong className="text-foreground">Dispute Support</strong> -
+                  Our team is available to help resolve any transaction issues
                 </li>
               </ul>
               <p className="mt-3">
-                Look for the verification badges next to usernames to identify
-                trusted members of our community.
+                Look for the{" "}
+                <strong className="text-foreground">Premium badge</strong> and{" "}
+                <strong className="text-foreground">ID Verified badge</strong>{" "}
+                next to usernames to identify the most trusted members of our
+                community.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -179,37 +212,75 @@ const FAQ = () => {
             className="border rounded-lg px-6 bg-card shadow-sm"
           >
             <AccordionTrigger className="text-left hover:no-underline py-6">
-              How do I verify my ID and why should I?
+              How does ID verification work?
             </AccordionTrigger>
             <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
               <p className="mb-3">
-                We use <strong className="text-foreground">Veriff</strong>, a
-                leading identity verification service, to ensure platform
-                security:
+                ID verification is an{" "}
+                <strong className="text-foreground">
+                  exclusive Premium member benefit
+                </strong>{" "}
+                that allows you to verify your identity and build trust within
+                the community.
               </p>
+              <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                <p className="font-medium text-foreground mb-2">
+                  Powered by Veriff - Global Leader in Identity Verification
+                </p>
+                <p className="text-sm">
+                  We partner with{" "}
+                  <strong className="text-foreground">Veriff</strong>, a
+                  world-leading identity verification provider trusted by
+                  companies like Bolt, Wise, and Blockchain.com. Veriff has
+                  verified over 100 million people across 190+ countries,
+                  ensuring the highest standards of security and fraud
+                  prevention.
+                </p>
+              </div>
               <div className="mb-4">
                 <p className="font-medium text-foreground mb-2">
-                  How to verify:
+                  How to get verified (Premium members):
                 </p>
                 <ol className="list-decimal list-inside space-y-1 ml-4">
-                  <li>Go to your profile settings</li>
+                  <li>Go to your Account Settings</li>
                   <li>Click &quot;Verify Identity&quot;</li>
-                  <li>Follow the secure Veriff process (takes 2-3 minutes)</li>
-                  <li>Upload a government-issued ID</li>
-                  <li>Take a quick selfie for comparison</li>
+                  <li>
+                    Follow the secure Veriff process (takes approximately 2-3
+                    minutes)
+                  </li>
+                  <li>
+                    Upload a government-issued ID (passport, driving licence, or
+                    national ID)
+                  </li>
+                  <li>Take a quick selfie for biometric comparison</li>
+                  <li>
+                    Receive your verified badge once approved (typically within
+                    minutes)
+                  </li>
                 </ol>
               </div>
               <div>
                 <p className="font-medium text-foreground mb-2">
-                  Benefits of verification:
+                  Why get verified?
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>Gain trust from other users</li>
-                  <li>Access to higher-value transactions</li>
-                  <li>Priority in swap requests</li>
-                  <li>Enhanced account security</li>
+                  <li>
+                    Display a trusted{" "}
+                    <strong className="text-foreground">verified badge</strong>{" "}
+                    on your profile
+                  </li>
+                  <li>Build instant trust with buyers and swap partners</li>
+                  <li>
+                    Stand out as a legitimate, verified member of the community
+                  </li>
+                  <li>Increase your chances of successful transactions</li>
                 </ul>
               </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Your personal data is handled securely by Veriff in compliance
+                with GDPR and global privacy standards. We never store your ID
+                documents on our servers.
+              </p>
             </AccordionContent>
           </AccordionItem>
 
@@ -223,18 +294,31 @@ const FAQ = () => {
             <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
               <p className="mb-3">Creating a listing is quick and easy:</p>
               <ol className="list-decimal list-inside space-y-2 ml-4">
-                <li>Click &quot;New Listing&quot; from your dashboard</li>
-                <li>Upload clear photos of your fragrance</li>
-                <li>Enter details: brand, name, size, and condition</li>
-                <li>Set your listing type (sale, swap, or both)</li>
-                <li>Add your price or swap preferences</li>
-                <li>Write a compelling description</li>
+                <li>Click &quot;New Listing&quot; from the navigation</li>
+                <li>
+                  Upload clear photos of your fragrance (front, back, and batch
+                  code)
+                </li>
+                <li>Select the brand and enter the fragrance name</li>
+                <li>Enter the bottle size in ml and percentage remaining</li>
+                <li>
+                  Choose your listing type:{" "}
+                  <strong className="text-foreground">Swap</strong> (all users)
+                  or <strong className="text-foreground">Sell</strong> (Premium
+                  only)
+                </li>
+                <li>Add swap preferences or set your price</li>
+                <li>Write a detailed description</li>
                 <li>Publish and start receiving offers!</li>
               </ol>
               <p className="mt-3">
                 <strong className="text-foreground">Pro tip:</strong>{" "}
-                High-quality photos and detailed descriptions get more interest
-                from potential buyers and swappers.
+                High-quality photos showing the fill level, batch code, and any
+                wear get significantly more interest from buyers and swappers.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Standard users can have up to 3 active listings. Premium members
+                get unlimited listings.
               </p>
             </AccordionContent>
           </AccordionItem>
@@ -316,39 +400,41 @@ const FAQ = () => {
             </AccordionTrigger>
             <AccordionContent className="pb-6 text-muted-foreground leading-relaxed">
               <p className="mb-3">
-                Shipping is handled between users with our guidance:
+                Shipping arrangements depend on the transaction type:
               </p>
-              <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>
-                  <strong className="text-foreground">
-                    Seller responsibility
-                  </strong>{" "}
-                  - The seller arranges and pays for shipping (unless agreed
-                  otherwise)
-                </li>
-                <li>
-                  <strong className="text-foreground">Tracking required</strong>{" "}
-                  - Always use tracked shipping services for protection
-                </li>
-                <li>
-                  <strong className="text-foreground">
-                    Insurance recommended
-                  </strong>{" "}
-                  - Consider insuring valuable fragrances
-                </li>
-                <li>
-                  <strong className="text-foreground">Secure packaging</strong>{" "}
-                  - We provide guidelines for safe fragrance shipping
-                </li>
-                <li>
-                  <strong className="text-foreground">
-                    Delivery confirmation
-                  </strong>{" "}
-                  - Buyers confirm receipt through our platform
-                </li>
+              <div className="mb-4">
+                <p className="font-medium text-foreground mb-2">For Swaps:</p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>
+                    Both parties are responsible for shipping their own
+                    fragrance
+                  </li>
+                  <li>
+                    Exchange addresses securely through our platform after
+                    accepting
+                  </li>
+                  <li>Add tracking numbers to keep each other updated</li>
+                  <li>Confirm receipt to complete the swap</li>
+                </ul>
+              </div>
+              <div className="mb-4">
+                <p className="font-medium text-foreground mb-2">For Sales:</p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>Seller arranges and pays for shipping</li>
+                  <li>Buyer provides shipping address during checkout</li>
+                  <li>Seller adds tracking number for the buyer to follow</li>
+                </ul>
+              </div>
+              <p className="mb-3">
+                <strong className="text-foreground">Important tips:</strong>
+              </p>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>Always use tracked shipping services</li>
+                <li>Consider insurance for valuable fragrances</li>
+                <li>Package securely to prevent leaks or damage</li>
               </ul>
-              <p className="mt-3">
-                International shipping is supported, but check local customs
+              <p className="mt-3 text-sm text-muted-foreground">
+                International shipping is supported. Check your local customs
                 regulations for fragrance imports/exports.
               </p>
             </AccordionContent>
