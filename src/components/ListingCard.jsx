@@ -117,9 +117,9 @@ const ListingCard = ({
   };
 
   return (
-    <Card className="h-full hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full relative flex flex-col">
+    <Card className="h-full max-w-[300px] hover:shadow-lg hover:cursor-pointer transition-all duration-200 overflow-hidden group w-full relative flex flex-col">
       {/* Image Section - Responsive aspect ratio */}
-      <div className="relative max-h-[300px] aspect-[3/4] w-full overflow-hidden">
+      <div className="relative max-h-[350px] aspect-[3/4] w-full overflow-hidden">
         <Image
           src={data.imageURLs[0] || "/fragrance-placeholder.jpg"}
           alt={`${data.fragrance} - ${data.brand}`}
