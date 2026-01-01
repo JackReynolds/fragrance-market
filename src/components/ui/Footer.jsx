@@ -4,8 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import * as React from "react";
 import { Instagram } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Footer = () => {
+  const { authUser } = useAuth();
+
   return (
     <footer
       style={{
@@ -49,26 +52,10 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  href="/new-arrivals"
+                  href="/marketplace"
                   className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   New Arrivals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/trending"
-                  className="text-gray-100 hover:text-gray-300 transition-colors"
-                >
-                  Trending
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/discounts"
-                  className="text-gray-100 hover:text-gray-300 transition-colors"
-                >
-                  Discounts
                 </Link>
               </li>
             </ul>
@@ -79,25 +66,29 @@ const Footer = () => {
               Account
             </h4>
             <ul className="space-y-2 text-sm">
+              {!authUser && (
+                <>
+                  <li>
+                    <Link
+                      href="/sign-in"
+                      className="text-gray-100 hover:text-gray-300 transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/sign-up"
+                      className="text-gray-100 hover:text-gray-300 transition-colors"
+                    >
+                      Sign Up
+                    </Link>
+                  </li>
+                </>
+              )}
               <li>
                 <Link
-                  href="/signin"
-                  className="text-gray-100 hover:text-gray-300 transition-colors"
-                >
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/signup"
-                  className="text-gray-100 hover:text-gray-300 transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/sell"
+                  href="/new-listing"
                   className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Sell/Swap
@@ -105,7 +96,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  href="/dashboard"
+                  href="/my-profile"
                   className="text-gray-100 hover:text-gray-300 transition-colors"
                 >
                   Dashboard
