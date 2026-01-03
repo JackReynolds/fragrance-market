@@ -740,6 +740,11 @@ const NewListing = () => {
             caption: "Uploaded on Fragrance Market",
           },
           resourceType: "image",
+          // Client-side image optimization before upload
+          clientAllowedFormats: ["jpg", "jpeg", "png", "webp", "heic"],
+          maxFileSize: 10000000, // 10MB max raw file size
+          maxImageWidth: 1500, // Resize to max 1500px wide before upload
+          maxImageHeight: 1500, // Resize to max 1500px tall before upload
         },
         (error, result) => {
           if (!error && result && result.event === "success") {

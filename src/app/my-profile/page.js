@@ -288,6 +288,11 @@ export default function Profile() {
           cropping: true,
           croppingAspectRatio: 1,
           croppingShowDimensions: true,
+          // Client-side image optimization before upload
+          clientAllowedFormats: ["jpg", "jpeg", "png", "webp", "heic"],
+          maxFileSize: 10000000, // 10MB max raw file size
+          maxImageWidth: 800, // Profile pictures don't need to be large
+          maxImageHeight: 800,
         },
         async (error, result) => {
           if (!error && result && result.event === "success") {
