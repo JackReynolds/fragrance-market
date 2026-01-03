@@ -68,6 +68,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog.jsx";
+import { detectSaleTerms } from "@/utils/detectSaleTerms";
+import SaleTermsWarningModal from "@/components/new-listing/SaleTermsWarningModal";
 
 const NewListing = () => {
   const { authUser, authLoading } = useAuth();
@@ -80,6 +82,8 @@ const NewListing = () => {
   const [showCustomBrand, setShowCustomBrand] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [currentListingCount, setCurrentListingCount] = useState(0);
+  const [showSaleWarningModal, setShowSaleWarningModal] = useState(false);
+  const [detectedSaleTerms, setDetectedSaleTerms] = useState([]);
 
   const { profileDoc } = useProfileDoc();
 
@@ -870,46 +874,8 @@ const NewListing = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const errors = validateForm();
-    if (Object.keys(errors).length) {
-      setErrors(errors);
-      const first = document.getElementById(Object.keys(errors)[0]);
-      if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-
-    if (!authUser || !profileDoc) {
-      toast.error("Your profile is still loading. Please try again.");
-      return;
-    }
-
-    // Validate sell listing requirements
-    if (formData.type === "sell") {
-      if (!profileDoc.isPremium) {
-        toast.error("Premium membership required to sell fragrances.");
-        return;
-      }
-      if (!profileDoc.isIdVerified) {
-        toast.error(
-          "ID verification required to sell fragrances. Please verify your identity in your profile."
-        );
-        return;
-      }
-      if (profileDoc.stripeAccountStatus?.statusCode !== 1) {
-        toast.error(
-          "Complete Stripe setup required to sell fragrances. Please set up payments in your profile."
-        );
-        return;
-      }
-      if (!formData.currency) {
-        toast.error("Please choose a currency.");
-        return;
-      }
-    }
-
+  // Extracted listing creation logic that can be called directly or after modal acknowledgment
+  const createListing = async () => {
     setIsLoading(true);
     try {
       // Safe price parsing → cents (avoid float issues)
@@ -983,6 +949,69 @@ const NewListing = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const errors = validateForm();
+    if (Object.keys(errors).length) {
+      setErrors(errors);
+      const first = document.getElementById(Object.keys(errors)[0]);
+      if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (!authUser || !profileDoc) {
+      toast.error("Your profile is still loading. Please try again.");
+      return;
+    }
+
+    // Validate sell listing requirements
+    if (formData.type === "sell") {
+      if (!profileDoc.isPremium) {
+        toast.error("Premium membership required to sell fragrances.");
+        return;
+      }
+      if (!profileDoc.isIdVerified) {
+        toast.error(
+          "ID verification required to sell fragrances. Please verify your identity in your profile."
+        );
+        return;
+      }
+      if (profileDoc.stripeAccountStatus?.statusCode !== 1) {
+        toast.error(
+          "Complete Stripe setup required to sell fragrances. Please set up payments in your profile."
+        );
+        return;
+      }
+      if (!formData.currency) {
+        toast.error("Please choose a currency.");
+        return;
+      }
+    }
+
+    // Check for sale terms in swap listings from non-premium users
+    if (formData.type === "swap" && !profileDoc?.isPremium) {
+      const { detected, matchedTerms } = detectSaleTerms(
+        formData.description,
+        formData.swapPreferences
+      );
+
+      if (detected) {
+        setDetectedSaleTerms(matchedTerms);
+        setShowSaleWarningModal(true);
+        return;
+      }
+    }
+
+    // No issues detected, proceed with listing creation
+    await createListing();
+  };
+
+  // Handler for when user acknowledges the warning and wants to submit anyway
+  const handleSubmitAnyway = async () => {
+    await createListing();
   };
 
   // Loading state
@@ -1115,6 +1144,14 @@ const NewListing = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sale Terms Warning Modal */}
+      <SaleTermsWarningModal
+        isOpen={showSaleWarningModal}
+        onClose={() => setShowSaleWarningModal(false)}
+        onSubmitAnyway={handleSubmitAnyway}
+        matchedTerms={detectedSaleTerms}
+      />
 
       {/* Full Width Header */}
       <div className="relative py-8 md:py-12">
