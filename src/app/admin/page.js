@@ -55,18 +55,21 @@ export default function AdminDashboard() {
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
         const newUsersThisWeek = users.filter((u) => {
-          const createdAt = u.createdAt?.seconds
-            ? new Date(u.createdAt.seconds * 1000)
-            : null;
+          // Handle both client SDK (seconds) and Admin SDK (_seconds) formats
+          const seconds = u.createdAt?.seconds || u.createdAt?._seconds;
+          const createdAt = seconds ? new Date(seconds * 1000) : null;
           return createdAt && createdAt > oneWeekAgo;
         }).length;
 
         // Active listings (not disabled)
         const activeListings = listings.filter((l) => !l.disabled).length;
 
-        // Pending swaps
+        // Pending swaps (swap_request or swap_accepted status)
         const pendingSwaps = swaps.filter(
-          (s) => s.status === "pending" || s.status === "accepted"
+          (s) =>
+            s.status === "swap_request" ||
+            s.status === "swap_accepted" ||
+            s.status === "pending_shipment"
         ).length;
 
         setStats({
@@ -78,29 +81,24 @@ export default function AdminDashboard() {
           newUsersThisWeek,
         });
 
-        // Get recent activity (last 5 users, last 5 listings)
-        const recentUsers = users
-          .filter((u) => u.createdAt)
-          .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
-          .slice(0, 3)
-          .map((u) => ({
-            type: "user",
-            label: `New user: ${u.username || u.email || "Unknown"}`,
-            time: u.createdAt,
-          }));
+        // Get recent activity (last 3 users, last 3 listings)
+        // Data is already sorted by createdAt desc from the API
+        const recentUsers = users.slice(0, 3).map((u) => ({
+          type: "user",
+          label: `New user: ${u.username || u.email || "Unknown"}`,
+          time: u.createdAt,
+        }));
 
-        const recentListings = listings
-          .filter((l) => l.createdAt)
-          .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
-          .slice(0, 3)
-          .map((l) => ({
-            type: "listing",
-            label: `New listing: ${l.fragranceName || "Unknown"}`,
-            time: l.createdAt,
-          }));
+        const recentListings = listings.slice(0, 3).map((l) => ({
+          type: "listing",
+          label: `New listing: ${l.fragrance || l.title || "Unknown"}`,
+          time: l.createdAt,
+        }));
+
+        const getTimestamp = (time) => time?.seconds || time?._seconds || 0;
 
         const combined = [...recentUsers, ...recentListings]
-          .sort((a, b) => (b.time?.seconds || 0) - (a.time?.seconds || 0))
+          .sort((a, b) => getTimestamp(b.time) - getTimestamp(a.time))
           .slice(0, 5);
 
         setRecentActivity(combined);
@@ -115,8 +113,11 @@ export default function AdminDashboard() {
   }, [authUser]);
 
   const formatTimeAgo = (timestamp) => {
-    if (!timestamp?.seconds) return "Unknown";
-    const date = new Date(timestamp.seconds * 1000);
+    // Handle both client SDK (seconds) and Admin SDK (_seconds) formats
+    const seconds = timestamp?.seconds || timestamp?._seconds;
+    if (!seconds) return "Unknown";
+
+    const date = new Date(seconds * 1000);
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
@@ -134,7 +135,8 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Welcome back. Here&apos;s what&apos;s happening with The Fragrance Market.
+          Welcome back. Here&apos;s what&apos;s happening with The Fragrance
+          Market.
         </p>
       </div>
 
@@ -148,7 +150,9 @@ export default function AdminDashboard() {
         />
         <StatsCard
           title="New This Week"
-          value={loading ? "—" : stats?.newUsersThisWeek?.toLocaleString() || "0"}
+          value={
+            loading ? "—" : stats?.newUsersThisWeek?.toLocaleString() || "0"
+          }
           icon={UserPlus}
           subtitle="User signups"
         />
@@ -187,7 +191,7 @@ export default function AdminDashboard() {
                 View All Listings
               </Button>
             </Link>
-            <Link href="/admin/swaps">
+            <Link href="/admin/swap-requests">
               <Button variant="outline" className="w-full justify-start">
                 <ArrowLeftRight className="h-4 w-4 mr-2" />
                 View Swap Requests
@@ -248,4 +252,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
