@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable react/prop-types */
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,4 +51,3 @@ export default function AdminAuthGate({ children }) {
 
   return <>{children}</>;
 }
-
