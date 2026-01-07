@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable react/prop-types */
 import React, { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -136,7 +137,8 @@ export default function DataTable({
                   key={col.key}
                   className={cn(
                     "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground",
-                    col.sortable && "cursor-pointer hover:text-foreground select-none"
+                    col.sortable &&
+                      "cursor-pointer hover:text-foreground select-none"
                   )}
                   onClick={() => col.sortable && handleSort(col.key)}
                 >
@@ -256,4 +258,3 @@ export default function DataTable({
     </div>
   );
 }
-
