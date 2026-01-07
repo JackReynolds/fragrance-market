@@ -19,10 +19,13 @@ export async function GET(request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch all swap requests
-    const swapsSnapshot = await db.collection("swap_requests").get();
-    const swaps = [];
+    // Fetch all swap requests, sorted by newest first
+    const swapsSnapshot = await db
+      .collection("swap_requests")
+      .orderBy("createdAt", "desc")
+      .get();
 
+    const swaps = [];
     swapsSnapshot.forEach((doc) => {
       swaps.push({
         id: doc.id,

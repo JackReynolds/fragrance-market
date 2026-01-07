@@ -19,10 +19,13 @@ export async function GET(request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch all profiles (users)
-    const profilesSnapshot = await db.collection("profiles").get();
-    const users = [];
+    // Fetch all profiles (users), sorted by newest first
+    const profilesSnapshot = await db
+      .collection("profiles")
+      .orderBy("createdAt", "desc")
+      .get();
 
+    const users = [];
     profilesSnapshot.forEach((doc) => {
       users.push({
         id: doc.id,
