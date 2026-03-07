@@ -8,7 +8,7 @@ import { AuthContext } from "./authContext";
 
 /**
  * ProfileDocContext will provide the "extended user data" from Firestore,
- * which contains veriff info, phone number, address, etc.
+ * which contains identity verification info, phone number, address, etc.
  */
 export const ProfileDocContext = createContext({
   profileDoc: null, // The extended user document from Firestore

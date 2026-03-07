@@ -99,7 +99,7 @@ const IdVerifiedBadge = ({
             <span className="font-semibold">ID Verified</span>
           </div>
           <div className="text-xs opacity-90 pb-1">
-            Identity verified through third party verification service Veriff.
+            Identity verified through Stripe Identity.
           </div>
         </div>
       </TooltipContent>

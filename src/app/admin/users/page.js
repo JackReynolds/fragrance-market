@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import firestoreTimestampToDate from "@/utils/firestoreTimestampToDate";
+import { resolveIdentityVerification } from "@/lib/identityVerification";
 
 export default function AdminUsersPage() {
   const { authUser } = useAuth();
@@ -228,6 +229,10 @@ export default function AdminUsersPage() {
     const hours = Math.floor(minutes / 60);
     return `${hours}h ago`;
   };
+
+  const selectedUserVerification = selectedUser
+    ? resolveIdentityVerification(selectedUser)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -509,31 +514,33 @@ export default function AdminUsersPage() {
                 </div>
               )}
 
-              {/* Veriff Verification Section (if verified) */}
-              {selectedUser.veriff && (
+              {/* Identity Verification Section */}
+              {selectedUserVerification && (
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4" /> ID Verification (Veriff)
+                    <ShieldCheck className="h-4 w-4" /> ID Verification
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-sm bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4">
                     <div>
-                      <p className="text-muted-foreground text-xs">Decision</p>
+                      <p className="text-muted-foreground text-xs">Status</p>
                       <p className="capitalize font-medium">
                         <span
                           className={`${
-                            selectedUser.veriff.decision === "approved"
+                            selectedUserVerification.verified
                               ? "text-emerald-500"
-                              : "text-red-500"
+                              : selectedUserVerification.locked
+                                ? "text-red-500"
+                                : "text-amber-500"
                           }`}
                         >
-                          {selectedUser.veriff.decision || "—"}
+                          {selectedUserVerification.status || "—"}
                         </span>
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground text-xs">Status</p>
+                      <p className="text-muted-foreground text-xs">Provider</p>
                       <p className="capitalize">
-                        {selectedUser.veriff.status || "—"}
+                        {selectedUserVerification.provider || "—"}
                       </p>
                     </div>
                     <div>
@@ -542,29 +549,58 @@ export default function AdminUsersPage() {
                       </p>
                       <p>
                         {firestoreTimestampToDate(
-                          selectedUser.veriff.lastVerificationDate
+                          selectedUserVerification.verifiedAt
                         )?.toLocaleDateString() || "—"}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">Attempts</p>
-                      <p>{selectedUser.veriff.verificationAttempts || "—"}</p>
+                      <p>{selectedUserVerification.attemptsTotal || 0}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">
                         Session ID
                       </p>
                       <p className="font-mono text-xs truncate">
-                        {selectedUser.veriff.sessionId || "—"}
+                        {selectedUserVerification.lastSessionId || "—"}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground text-xs">
-                        Event Type
+                        Last Error
                       </p>
-                      <p className="capitalize">
-                        {selectedUser.veriff.eventType || "—"}
+                      <p className="capitalize break-words">
+                        {selectedUserVerification.lastErrorCode || "—"}
                       </p>
+                    </div>
+                    {selectedUserVerification.lockReason ? (
+                      <div className="col-span-2">
+                        <p className="text-muted-foreground text-xs">
+                          Lock Reason
+                        </p>
+                        <p className="capitalize break-words">
+                          {selectedUserVerification.lockReason}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+
+              {/* Legacy Veriff history */}
+              {!selectedUser?.identityVerification && selectedUser?.veriff && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4" /> Legacy Veriff History
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 rounded-lg border border-muted bg-muted/20 p-4 text-sm">
+                    <div>
+                      <p className="text-muted-foreground text-xs">Decision</p>
+                      <p className="capitalize">{selectedUser.veriff.decision || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs">Status</p>
+                      <p className="capitalize">{selectedUser.veriff.status || "—"}</p>
                     </div>
                   </div>
                 </div>

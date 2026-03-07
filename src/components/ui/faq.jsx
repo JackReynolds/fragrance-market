@@ -131,7 +131,8 @@ const FAQ = () => {
                 </li>
                 <li>
                   <strong className="text-foreground">ID verification</strong> -
-                  Access to verify your identity through Veriff for added trust
+                  Access to verify your identity through Stripe Identity for
+                  added trust
                 </li>
                 <li>
                   <strong className="text-foreground">Exclusive Discord</strong>{" "}
@@ -166,8 +167,8 @@ const FAQ = () => {
                   <strong className="text-foreground">
                     ID Verification (Premium)
                   </strong>{" "}
-                  - Premium members can verify their identity through Veriff, a
-                  global leader in identity verification
+                  - Premium members can verify their identity through Stripe
+                  Identity for extra trust and account protection
                 </li>
                 <li>
                   <strong className="text-foreground">
@@ -225,16 +226,13 @@ const FAQ = () => {
               </p>
               <div className="mb-4 p-4 bg-muted/50 rounded-lg">
                 <p className="font-medium text-foreground mb-2">
-                  Powered by Veriff - Global Leader in Identity Verification
+                  Powered by Stripe Identity
                 </p>
                 <p className="text-sm">
                   We partner with{" "}
-                  <strong className="text-foreground">Veriff</strong>, a
-                  world-leading identity verification provider trusted by
-                  companies like Bolt, Wise, and Blockchain.com. Veriff has
-                  verified over 100 million people across 190+ countries,
-                  ensuring the highest standards of security and fraud
-                  prevention.
+                  <strong className="text-foreground">Stripe Identity</strong>{" "}
+                  to verify users with a hosted document and selfie flow backed
+                  by Stripe&apos;s security and fraud tooling.
                 </p>
               </div>
               <div className="mb-4">
@@ -245,7 +243,8 @@ const FAQ = () => {
                   <li>Go to your Account Settings</li>
                   <li>Click &quot;Verify Identity&quot;</li>
                   <li>
-                    Follow the secure Veriff process (takes approximately 2-3
+                    Follow the secure Stripe Identity process (takes
+                    approximately 2-3
                     minutes)
                   </li>
                   <li>
@@ -277,9 +276,8 @@ const FAQ = () => {
                 </ul>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                Your personal data is handled securely by Veriff in compliance
-                with GDPR and global privacy standards. We never store your ID
-                documents on our servers.
+                Your personal data is handled securely by Stripe Identity. We
+                never store your ID documents on our servers.
               </p>
             </AccordionContent>
           </AccordionItem>
