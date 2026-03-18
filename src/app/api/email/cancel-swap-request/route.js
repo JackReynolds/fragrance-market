@@ -11,14 +11,18 @@ if (!apiKey || !templateId) {
 
 sgMail.setApiKey(apiKey);
 
+const VALID_ACTION_TYPES = new Set(["declined", "cancelled"]);
+
 const sendCancellationEmail = async (emailData) => {
   const {
+    actionType,
     recipientEmail,
     recipientUsername,
     cancellingUsername,
     offeredListingTitle,
     requestedListingTitle,
     cancelMessage,
+    hasCancelMessage,
   } = emailData;
 
   const message = {
@@ -26,13 +30,18 @@ const sendCancellationEmail = async (emailData) => {
     from: fromEmail,
     templateId,
     dynamicTemplateData: {
+      actionType,
       recipientUsername,
       cancellingUsername,
       offeredListingTitle,
       requestedListingTitle,
       cancelMessage,
+      hasCancelMessage,
     },
-    subject: "Swap Request Cancelled | The Fragrance Market",
+    subject:
+      actionType === "declined"
+        ? "Swap Request Declined | The Fragrance Market"
+        : "Swap Request Cancelled | The Fragrance Market",
   };
   await sgMail.send(message);
 };
@@ -40,6 +49,7 @@ const sendCancellationEmail = async (emailData) => {
 export async function POST(request) {
   try {
     const {
+      actionType,
       recipientUid,
       recipientUsername,
       cancellingUsername,
@@ -47,8 +57,11 @@ export async function POST(request) {
       requestedListingTitle,
       cancelMessage,
     } = await request.json();
+    const trimmedCancelMessage =
+      typeof cancelMessage === "string" ? cancelMessage.trim() : "";
 
     if (
+      !VALID_ACTION_TYPES.has(actionType) ||
       !recipientUid ||
       !recipientUsername ||
       !cancellingUsername ||
@@ -78,16 +91,18 @@ export async function POST(request) {
     }
 
     await sendCancellationEmail({
+      actionType,
       recipientEmail,
       recipientUsername,
       cancellingUsername,
       offeredListingTitle,
       requestedListingTitle,
-      cancelMessage,
+      cancelMessage: trimmedCancelMessage,
+      hasCancelMessage: !!trimmedCancelMessage,
     });
 
     return NextResponse.json(
-      { message: "Swap cancellation email sent successfully" },
+      { message: "Swap notification email sent successfully" },
       { status: 200 }
     );
   } catch (error) {

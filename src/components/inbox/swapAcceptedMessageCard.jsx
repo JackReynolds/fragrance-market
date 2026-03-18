@@ -277,7 +277,9 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   // Function to send swap request cancellation email
   const sendSwapRequestCancellationEmail = async (cancelMessage = "") => {
     try {
+      const trimmedMessage = cancelMessage.trim();
       const emailPayload = {
+        actionType: "cancelled",
         // send uuid instead of email
         recipientUid: otherUserInfo.uid,
         recipientUsername: otherUserInfo.username,
@@ -286,12 +288,8 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
         // Swap details
         offeredListingTitle: swapRequest.offeredListing.title,
         requestedListingTitle: swapRequest.requestedListing.title,
+        cancelMessage: trimmedMessage,
       };
-
-      // Only include cancelMessage if it exists and isn't empty
-      if (cancelMessage && cancelMessage.trim()) {
-        emailPayload.cancelMessage = cancelMessage.trim();
-      }
 
       const response = await fetch("/api/email/cancel-swap-request", {
         method: "POST",
@@ -319,11 +317,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
   const handleCancelSwap = async (cancelMessage = "") => {
     try {
       // First, send the cancellation email to the other user
-      if (cancelMessage.trim()) {
-        sendSwapRequestCancellationEmail(cancelMessage.trim());
-      } else {
-        sendSwapRequestCancellationEmail(); // Send without message
-      }
+      await sendSwapRequestCancellationEmail(cancelMessage);
 
       // Then delete the swap request
       const response = await fetch(`/api/firebase/delete-swap-request`, {
@@ -658,6 +652,7 @@ const SwapAcceptedMessageCard = ({ message, authUser, swapRequest }) => {
         onClose={() => setShowCancelModal(false)}
         onConfirm={handleCancelSwap}
         swapRequest={swapRequest}
+        mode="cancel"
       />
     </div>
   );

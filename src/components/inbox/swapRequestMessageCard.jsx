@@ -10,10 +10,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import profilePicturePlaceholder from "/public/profilePicturePlaceholder.png";
+import CancelSwapRequestModal from "./cancelSwapRequestModal";
 
 const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   const [isRejecting, setIsRejecting] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [showDeclineModal, setShowDeclineModal] = useState(false);
 
   // Determine if current user is the one being requested from or the one who offered
   const isRequestedFromUser = message?.requestedFrom?.uid === authUser.uid;
@@ -144,33 +146,88 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     }
   };
 
-  // Helper function to delete swap request and messages collection
-  const deleteSwapRequestAndMessages = async () => {
-    console.log(swapRequest.id);
+  const sendSwapRequestDeclinedEmail = async (cancelMessage = "") => {
     try {
-      const response = await fetch(`/api/firebase/delete-swap-request`, {
+      const offeredBy = swapRequest?.offeredBy || message?.offeredBy;
+      const requestedFrom =
+        swapRequest?.requestedFrom || message?.requestedFrom;
+      const offeredListing =
+        swapRequest?.offeredListing || message?.offeredListing;
+      const requestedListing =
+        swapRequest?.requestedListing || message?.requestedListing;
+      const trimmedMessage = cancelMessage.trim();
+
+      if (
+        !offeredBy?.uid ||
+        !offeredBy?.username ||
+        !requestedFrom?.username ||
+        !offeredListing?.title ||
+        !requestedListing?.title
+      ) {
+        console.error("Missing required data for swap declined email:", {
+          hasRecipientUid: !!offeredBy?.uid,
+          hasRecipientUsername: !!offeredBy?.username,
+          hasCancellingUsername: !!requestedFrom?.username,
+          hasOfferedListingTitle: !!offeredListing?.title,
+          hasRequestedListingTitle: !!requestedListing?.title,
+        });
+        return;
+      }
+
+      const response = await fetch("/api/email/cancel-swap-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ swapRequestId: swapRequest.id }),
+        body: JSON.stringify({
+          actionType: "declined",
+          recipientUid: offeredBy.uid,
+          recipientUsername: offeredBy.username,
+          cancellingUsername: requestedFrom.username,
+          offeredListingTitle: offeredListing.title,
+          requestedListingTitle: requestedListing.title,
+          cancelMessage: trimmedMessage,
+        }),
       });
+
       if (!response.ok) {
-        throw new Error("Failed to delete swap request");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send swap declined email");
       }
     } catch (error) {
-      console.error("Error deleting swap request:", error);
-      toast.error("Error deleting swap request");
+      console.error("Error sending swap declined email:", error);
+      toast.warning("Swap rejected, but notification email failed to send");
     }
   };
 
-  const handleRejectOrCancelSwap = async (decision) => {
+  // Helper function to delete swap request and messages collection
+  const deleteSwapRequestAndMessages = async () => {
+    const response = await fetch(`/api/firebase/delete-swap-request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ swapRequestId: swapRequest.id }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete swap request");
+    }
+  };
+
+  const handleRequestClosure = async (decision, cancelMessage = "") => {
     try {
       setIsRejecting(true);
-      // delete swap request and messages collection
+
+      if (decision === "reject") {
+        await sendSwapRequestDeclinedEmail(cancelMessage);
+      }
+
       await deleteSwapRequestAndMessages();
 
       // If the requested from user has not yet seen the message, mark conversation as read
       if (!message.readBy.includes(message.requestedFrom.uid)) {
         markConversationAsRead(message.requestedFrom.uid, swapRequest.id);
+      }
+
+      if (decision === "reject") {
+        setShowDeclineModal(false);
       }
 
       toast.success(
@@ -179,6 +236,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
     } catch (error) {
       console.error(`Error ${decision}ing swap:`, error);
       toast.error(`Error ${decision}ing swap`);
+      throw error;
     } finally {
       setIsRejecting(false);
     }
@@ -333,7 +391,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
                 size="sm"
                 variant="destructive"
                 className="w-full sm:w-auto hover:cursor-pointer hover:bg-destructive/80 order-2 sm:order-1"
-                onClick={() => handleRejectOrCancelSwap("reject")}
+                onClick={() => setShowDeclineModal(true)}
                 disabled={isRejecting}
               >
                 {isRejecting ? "Rejecting..." : "Reject"}
@@ -352,7 +410,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
               size="sm"
               variant="destructive"
               className="w-full sm:w-auto hover:cursor-pointer hover:bg-destructive/80"
-              onClick={() => handleRejectOrCancelSwap("cancel")}
+              onClick={() => handleRequestClosure("cancel")}
               disabled={isRejecting}
             >
               {isRejecting ? "Cancelling..." : "Cancel Request"}
@@ -360,6 +418,17 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
           ) : null}
         </div>
       )}
+
+      <CancelSwapRequestModal
+        isOpen={showDeclineModal}
+        onClose={() => setShowDeclineModal(false)}
+        onConfirm={(cancelMessage) =>
+          handleRequestClosure("reject", cancelMessage)
+        }
+        swapRequest={swapRequest}
+        mode="decline"
+        isLoading={isRejecting}
+      />
     </div>
   );
 };
