@@ -1,6 +1,7 @@
 import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
+import { syncPremiumDiscordAccess } from "@/lib/premiumDiscord";
 
 const ADMIN_UID = "LLnA54zGzgTGnGtkQSIQy9svcTJ2";
 
@@ -138,6 +139,54 @@ export async function POST(request) {
         return NextResponse.json({
           success: true,
           message: "Document updated successfully",
+        });
+      }
+
+      case "sendDiscordInvite": {
+        if (collection !== "profiles") {
+          return NextResponse.json(
+            { error: "Discord invite action only supported for profiles" },
+            { status: 400 }
+          );
+        }
+
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          return NextResponse.json(
+            { error: "User profile not found" },
+            { status: 404 }
+          );
+        }
+
+        const profile = doc.data();
+        if (!profile.isPremium) {
+          return NextResponse.json(
+            { error: "User must have an active premium subscription" },
+            { status: 400 }
+          );
+        }
+
+        if (!profile.discord?.userId) {
+          return NextResponse.json(
+            { error: "User must link their Discord account before sending an invite" },
+            { status: 400 }
+          );
+        }
+
+        if (!profile.email) {
+          return NextResponse.json(
+            { error: "User profile is missing an email address" },
+            { status: 400 }
+          );
+        }
+
+        await syncPremiumDiscordAccess(documentId, {
+          forceInviteEmail: true,
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Discord invite email sent successfully",
         });
       }
 

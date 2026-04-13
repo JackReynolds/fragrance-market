@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { syncPremiumDiscordAccess } from "@/lib/premiumDiscord";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_SUBSCRIPTION_WEBHOOK_SECRET;
 
 export const runtime = "nodejs";
+
+async function syncDiscordForUser(userUid) {
+  try {
+    await syncPremiumDiscordAccess(userUid);
+  } catch (error) {
+    console.error(`Discord sync failed for user ${userUid}:`, error.message);
+  }
+}
 
 export async function POST(request) {
   console.log("WEBHOOK HIT! Timestamp:", new Date().toISOString());
@@ -126,6 +135,7 @@ async function handleCheckoutCompleted(session) {
     ]);
 
     console.log(`✅ User ${userUid} upgraded to premium in both collections`);
+    await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleCheckoutCompleted:", error);
     console.error("Error stack:", error.stack);
@@ -206,6 +216,7 @@ async function handleSubscriptionCreated(subscription) {
     console.log(
       `✅ Subscription ${subscription.id} set up for user ${userUid} via handleSubscriptionCreated`
     );
+    await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleSubscriptionCreated:", error);
     console.error("Error stack:", error.stack);
@@ -303,6 +314,8 @@ async function handleSubscriptionUpdated(subscription) {
         `User ${userUid} subscription is scheduled for cancellation on ${cancelAt?.toDate()}, but remains premium until then`
       );
     }
+
+    await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleSubscriptionUpdated:", error);
   }
@@ -353,6 +366,7 @@ async function handleSubscriptionDeleted(subscription) {
     console.log(
       `Removed premium status in both collections for user ${userUid}`
     );
+    await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleSubscriptionDeleted:", error);
   }

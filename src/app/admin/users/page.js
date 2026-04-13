@@ -22,6 +22,7 @@ import {
   Mail,
   FileText,
   RefreshCw,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -233,6 +234,11 @@ export default function AdminUsersPage() {
   const selectedUserVerification = selectedUser
     ? resolveIdentityVerification(selectedUser)
     : null;
+  const selectedUserDiscord = selectedUser?.discord || null;
+  const canSendDiscordInvite =
+    !!selectedUser?.isPremium &&
+    !!selectedUserDiscord?.userId &&
+    !!selectedUser?.email;
 
   return (
     <div className="space-y-6">
@@ -510,6 +516,82 @@ export default function AdminUsersPage() {
                         </p>
                       </div>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {(selectedUser.isPremium || selectedUserDiscord?.userId) && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Mail className="h-4 w-4" /> Discord Access
+                  </h4>
+                  <div className="space-y-4 rounded-lg border border-indigo-500/20 bg-indigo-500/5 p-4">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground text-xs">Linked</p>
+                        <p>{selectedUserDiscord?.userId ? "Yes" : "No"}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Status</p>
+                        <p className="capitalize">
+                          {selectedUserDiscord?.accessStatus?.replaceAll("_", " ") ||
+                            "inactive"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">
+                          Discord Username
+                        </p>
+                        <p>
+                          {selectedUserDiscord?.globalName ||
+                            selectedUserDiscord?.username ||
+                            "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">
+                          Last Invite Sent
+                        </p>
+                        <p>
+                          {firestoreTimestampToDate(
+                            selectedUserDiscord?.lastInviteSentAt
+                          )?.toLocaleString() || "—"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {selectedUserDiscord?.lastError ? (
+                      <p className="text-sm text-destructive">
+                        {selectedUserDiscord.lastError}
+                      </p>
+                    ) : null}
+
+                    {!selectedUser.isPremium ? (
+                      <p className="text-sm text-muted-foreground">
+                        Discord invites can only be sent while the user has an
+                        active premium subscription.
+                      </p>
+                    ) : !selectedUserDiscord?.userId ? (
+                      <p className="text-sm text-muted-foreground">
+                        The user needs to link their Discord account before an
+                        invite email can be sent.
+                      </p>
+                    ) : null}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      disabled={!canSendDiscordInvite || actionLoading}
+                      onClick={() =>
+                        handleAction("sendDiscordInvite", selectedUser.id)
+                      }
+                    >
+                      <Send className="h-4 w-4" />
+                      {actionLoading
+                        ? "Sending..."
+                        : "Send Discord Invite Email"}
+                    </Button>
                   </div>
                 </div>
               )}

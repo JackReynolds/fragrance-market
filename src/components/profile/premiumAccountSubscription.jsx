@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
 import PremiumBadge from "@/components/ui/premiumBadge";
 import { Crown, ExternalLink } from "lucide-react";
+import PremiumDiscordAccessCard from "@/components/premiumDiscordAccessCard";
 
 const PremiumAccountSubscription = () => {
   const router = useRouter();
@@ -62,6 +63,8 @@ const PremiumAccountSubscription = () => {
       </CardHeader>
 
       <CardContent className="space-y-4">
+        <PremiumDiscordAccessCard returnTo="/my-profile" compact={true} />
+
         {isPremium ? (
           <>
             <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">

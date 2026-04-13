@@ -102,6 +102,7 @@ For every PR:
 - Email routes are under `src/app/api/email/`.
 - SendGrid is also used in selected non-email routes (for example swap request creation and some webhook flows).
 - API key comes from `SENDGRID_API_KEY`.
+- Premium Discord invite emails use `SENDGRID_PREMIUM_DISCORD_INVITE_TEMPLATE_ID`.
 
 ### Stripe
 
@@ -115,6 +116,22 @@ For every PR:
   - `src/app/api/webhooks/stripe-identity/route.js`
 - Webhook routes verify signatures using `stripe.webhooks.constructEvent(...)`.
 - Stripe Identity reuses `STRIPE_SECRET_KEY` and verifies webhooks with `STRIPE_IDENTITY_WEBHOOK_SECRET`.
+
+### Discord
+
+- Premium Discord access is provisioned from the Stripe subscription webhook in `src/app/api/webhooks/stripe-subscription/route.js`.
+- Discord OAuth routes live in:
+  - `src/app/api/discord/connect-url/route.js`
+  - `src/app/api/discord/callback/route.js`
+  - `src/app/api/discord/resend-invite/route.js`
+- Discord REST helpers live in `src/lib/discord.js` and premium access orchestration lives in `src/lib/premiumDiscord.js`.
+- Discord configuration requires:
+  - `DISCORD_CLIENT_ID`
+  - `DISCORD_CLIENT_SECRET`
+  - `DISCORD_BOT_TOKEN`
+  - `DISCORD_GUILD_ID`
+  - `DISCORD_INVITE_CHANNEL_ID`
+  - `DISCORD_OAUTH_REDIRECT_URI`
 
 ### Algolia
 

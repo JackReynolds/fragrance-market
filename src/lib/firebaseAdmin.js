@@ -20,4 +20,5 @@ function createFirebaseAdminApp() {
 }
 
 const app = createFirebaseAdminApp();
+export const adminApp = app;
 export const db = getFirestore(app);

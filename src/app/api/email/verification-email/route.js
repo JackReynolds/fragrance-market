@@ -75,7 +75,7 @@ export async function POST(request) {
     console.log("🔗 Generating email verification link...");
 
     // ✅ Properly await the email verification link generation
-    const auth = getAuth(); // Use default app or specify adminApp if needed
+    const auth = getAuth(adminApp);
     const link = await auth.generateEmailVerificationLink(
       email,
       actionCodeSettings

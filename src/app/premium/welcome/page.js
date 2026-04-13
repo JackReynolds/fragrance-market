@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
+import PremiumDiscordAccessCard from "@/components/premiumDiscordAccessCard";
 
 export default function PremiumWelcomePage() {
   const { authUser, authLoading } = useAuth();
@@ -198,6 +199,10 @@ export default function PremiumWelcomePage() {
               </Card>
             ))}
           </div>
+        </div>
+
+        <div className="mb-12">
+          <PremiumDiscordAccessCard returnTo="/premium/welcome" />
         </div>
 
         {/* CTA Section */}
