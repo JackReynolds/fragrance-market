@@ -225,7 +225,7 @@ export default function PremiumPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Standard Plan */}
-            <Card className="relative">
+            <Card className="relative flex h-full flex-col">
               <CardHeader className="text-center pb-6">
                 <CardTitle className="text-2xl">Standard</CardTitle>
                 <div className="text-3xl font-bold">Free</div>
@@ -233,7 +233,7 @@ export default function PremiumPage() {
                   Perfect for casual traders
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-1 flex-col">
                 <div className="space-y-3">
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-green-500 mr-3" />
@@ -274,14 +274,16 @@ export default function PremiumPage() {
                     </span>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full mt-6" asChild>
-                  <Link href="/sign-up">Get Started Free</Link>
-                </Button>
+                <div className="mt-auto pt-6">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/sign-up">Get Started Free</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
             {/* Premium Plan */}
-            <Card className="relative border-2 border-primary">
+            <Card className="relative flex h-full flex-col border-2 border-primary">
               <div className="absolute top-0 right-0 bg-primary text-primary-foreground px-3 py-1 text-xs font-medium rounded-bl-lg rounded-tr-md">
                 MOST POPULAR
               </div>
@@ -307,7 +309,7 @@ export default function PremiumPage() {
                 </div>
                 <p className="text-muted-foreground">For enthusiasts</p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-1 flex-col">
                 <div className="space-y-3">
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-primary mr-3" />
@@ -346,7 +348,9 @@ export default function PremiumPage() {
                     </span>
                   </div>
                 </div>
-                <GoPremiumButton authUser={authUser} className="w-full mt-6" />
+                <div className="mt-auto pt-6">
+                  <GoPremiumButton className="w-full" />
+                </div>
               </CardContent>
             </Card>
           </div>

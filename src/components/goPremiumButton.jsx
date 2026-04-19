@@ -1,8 +1,7 @@
-/* eslint-disable react/prop-types */
-
 "use client";
 
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,7 +9,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
 
-const GoPremiumButton = () => {
+const GoPremiumButton = ({ className = "" }) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { authUser } = useAuth();
@@ -63,7 +62,7 @@ const GoPremiumButton = () => {
     <div className="flex justify-center">
       <Button
         onClick={createCheckoutSession}
-        className="w-full hover:cursor-pointer hover:bg-primary/80 shadow-md max-w-lg"
+        className={`w-full hover:cursor-pointer hover:bg-primary/80 shadow-md max-w-lg ${className}`.trim()}
         disabled={isLoading}
       >
         {isLoading ? (
@@ -74,6 +73,10 @@ const GoPremiumButton = () => {
       </Button>
     </div>
   );
+};
+
+GoPremiumButton.propTypes = {
+  className: PropTypes.string,
 };
 
 export default GoPremiumButton;

@@ -24,14 +24,14 @@ function getDiscordUiState(profileDoc) {
 
   if (!profileDoc?.isPremium) {
     return {
-      badge: discord.userId ? "Linked" : "Not linked",
+      badge: discord.userId ? "Linked" : "Premium only",
       title: discord.userId
         ? "Discord is linked to your account"
         : "Connect Discord when you upgrade",
       description: discord.userId
         ? "Your Discord account is ready for future premium access."
         : "Premium members can link Discord to receive server access automatically.",
-      canConnect: !discord.userId,
+      canConnect: false,
       canSync: false,
       syncLabel: "Retry Discord Access",
     };
