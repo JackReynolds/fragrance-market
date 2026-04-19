@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { syncPremiumDiscordAccess } from "@/lib/premiumDiscord";
+import { sendPremiumWelcomeEmail } from "@/app/api/email/premium-welcome/route";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_SUBSCRIPTION_WEBHOOK_SECRET;
@@ -14,6 +15,47 @@ async function syncDiscordForUser(userUid) {
     await syncPremiumDiscordAccess(userUid);
   } catch (error) {
     console.error(`Discord sync failed for user ${userUid}:`, error.message);
+  }
+}
+
+async function maybeSendPremiumWelcomeEmail(
+  userUid,
+  existingProfile,
+  subscriptionId,
+  isPremiumActive
+) {
+  if (!isPremiumActive || !existingProfile || existingProfile.isPremium) {
+    return;
+  }
+
+  if (!existingProfile.email) {
+    console.warn(`Skipping premium welcome email for user ${userUid}: no email found`);
+    return;
+  }
+
+  if (
+    subscriptionId &&
+    existingProfile.lastPremiumWelcomeSubscriptionId === subscriptionId
+  ) {
+    return;
+  }
+
+  try {
+    await sendPremiumWelcomeEmail({
+      email: existingProfile.email,
+      username: existingProfile.username || "there",
+    });
+
+    await db.collection("profiles").doc(userUid).update({
+      premiumWelcomeEmailSentAt: FieldValue.serverTimestamp(),
+      lastPremiumWelcomeSubscriptionId: subscriptionId || null,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    console.error(
+      `Failed to send premium welcome email for user ${userUid}:`,
+      error.message
+    );
   }
 }
 
@@ -83,6 +125,9 @@ async function handleCheckoutCompleted(session) {
       return;
     }
 
+    const profileSnapshot = await db.collection("profiles").doc(userUid).get();
+    const existingProfile = profileSnapshot.exists ? profileSnapshot.data() : null;
+
     // Update Stripe customer with metadata
     await stripe.customers.update(session.customer, {
       metadata: {
@@ -102,6 +147,7 @@ async function handleCheckoutCompleted(session) {
           new Date(subscription.items.data[0].current_period_end * 1000)
         )
       : null;
+    const isPremium = ["active", "trialing"].includes(subscription.status);
 
     // Prepare update data
     const subscriptionData = {
@@ -124,17 +170,23 @@ async function handleCheckoutCompleted(session) {
         .collection("profiles")
         .doc(userUid)
         .update({
-          isPremium: true,
+          isPremium: isPremium,
           ...subscriptionData,
         }),
       // Update users (public - only isPremium flag for display)
       db.collection("users").doc(userUid).update({
-        isPremium: true,
+        isPremium: isPremium,
         updatedAt: FieldValue.serverTimestamp(),
       }),
     ]);
 
     console.log(`✅ User ${userUid} upgraded to premium in both collections`);
+    await maybeSendPremiumWelcomeEmail(
+      userUid,
+      existingProfile,
+      session.subscription,
+      isPremium
+    );
     await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleCheckoutCompleted:", error);
@@ -160,6 +212,7 @@ async function handleSubscriptionCreated(subscription) {
 
     // Check if user already has this subscription set up (avoid duplicate writes)
     const profileDoc = await db.collection("profiles").doc(userUid).get();
+    const existingProfile = profileDoc.exists ? profileDoc.data() : null;
     if (
       profileDoc.exists &&
       profileDoc.data()?.stripeSubscriptionId === subscription.id
@@ -216,6 +269,12 @@ async function handleSubscriptionCreated(subscription) {
     console.log(
       `✅ Subscription ${subscription.id} set up for user ${userUid} via handleSubscriptionCreated`
     );
+    await maybeSendPremiumWelcomeEmail(
+      userUid,
+      existingProfile,
+      subscription.id,
+      isPremium
+    );
     await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleSubscriptionCreated:", error);
@@ -250,6 +309,7 @@ async function handleSubscriptionUpdated(subscription) {
 
     const profileDoc = profilesSnapshot.docs[0];
     const userUid = profileDoc.id;
+    const existingProfile = profileDoc.data();
 
     // Determine if user should be premium based on subscription status
     const isPremium = ["active", "trialing"].includes(subscription.status);
@@ -315,6 +375,12 @@ async function handleSubscriptionUpdated(subscription) {
       );
     }
 
+    await maybeSendPremiumWelcomeEmail(
+      userUid,
+      existingProfile,
+      subscription.id,
+      isPremium
+    );
     await syncDiscordForUser(userUid);
   } catch (error) {
     console.error("Error in handleSubscriptionUpdated:", error);

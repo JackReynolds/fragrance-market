@@ -142,10 +142,10 @@ export async function POST(request) {
         });
       }
 
-      case "sendDiscordInvite": {
+      case "syncDiscordAccess": {
         if (collection !== "profiles") {
           return NextResponse.json(
-            { error: "Discord invite action only supported for profiles" },
+            { error: "Discord sync action only supported for profiles" },
             { status: 400 }
           );
         }
@@ -168,25 +168,16 @@ export async function POST(request) {
 
         if (!profile.discord?.userId) {
           return NextResponse.json(
-            { error: "User must link their Discord account before sending an invite" },
+            { error: "User must link their Discord account before syncing access" },
             { status: 400 }
           );
         }
 
-        if (!profile.email) {
-          return NextResponse.json(
-            { error: "User profile is missing an email address" },
-            { status: 400 }
-          );
-        }
-
-        await syncPremiumDiscordAccess(documentId, {
-          forceInviteEmail: true,
-        });
+        await syncPremiumDiscordAccess(documentId);
 
         return NextResponse.json({
           success: true,
-          message: "Discord invite email sent successfully",
+          message: "Discord access synced successfully",
         });
       }
 

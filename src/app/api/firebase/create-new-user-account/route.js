@@ -100,9 +100,6 @@ export async function POST(request) {
         avatar: null,
         linkedAt: null,
         accessStatus: "inactive",
-        lastInviteUrl: null,
-        lastInviteExpiresAt: null,
-        lastInviteSentAt: null,
         lastProvisionedSubscriptionId: null,
         lastRemovedAt: null,
         lastError: null,
@@ -110,6 +107,8 @@ export async function POST(request) {
         tokenExpiresAt: null,
         updatedAt: null,
       },
+      premiumWelcomeEmailSentAt: null,
+      lastPremiumWelcomeSubscriptionId: null,
       unreadConversations: [],
       createdAt: FieldValue.serverTimestamp(),
     });

@@ -107,8 +107,8 @@ export async function GET(request) {
       return buildRedirect(
         requestUrl,
         statePayload.returnTo,
-        "invite-sent",
-        "Discord access is active and your invite email has been sent."
+        "active",
+        "Discord access is active."
       );
     }
 

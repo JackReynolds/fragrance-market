@@ -231,6 +231,7 @@ export async function POST(request) {
       status: "swap_request",
       participants: [currentUserUid, requestedFromUid],
       createdAt: FieldValue.serverTimestamp(),
+      lastActivityAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
 

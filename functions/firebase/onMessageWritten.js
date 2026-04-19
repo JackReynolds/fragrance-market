@@ -67,6 +67,12 @@ exports.onMessageWritten = onDocumentWritten(
       }
 
       const swapData = swapSnapshot.data();
+      const swapRef = db.doc(`swap_requests/${swapId}`);
+
+      await swapRef.update({
+        lastActivityAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
 
       // Get participants
       let participants = swapData.participants || [];

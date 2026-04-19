@@ -21,12 +21,14 @@ import { db } from "@/firebase.config";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowUp, ChevronLeft } from "lucide-react";
+import { format } from "date-fns";
 import StandardMessage from "./standardMessage";
 import SwapRequestMessageCard from "./swapRequestMessageCard";
 import SwapAcceptedMessageCard from "./swapAcceptedMessageCard";
 import PendingShipmentMessageCard from "./pendingShipmentMessageCard";
 import SwapCompletedMessageCard from "./swapCompletedMessageCard";
 import SwapTimeline from "./swapTimeline";
+import { getSwapDeletionInfo } from "@/lib/swapInactivity";
 
 export default function ChatWindow({
   swapRequest,
@@ -67,6 +69,7 @@ export default function ChatWindow({
     swapRequest.offeredBy.uid === authUser.uid
       ? `Your ${swapRequest.offeredListing.title} for ${swapRequest.requestedListing.title}`
       : `${swapRequest.offeredListing.title} for your ${swapRequest.requestedListing.title}`;
+  const deletionInfo = getSwapDeletionInfo(swapRequest);
 
   // Listen for swap request existence
   useEffect(() => {
@@ -405,6 +408,32 @@ export default function ChatWindow({
 
       {/* Timeline */}
       <SwapTimeline swapRequest={swapRequest} className="mx-2 mb-0" />
+
+      {deletionInfo?.shouldWarn && (
+        <div
+          className={`mx-4 mt-3 rounded-lg border px-3 py-2 text-sm ${
+            deletionInfo.isOverdue
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-orange-200 bg-orange-50 text-orange-800"
+          }`}
+        >
+          <p className="font-medium">
+            {deletionInfo.isOverdue
+              ? "This inactive swap is due for deletion."
+              : `This inactive swap will be deleted in ${deletionInfo.daysUntilDeletion} day${
+                  deletionInfo.daysUntilDeletion === 1 ? "" : "s"
+                }.`}
+          </p>
+          <p className="mt-1 text-xs">
+            {deletionInfo.isOverdue
+              ? "The daily cleanup has not run yet. Sending a new message or progressing the swap resets the inactivity timer."
+              : `Scheduled deletion date: ${format(
+                  deletionInfo.deletionDate,
+                  "MMM d, yyyy"
+                )}. Sending a new message or progressing the swap resets the inactivity timer.`}
+          </p>
+        </div>
+      )}
 
       {/* Messages Area - Flexible height, scrollable */}
       <div

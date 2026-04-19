@@ -263,6 +263,7 @@ export async function POST(request) {
         shipmentStatus: updatedShipmentStatus,
         confirmationTimestamps: updatedConfirmationTimestamps,
         trackingNumbers: updatedTrackingNumbers,
+        lastActivityAt: confirmationTimestamp,
         updatedAt: confirmationTimestamp,
         lastUpdatedBy: userUid,
       };
@@ -302,6 +303,7 @@ export async function POST(request) {
         transaction.update(swapRequestRef, {
           status: "swap_completed",
           completedAt: confirmationTimestamp,
+          lastActivityAt: confirmationTimestamp,
           trackingNumbers: updatedTrackingNumbers,
         });
 

@@ -6,24 +6,31 @@ const db = getFirestore();
 
 // Configuration
 const DAYS_THRESHOLD = 30; // Delete swap requests older than 30 days
+const ACTIVE_SWAP_STATUSES = [
+  "swap_request",
+  "swap_accepted",
+  "pending_shipment",
+];
 const BATCH_SIZE = 100; // Process swap requests in batches
 const DELETE_BATCH_SIZE = 50; // Batch size for deleting subcollections
 
 exports.removeOldSwapRequests = onSchedule(
   {
-    schedule: "0 1 * * *",
+    schedule: "0 3 * * *",
     timeZone: "UTC",
     region: "europe-west2",
   },
-  async (event) => {
+  async () => {
     const startTime = Date.now();
     let processedSwapRequests = 0;
     let deletedSwapRequests = 0;
+    let repairedSwapRequests = 0;
     let errorCount = 0;
 
     logger.info("🧹 Starting cleanup of old swap requests", {
       daysThreshold: DAYS_THRESHOLD,
       batchSize: BATCH_SIZE,
+      activeStatuses: ACTIVE_SWAP_STATUSES,
     });
 
     try {
@@ -31,19 +38,16 @@ exports.removeOldSwapRequests = onSchedule(
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - DAYS_THRESHOLD);
 
-      logger.info("Cleaning up swap requests created before:", {
+      logger.info("Cleaning up swap requests with no activity since:", {
         cutoffDate: cutoffDate.toISOString(),
       });
 
-      // Query swap requests with status "swap_request" older than threshold
       let lastDoc = null;
 
       while (true) {
         let query = db
           .collection("swap_requests")
-          .where("status", "==", "swap_request")
-          .where("createdAt", "<", cutoffDate)
-          .orderBy("createdAt")
+          .where("status", "in", ACTIVE_SWAP_STATUSES)
           .limit(BATCH_SIZE);
 
         if (lastDoc) {
@@ -62,15 +66,59 @@ exports.removeOldSwapRequests = onSchedule(
           try {
             const swapData = swapDoc.data();
             const swapId = swapDoc.id;
+            const latestMessageAt = await getLatestMessageTimestamp(swapId);
+            const parentActivityAt = getLatestDate(
+              toDate(swapData.lastActivityAt),
+              toDate(swapData.updatedAt),
+              toDate(swapData.createdAt)
+            );
+            const effectiveActivityAt = getLatestDate(
+              parentActivityAt,
+              latestMessageAt
+            );
 
             processedSwapRequests++;
 
             logger.info(`Processing swap request ${swapId}`, {
+              lastActivityAt: swapData.lastActivityAt?.toDate?.()?.toISOString(),
+              updatedAt: swapData.updatedAt?.toDate?.()?.toISOString(),
               createdAt: swapData.createdAt?.toDate?.()?.toISOString(),
+              latestMessageAt: latestMessageAt?.toISOString() || null,
+              effectiveActivityAt: effectiveActivityAt?.toISOString() || null,
               status: swapData.status,
               offeredBy: swapData.offeredBy?.username,
               requestedFrom: swapData.requestedFrom?.username,
             });
+
+            if (!effectiveActivityAt) {
+              logger.warn(
+                `Swap request ${swapId} has no activity timestamps, skipping`
+              );
+              continue;
+            }
+
+            if (
+              latestMessageAt &&
+              (!parentActivityAt || latestMessageAt > parentActivityAt)
+            ) {
+              await db.collection("swap_requests").doc(swapId).update({
+                lastActivityAt: latestMessageAt,
+                updatedAt: latestMessageAt,
+              });
+
+              repairedSwapRequests++;
+              logger.info(
+                `🛠️ Repaired activity timestamps for legacy swap ${swapId}`
+              );
+              continue;
+            }
+
+            if (effectiveActivityAt >= cutoffDate) {
+              logger.info(
+                `Skipping active swap ${swapId} because activity is still within threshold`
+              );
+              continue;
+            }
 
             // ✅ CRITICAL: Delete main document FIRST to prevent stale presence
             await db.collection("swap_requests").doc(swapId).delete();
@@ -119,6 +167,7 @@ exports.removeOldSwapRequests = onSchedule(
       logger.info("✅ Old swap requests cleanup completed", {
         processedSwapRequests,
         deletedSwapRequests,
+        repairedSwapRequests,
         errorCount,
         durationMs: duration,
         durationMinutes: Math.round((duration / 60000) * 100) / 100,
@@ -130,6 +179,7 @@ exports.removeOldSwapRequests = onSchedule(
         timestamp: FieldValue.serverTimestamp(),
         processedCount: processedSwapRequests,
         deletedCount: deletedSwapRequests,
+        repairedCount: repairedSwapRequests,
         errorCount,
         durationMs: duration,
         daysThreshold: DAYS_THRESHOLD,
@@ -182,6 +232,38 @@ exports.removeOldSwapRequests = onSchedule(
       process.nextTick(() => {
         deleteQueryBatch(db, query, resolve);
       });
+    }
+
+    async function getLatestMessageTimestamp(swapId) {
+      const latestMessageSnapshot = await db
+        .collection(`swap_requests/${swapId}/messages`)
+        .orderBy("createdAt", "desc")
+        .limit(1)
+        .get();
+
+      if (latestMessageSnapshot.empty) {
+        return null;
+      }
+
+      return toDate(latestMessageSnapshot.docs[0].data().createdAt);
+    }
+
+    function toDate(value) {
+      if (!value) return null;
+      if (value instanceof Date) return value;
+      if (typeof value.toDate === "function") return value.toDate();
+      return null;
+    }
+
+    function getLatestDate(...dates) {
+      const validDates = dates.filter(Boolean);
+      if (validDates.length === 0) {
+        return null;
+      }
+
+      return validDates.reduce((latest, current) =>
+        current > latest ? current : latest
+      );
     }
   }
 );

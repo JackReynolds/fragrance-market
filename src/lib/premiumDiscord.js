@@ -2,17 +2,14 @@ import { FieldValue } from "firebase-admin/firestore";
 import { db } from "@/lib/firebaseAdmin";
 import {
   addGuildMember,
-  createDiscordInvite,
   decryptDiscordRefreshToken,
   encryptDiscordRefreshToken,
   fetchDiscordUser,
-  getDiscordInviteExpiryTimestamp,
   getDiscordTokenExpiryTimestamp,
   getGuildMember,
   refreshDiscordAccessToken,
   removeGuildMember,
 } from "@/lib/discord";
-import { sendPremiumDiscordInviteEmail } from "@/app/api/email/premium-discord-invite/route";
 
 function getDiscordProfileData(profile) {
   return profile?.discord || {};
@@ -20,6 +17,7 @@ function getDiscordProfileData(profile) {
 
 async function updateDiscordError(profileRef, message) {
   await profileRef.update({
+    "discord.accessStatus": "error",
     "discord.lastError": message,
     "discord.updatedAt": FieldValue.serverTimestamp(),
   });
@@ -51,10 +49,7 @@ async function getFreshDiscordAccess(profileRef, discordData) {
   return refreshedTokens.access_token;
 }
 
-export async function syncPremiumDiscordAccess(
-  userUid,
-  { forceInviteEmail = false } = {}
-) {
+export async function syncPremiumDiscordAccess(userUid) {
   const profileRef = db.collection("profiles").doc(userUid);
   const profileSnapshot = await profileRef.get();
 
@@ -73,8 +68,6 @@ export async function syncPremiumDiscordAccess(
 
       await profileRef.update({
         "discord.accessStatus": discordData.userId ? "removed" : "inactive",
-        "discord.lastInviteUrl": null,
-        "discord.lastInviteExpiresAt": null,
         "discord.lastProvisionedSubscriptionId": null,
         "discord.lastRemovedAt": FieldValue.serverTimestamp(),
         "discord.lastError": null,
@@ -97,7 +90,6 @@ export async function syncPremiumDiscordAccess(
     const existingMember = await getGuildMember(discordData.userId);
 
     if (
-      !forceInviteEmail &&
       existingMember &&
       discordData.accessStatus === "active" &&
       discordData.lastProvisionedSubscriptionId &&
@@ -108,7 +100,7 @@ export async function syncPremiumDiscordAccess(
         "discord.updatedAt": FieldValue.serverTimestamp(),
       });
 
-      return { status: "already_provisioned" };
+      return { status: "active" };
     }
 
     if (!existingMember) {
@@ -119,34 +111,14 @@ export async function syncPremiumDiscordAccess(
       });
     }
 
-    const invite = await createDiscordInvite();
-    const inviteUrl = `https://discord.gg/${invite.code}`;
-    const inviteExpiresAt = getDiscordInviteExpiryTimestamp(invite);
-
-    await sendPremiumDiscordInviteEmail({
-      email: profile.email,
-      username: profile.username || "there",
-      discordUsername:
-        discordData.globalName || discordData.username || profile.username || "member",
-      inviteUrl,
-      inviteExpiresAt: inviteExpiresAt.toDate(),
-    });
-
     await profileRef.update({
       "discord.accessStatus": "active",
-      "discord.lastInviteUrl": inviteUrl,
-      "discord.lastInviteExpiresAt": inviteExpiresAt,
-      "discord.lastInviteSentAt": FieldValue.serverTimestamp(),
       "discord.lastProvisionedSubscriptionId": profile.stripeSubscriptionId || null,
       "discord.lastError": null,
       "discord.updatedAt": FieldValue.serverTimestamp(),
     });
 
-    return {
-      status: "provisioned",
-      inviteUrl,
-      inviteExpiresAt: inviteExpiresAt.toDate().toISOString(),
-    };
+    return { status: "active" };
   } catch (error) {
     await updateDiscordError(profileRef, error.message);
     throw error;

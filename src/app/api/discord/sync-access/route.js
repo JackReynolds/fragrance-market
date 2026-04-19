@@ -14,10 +14,8 @@ export async function POST(request) {
 
     const token = authHeader.split("Bearer ")[1];
     const decodedToken = await getAuth(adminApp).verifyIdToken(token);
-    const profileSnapshot = await db
-      .collection("profiles")
-      .doc(decodedToken.uid)
-      .get();
+    const profileRef = db.collection("profiles").doc(decodedToken.uid);
+    const profileSnapshot = await profileRef.get();
 
     if (!profileSnapshot.exists) {
       return NextResponse.json(
@@ -41,21 +39,23 @@ export async function POST(request) {
       );
     }
 
-    const result = await syncPremiumDiscordAccess(decodedToken.uid, {
-      forceInviteEmail: true,
-    });
+    await syncPremiumDiscordAccess(decodedToken.uid);
+
+    const updatedProfileSnapshot = await profileRef.get();
+    const updatedDiscord = updatedProfileSnapshot.data()?.discord || {};
 
     return NextResponse.json(
       {
         success: true,
-        inviteExpiresAt: result.inviteExpiresAt || null,
+        accessStatus: updatedDiscord.accessStatus || null,
+        lastError: updatedDiscord.lastError || null,
       },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error resending Discord invite:", error);
+    console.error("Error syncing Discord access:", error);
     return NextResponse.json(
-      { error: error.message || "Unable to resend Discord invite" },
+      { error: error.message || "Unable to sync Discord access" },
       { status: 500 }
     );
   }

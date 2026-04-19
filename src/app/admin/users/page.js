@@ -235,10 +235,8 @@ export default function AdminUsersPage() {
     ? resolveIdentityVerification(selectedUser)
     : null;
   const selectedUserDiscord = selectedUser?.discord || null;
-  const canSendDiscordInvite =
-    !!selectedUser?.isPremium &&
-    !!selectedUserDiscord?.userId &&
-    !!selectedUser?.email;
+  const canSyncDiscordAccess =
+    !!selectedUser?.isPremium && !!selectedUserDiscord?.userId;
 
   return (
     <div className="space-y-6">
@@ -550,11 +548,11 @@ export default function AdminUsersPage() {
                       </div>
                       <div>
                         <p className="text-muted-foreground text-xs">
-                          Last Invite Sent
+                          Last Updated
                         </p>
                         <p>
                           {firestoreTimestampToDate(
-                            selectedUserDiscord?.lastInviteSentAt
+                            selectedUserDiscord?.updatedAt
                           )?.toLocaleString() || "—"}
                         </p>
                       </div>
@@ -568,13 +566,13 @@ export default function AdminUsersPage() {
 
                     {!selectedUser.isPremium ? (
                       <p className="text-sm text-muted-foreground">
-                        Discord invites can only be sent while the user has an
+                        Discord access can only be synced while the user has an
                         active premium subscription.
                       </p>
                     ) : !selectedUserDiscord?.userId ? (
                       <p className="text-sm text-muted-foreground">
-                        The user needs to link their Discord account before an
-                        invite email can be sent.
+                        The user needs to link their Discord account before
+                        access can be synced.
                       </p>
                     ) : null}
 
@@ -582,15 +580,15 @@ export default function AdminUsersPage() {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      disabled={!canSendDiscordInvite || actionLoading}
+                      disabled={!canSyncDiscordAccess || actionLoading}
                       onClick={() =>
-                        handleAction("sendDiscordInvite", selectedUser.id)
+                        handleAction("syncDiscordAccess", selectedUser.id)
                       }
                     >
                       <Send className="h-4 w-4" />
                       {actionLoading
-                        ? "Sending..."
-                        : "Send Discord Invite Email"}
+                        ? "Syncing..."
+                        : "Sync Discord Access"}
                     </Button>
                   </div>
                 </div>

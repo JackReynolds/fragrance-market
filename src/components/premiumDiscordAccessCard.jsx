@@ -15,19 +15,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
-import { Loader2, MailCheck, RefreshCcw, ShieldCheck, Link2 } from "lucide-react";
-
-function getDateValue(value) {
-  if (!value) return null;
-  if (typeof value?.toDate === "function") return value.toDate();
-  if (value?.seconds) return new Date(value.seconds * 1000);
-  return null;
-}
+import { Loader2, RefreshCcw, ShieldCheck, Link2 } from "lucide-react";
 
 function getDiscordUiState(profileDoc) {
   const discord = profileDoc?.discord || {};
-  const inviteExpiresAt = getDateValue(discord.lastInviteExpiresAt);
-  const inviteIsFresh = inviteExpiresAt ? inviteExpiresAt.getTime() > Date.now() : false;
+  const accessStatus = discord.accessStatus || "inactive";
+  const hasSyncError = Boolean(discord.lastError) || accessStatus === "error";
 
   if (!profileDoc?.isPremium) {
     return {
@@ -39,7 +32,8 @@ function getDiscordUiState(profileDoc) {
         ? "Your Discord account is ready for future premium access."
         : "Premium members can link Discord to receive server access automatically.",
       canConnect: !discord.userId,
-      canResend: false,
+      canSync: false,
+      syncLabel: "Retry Discord Access",
     };
   }
 
@@ -48,32 +42,45 @@ function getDiscordUiState(profileDoc) {
       badge: "Connect Discord",
       title: "Connect Discord to activate server access",
       description:
-        "Link your Discord account and we will provision premium access and email your 7-day invite automatically.",
+        "Link your Discord account to activate premium server access. Don't have Discord yet? Create an account first, then come back and connect it here.",
       canConnect: true,
-      canResend: false,
+      canSync: false,
+      syncLabel: "Retry Discord Access",
     };
   }
 
-  if (inviteIsFresh) {
+  if (hasSyncError) {
     return {
-      badge: "Invite emailed",
-      title: "Your Discord invite is on the way",
+      badge: "Action needed",
+      title: "Discord access needs attention",
       description:
-        "We emailed your current 7-day invite link. If it expires, you can resend a fresh one here.",
+        "Your Discord account is linked, but server access could not be activated. Retry the sync here.",
       canConnect: false,
-      canResend: true,
-      inviteExpiresAt,
+      canSync: true,
+      syncLabel: "Retry Discord Access",
+    };
+  }
+
+  if (accessStatus === "active") {
+    return {
+      badge: "Discord active",
+      title: "Your premium Discord access is active",
+      description:
+        "Your Discord account is linked and active for The Fragrance Market premium server.",
+      canConnect: false,
+      canSync: false,
+      syncLabel: "Retry Discord Access",
     };
   }
 
   return {
-    badge: "Discord access active",
-    title: "Your premium Discord access is active",
+    badge: "Ready to sync",
+    title: "Finish activating Discord access",
     description:
-      "Your Discord account is linked. You can resend a fresh invite email any time if you need it again.",
+      "Your Discord account is linked. If server access is not active yet, run the sync again here.",
     canConnect: false,
-    canResend: true,
-    inviteExpiresAt,
+    canSync: true,
+    syncLabel: "Sync Discord Access",
   };
 }
 
@@ -84,7 +91,7 @@ const PremiumDiscordAccessCard = ({ returnTo = "/premium/welcome", compact = fal
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isResending, setIsResending] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const uiState = useMemo(() => getDiscordUiState(profileDoc), [profileDoc]);
 
@@ -143,8 +150,8 @@ const PremiumDiscordAccessCard = ({ returnTo = "/premium/welcome", compact = fal
     }
   };
 
-  const handleResendInvite = async () => {
-    setIsResending(true);
+  const handleSyncAccess = async () => {
+    setIsSyncing(true);
 
     try {
       if (!authUser) {
@@ -153,7 +160,7 @@ const PremiumDiscordAccessCard = ({ returnTo = "/premium/welcome", compact = fal
       }
 
       const idToken = await authUser.getIdToken();
-      const response = await fetch("/api/discord/resend-invite", {
+      const response = await fetch("/api/discord/sync-access", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${idToken}`,
@@ -162,15 +169,19 @@ const PremiumDiscordAccessCard = ({ returnTo = "/premium/welcome", compact = fal
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.error || "Unable to resend Discord invite");
+        throw new Error(data?.error || "Unable to sync Discord access");
       }
 
-      toast.success("A fresh Discord invite email has been sent.");
+      toast.success(
+        data?.accessStatus === "active"
+          ? "Discord access is active."
+          : "Discord access sync completed."
+      );
     } catch (error) {
-      console.error("Error resending Discord invite:", error);
-      toast.error(error.message || "Unable to resend Discord invite.");
+      console.error("Error syncing Discord access:", error);
+      toast.error(error.message || "Unable to sync Discord access.");
     } finally {
-      setIsResending(false);
+      setIsSyncing(false);
     }
   };
 
@@ -187,20 +198,6 @@ const PremiumDiscordAccessCard = ({ returnTo = "/premium/welcome", compact = fal
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{uiState.description}</p>
-
-        {uiState.inviteExpiresAt ? (
-          <p className="text-xs text-muted-foreground">
-            Latest invite expires on{" "}
-            {uiState.inviteExpiresAt.toLocaleString("en-IE", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-            .
-          </p>
-        ) : null}
 
         {profileDoc?.discord?.lastError ? (
           <p className="text-sm text-destructive">{profileDoc.discord.lastError}</p>
@@ -222,25 +219,23 @@ const PremiumDiscordAccessCard = ({ returnTo = "/premium/welcome", compact = fal
             </Button>
           ) : null}
 
-          {uiState.canResend ? (
+          {uiState.canSync ? (
             <Button
-              variant={uiState.badge === "Invite emailed" ? "outline" : "default"}
+              variant="outline"
               className="shadow-md"
-              onClick={handleResendInvite}
-              disabled={isResending}
+              onClick={handleSyncAccess}
+              disabled={isSyncing}
             >
-              {isResending ? (
+              {isSyncing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : uiState.badge === "Invite emailed" ? (
-                <RefreshCcw className="mr-2 h-4 w-4" />
               ) : (
-                <MailCheck className="mr-2 h-4 w-4" />
+                <RefreshCcw className="mr-2 h-4 w-4" />
               )}
-              Resend Invite
+              {uiState.syncLabel}
             </Button>
           ) : null}
 
-          {!uiState.canConnect && !uiState.canResend ? (
+          {!uiState.canConnect && !uiState.canSync ? (
             <div className="inline-flex items-center text-sm text-muted-foreground">
               <ShieldCheck className="mr-2 h-4 w-4" />
               Premium Discord access is managed automatically from your subscription status.

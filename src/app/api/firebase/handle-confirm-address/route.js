@@ -114,6 +114,7 @@ export async function POST(request) {
         ...currentConfirmations,
         [userUid]: true,
       };
+      const activityTimestamp = FieldValue.serverTimestamp();
 
       // Update user's address in the swap request
       const addressField =
@@ -131,7 +132,8 @@ export async function POST(request) {
       transaction.update(swapRequestRef, {
         addressConfirmation: updatedConfirmations,
         [addressField]: address,
-        updatedAt: FieldValue.serverTimestamp(),
+        lastActivityAt: activityTimestamp,
+        updatedAt: activityTimestamp,
       });
 
       // Also update user's profile with the address
@@ -164,8 +166,9 @@ export async function POST(request) {
         if (swapData.status === "swap_accepted") {
           // Update swap request status
           transaction.update(swapRequestRef, {
+            lastActivityAt: activityTimestamp,
             status: "pending_shipment",
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: activityTimestamp,
           });
 
           // Update the existing swap_accepted message to pending_shipment
@@ -199,26 +202,26 @@ export async function POST(request) {
           transaction.update(offeredByProfileRef, {
             swapCount: FieldValue.increment(1),
             monthlySwapCount: FieldValue.increment(1),
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: activityTimestamp,
           });
 
           transaction.update(requestedFromProfileRef, {
             swapCount: FieldValue.increment(1),
             monthlySwapCount: FieldValue.increment(1),
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: activityTimestamp,
           });
 
           // Update users collection (public) - both counts
           transaction.update(offeredByUserRef, {
             swapCount: FieldValue.increment(1),
             monthlySwapCount: FieldValue.increment(1),
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: activityTimestamp,
           });
 
           transaction.update(requestedFromUserRef, {
             swapCount: FieldValue.increment(1),
             monthlySwapCount: FieldValue.increment(1),
-            updatedAt: FieldValue.serverTimestamp(),
+            updatedAt: activityTimestamp,
           });
 
           messageUpdated = true;

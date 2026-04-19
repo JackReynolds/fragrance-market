@@ -5,7 +5,6 @@ import {
   collection,
   query,
   where,
-  or,
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
@@ -78,9 +77,7 @@ export default function InboxPage() {
           setSwapRequests(requests);
 
           if (selectedRequest) {
-            const stillExists = requests.find(
-              (r) => r.id === selectedRequest.id
-            );
+            const stillExists = requests.find((r) => r.id === selectedRequest.id);
             if (!stillExists) {
               setSelectedRequest(null);
               if (isMobile) {
@@ -91,6 +88,8 @@ export default function InboxPage() {
                   setSelectedRequest(requests[0]);
                 }, 100);
               }
+            } else {
+              setSelectedRequest(stillExists);
             }
           }
           setLoading(false);
@@ -105,7 +104,7 @@ export default function InboxPage() {
     }, 100); // Small delay to ensure auth token is ready
 
     return () => clearTimeout(timer);
-  }, [authUser?.uid, isMobile, selectedRequest]);
+  }, [authUser?.uid, isMobile, selectedRequest?.id]);
 
   const handleSelectRequest = (request) => {
     setSelectedRequest(request);

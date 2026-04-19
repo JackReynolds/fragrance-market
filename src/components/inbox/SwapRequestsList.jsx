@@ -7,6 +7,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import IdVerifiedBadge from "../ui/idVerifiedBadge";
 import PremiumBadge from "../ui/premiumBadge";
+import { getSwapDeletionInfo } from "@/lib/swapInactivity";
 
 export default function SwapRequestsList({
   requests,
@@ -107,6 +108,12 @@ export default function SwapRequestsList({
               const otherParty = getOtherParty(request);
               const requestTitle = getRequestTitle(request);
               const isSelected = selectedId === request.id;
+              const deletionInfo = getSwapDeletionInfo(request);
+              const countdownLabel = deletionInfo?.isOverdue
+                ? "Deletion due"
+                : deletionInfo?.shouldWarn
+                ? `Deletes in ${deletionInfo.daysUntilDeletion}d`
+                : null;
 
               return (
                 <li
@@ -162,9 +169,22 @@ export default function SwapRequestsList({
                       <p className="text-xs text-muted-foreground truncate">
                         {requestTitle}
                       </p>
-                      <div className="flex justify-between items-center mt-1">
-                        {renderRequestStatus(request.status)}
-                        <span className="text-xs text-muted-foreground">
+                      <div className="mt-1 flex items-center justify-between gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          {renderRequestStatus(request.status)}
+                          {countdownLabel && (
+                            <span
+                              className={`truncate rounded-full px-1.5 py-0.5 text-[11px] ${
+                                deletionInfo.isOverdue
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-orange-100 text-orange-800"
+                              }`}
+                            >
+                              {countdownLabel}
+                            </span>
+                          )}
+                        </div>
+                        <span className="shrink-0 text-xs text-muted-foreground">
                           {request.updatedAt
                             ? format(request.updatedAt.toDate(), "MMM d")
                             : ""}

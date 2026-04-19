@@ -100,9 +100,10 @@ For every PR:
 
 - SendGrid powers transactional emails.
 - Email routes are under `src/app/api/email/`.
+- Premium welcome emails are sent from `src/app/api/email/premium-welcome/route.js`.
 - SendGrid is also used in selected non-email routes (for example swap request creation and some webhook flows).
 - API key comes from `SENDGRID_API_KEY`.
-- Premium Discord invite emails use `SENDGRID_PREMIUM_DISCORD_INVITE_TEMPLATE_ID`.
+- Premium welcome emails use `SENDGRID_PREMIUM_WELCOME_TEMPLATE_ID`.
 
 ### Stripe
 
@@ -119,18 +120,18 @@ For every PR:
 
 ### Discord
 
-- Premium Discord access is provisioned from the Stripe subscription webhook in `src/app/api/webhooks/stripe-subscription/route.js`.
+- Premium Discord access is activated via Discord OAuth and synced from `src/lib/premiumDiscord.js`.
+- The Stripe subscription webhook in `src/app/api/webhooks/stripe-subscription/route.js` marks premium active, sends the premium welcome email, and attempts Discord sync for already-linked accounts.
 - Discord OAuth routes live in:
   - `src/app/api/discord/connect-url/route.js`
   - `src/app/api/discord/callback/route.js`
-  - `src/app/api/discord/resend-invite/route.js`
+  - `src/app/api/discord/sync-access/route.js`
 - Discord REST helpers live in `src/lib/discord.js` and premium access orchestration lives in `src/lib/premiumDiscord.js`.
 - Discord configuration requires:
   - `DISCORD_CLIENT_ID`
   - `DISCORD_CLIENT_SECRET`
   - `DISCORD_BOT_TOKEN`
   - `DISCORD_GUILD_ID`
-  - `DISCORD_INVITE_CHANNEL_ID`
   - `DISCORD_OAUTH_REDIRECT_URI`
 
 ### Algolia
@@ -158,11 +159,11 @@ For every PR:
 
 Functions are exported from `functions/index.js`:
 - `onListingCreate`: sets owner tier/priority fields on new listings.
-- `onMessageWritten`: marks conversations unread for recipients based on message events.
+- `onMessageWritten`: marks conversations unread for recipients based on message events and refreshes swap activity timestamps.
 - `onMessageRead`: removes conversation unread markers when all messages are read.
 - `onUserTierChange`: syncs premium/verification flags to listings when profile tier changes.
 - `reduceSwapCountToZero`: monthly reset for `monthlySwapCount` (UTC 03:00, day 1).
-- `removeOldSwapRequests`: scheduled cleanup of old `swap_requests`.
+- `removeOldSwapRequests`: scheduled cleanup of inactive active-state `swap_requests` with no movement for 30 days (UTC 03:00 daily), including legacy timestamp repair when recent message activity is newer than the parent document.
 - `validateUnreadCounts`: scheduled unread-conversation consistency maintenance.
 
 Region note:

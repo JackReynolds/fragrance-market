@@ -27,6 +27,7 @@ const SwapRequestMessageCard = ({ message, authUser, swapRequest }) => {
   const changeSwapRequestStatus = async () => {
     const swapRequestRef = doc(db, "swap_requests", swapRequest.id);
     await updateDoc(swapRequestRef, {
+      lastActivityAt: serverTimestamp(),
       status: "swap_accepted",
       updatedAt: serverTimestamp(),
     });

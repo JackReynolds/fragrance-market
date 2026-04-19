@@ -2,7 +2,6 @@ import crypto from "crypto";
 import { Timestamp } from "firebase-admin/firestore";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
-export const DISCORD_INVITE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 const DISCORD_STATE_TTL_MS = 10 * 60 * 1000;
 
 function getDiscordConfig() {
@@ -11,7 +10,6 @@ function getDiscordConfig() {
     clientSecret: process.env.DISCORD_CLIENT_SECRET,
     botToken: process.env.DISCORD_BOT_TOKEN,
     guildId: process.env.DISCORD_GUILD_ID,
-    inviteChannelId: process.env.DISCORD_INVITE_CHANNEL_ID,
     redirectUri: process.env.DISCORD_OAUTH_REDIRECT_URI,
   };
 
@@ -244,22 +242,6 @@ export async function removeGuildMember(discordUserId) {
   }
 }
 
-export async function createDiscordInvite() {
-  const { inviteChannelId } = getDiscordConfig();
-
-  return discordFetch(`/channels/${inviteChannelId}/invites`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      max_age: DISCORD_INVITE_MAX_AGE_SECONDS,
-      max_uses: 1,
-      unique: true,
-    }),
-  });
-}
-
 export function encryptDiscordRefreshToken(refreshToken) {
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv(
@@ -298,16 +280,6 @@ export function decryptDiscordRefreshToken(ciphertext) {
   ]);
 
   return decrypted.toString("utf8");
-}
-
-export function getDiscordInviteExpiryTimestamp(invite) {
-  if (invite?.expires_at) {
-    return Timestamp.fromDate(new Date(invite.expires_at));
-  }
-
-  return Timestamp.fromDate(
-    new Date(Date.now() + DISCORD_INVITE_MAX_AGE_SECONDS * 1000)
-  );
 }
 
 export function getDiscordTokenExpiryTimestamp(expiresInSeconds) {
