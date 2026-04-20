@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { buildDiscordAuthorizeUrl, createDiscordState } from "@/lib/discord";
-import { adminApp } from "@/lib/firebaseAdmin";
+import { adminApp, db } from "@/lib/firebaseAdmin";
 
 export const runtime = "nodejs";
 
@@ -15,6 +15,21 @@ export async function POST(request) {
     const token = authHeader.split("Bearer ")[1];
     const decodedToken = await getAuth(adminApp).verifyIdToken(token);
     const { returnTo } = await request.json().catch(() => ({}));
+    const profileSnapshot = await db
+      .collection("profiles")
+      .doc(decodedToken.uid)
+      .get();
+
+    if (!profileSnapshot.exists) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
+
+    if (!profileSnapshot.data()?.isPremium) {
+      return NextResponse.json(
+        { error: "Premium membership is required to connect Discord" },
+        { status: 403 }
+      );
+    }
 
     const state = createDiscordState({
       userUid: decodedToken.uid,

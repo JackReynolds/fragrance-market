@@ -303,6 +303,7 @@ const ListingCard = ({
                     outerHeight="6"
                     crownWidth="4"
                     crownHeight="4"
+                    showPopup={true}
                   />
                 ) : null}
 

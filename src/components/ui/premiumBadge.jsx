@@ -18,8 +18,12 @@ const PremiumBadge = ({
   className,
   showGlow = true,
   animated = true,
-  showTooltip = true,
+  showPopup = false,
+  showTooltip,
 }) => {
+  const shouldShowPopup =
+    typeof showTooltip === "boolean" ? showTooltip : showPopup;
+
   const sizeClasses = {
     sm: {
       outer: "w-6 h-6",
@@ -46,19 +50,20 @@ const PremiumBadge = ({
       {/* Glow effect */}
       {showGlow && (
         <div
-          className={cn(
-            currentSize.outer,
-            "absolute inset-0 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full blur-sm opacity-75",
-            animated && "animate-pulse"
-          )}
-        />
+        className={cn(
+          currentSize.outer,
+          "absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 blur-sm opacity-75",
+          animated && "animate-pulse"
+        )}
+      />
       )}
 
       {/* Main badge */}
       <div
         className={cn(
           currentSize.outer,
-          "relative bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 rounded-full flex items-center justify-center cursor-help shadow-lg border-2 border-yellow-200",
+          "relative flex items-center justify-center rounded-full border-2 border-yellow-200 bg-gradient-to-br from-yellow-300 via-yellow-400 to-amber-500 shadow-lg",
+          shouldShowPopup && "cursor-help",
           animated && "hover:scale-110 transition-transform duration-200",
           "before:absolute before:inset-0 before:rounded-full before:bg-gradient-to-t before:from-transparent before:to-white/20",
           className
@@ -82,7 +87,7 @@ const PremiumBadge = ({
     </div>
   );
 
-  if (!showTooltip) {
+  if (!shouldShowPopup) {
     return badgeContent;
   }
 
@@ -99,8 +104,8 @@ const PremiumBadge = ({
             <span className="font-semibold">Premium Member</span>
           </div>
           <div className="text-xs opacity-90">
-            Unlimited swaps, unlimited fragrance uploads and priority search
-            ranking.
+            Unlimited swaps, unlimited listings, and access to selling
+            features.
           </div>
         </div>
       </TooltipContent>

@@ -162,6 +162,7 @@ export default function SwapRequestsList({
                               outerHeight="5"
                               crownWidth="3"
                               crownHeight="3"
+                              showPopup={true}
                             />
                           )}
                         </div>
