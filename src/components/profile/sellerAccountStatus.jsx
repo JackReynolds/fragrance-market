@@ -78,10 +78,13 @@ const SellerAccountStatus = ({ profileDoc }) => {
 
     setLoadingStripeStatus(true);
     try {
+      const idToken = await authUser.getIdToken();
       const response = await fetch("/api/stripe/check-stripe-account-status", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: authUser.uid }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
       });
 
       if (!response.ok) {
@@ -111,16 +114,16 @@ const SellerAccountStatus = ({ profileDoc }) => {
 
     setCreatingStripeAccount(true);
     try {
+      const idToken = await authUser.getIdToken();
       const response = await fetch(
         "/api/stripe/create-stripe-account-and-link",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            uid: authUser.uid,
-            accountType: "express",
-            email: authUser.email,
-          }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({}),
         }
       );
 
@@ -145,6 +148,7 @@ const SellerAccountStatus = ({ profileDoc }) => {
 
     setGeneratingLink(true);
     try {
+      const idToken = await authUser.getIdToken();
       // Determine link type based on status
       let linkType = "login"; // Default to login
 
@@ -158,9 +162,11 @@ const SellerAccountStatus = ({ profileDoc }) => {
 
       const response = await fetch("/api/stripe/create-stripe-login-link", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
-          stripeAccountId: profileDoc.stripeAccountId,
           linkType: linkType,
         }),
       });

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 import Stripe from "stripe";
-import { db } from "@/lib/firebaseAdmin";
+import { adminApp, db } from "@/lib/firebaseAdmin";
+import { getSellerEligibility } from "@/lib/sellerEligibility";
 import {
   MAX_NON_FRAUD_FAILURES,
   NON_FRAUD_RETRY_CAP,
@@ -27,21 +29,45 @@ function getStripeClient() {
 }
 
 export async function POST(request) {
-  let payload;
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let decodedToken;
+  try {
+    decodedToken = await getAuth(adminApp).verifyIdToken(
+      authHeader.slice(7)
+    );
+  } catch (error) {
+    console.error("Failed to authenticate identity verification request:", error);
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
-    payload = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+    const userUid = decodedToken.uid;
+    const eligibility = await getSellerEligibility(userUid);
+    if (!eligibility.subscriptionActive) {
+      return NextResponse.json(
+        {
+          error:
+            "An active Premium subscription is required before identity verification.",
+        },
+        { status: 403 }
+      );
+    }
 
-  const userUid = readSafeString(payload?.userUid);
-  if (!userUid) {
+    return await startIdentitySession(userUid);
+  } catch (error) {
+    console.error("Failed to check identity verification eligibility:", error);
     return NextResponse.json(
-      { error: "Missing required field: userUid" },
-      { status: 400 }
+      { error: "Unable to confirm Premium eligibility right now." },
+      { status: 500 }
     );
   }
+}
+
+async function startIdentitySession(userUid) {
 
   const stripeClient = getStripeClient();
   if (!stripeClient) {

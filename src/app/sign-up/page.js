@@ -216,15 +216,17 @@ export default function SignUp() {
       );
       const user = userCredential.user;
       await updateProfile(user, { displayName: formData.username });
+      const idToken = await user.getIdToken();
 
       // Call Firebase function to create Firestore user document
       const response = await fetch("/api/firebase/create-new-user-account", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
           username: formData.username.trim(),
-          email: formData.email,
-          uid: user.uid,
           country: formData.country,
           countryCode: formData.countryCode,
         }),

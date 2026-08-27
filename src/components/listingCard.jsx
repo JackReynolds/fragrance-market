@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import getCountryFlagEmoji from "@/utils/getCountryFlagEmoji";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
+import getListingPrice from "@/utils/getListingPrice";
 import PremiumBadge from "./ui/premiumBadge";
 import IdVerifiedBadge from "./ui/idVerifiedBadge";
 
@@ -255,10 +256,10 @@ const ListingCard = ({
           )}
 
           {/* Price Row - Responsive sizing */}
-          {data.price && data.type === "sell" && (
+          {getListingPrice(data) > 0 && data.type === "sell" && (
             <div className="mb-2 sm:mb-3">
               <p className="text-sm sm:text-base md:text-lg font-bold text-emerald-600">
-                {formatCurrency(data.price, data.currency || "EUR")}
+                {formatCurrency(getListingPrice(data), data.currency || "EUR")}
               </p>
             </div>
           )}

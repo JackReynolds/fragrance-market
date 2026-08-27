@@ -42,6 +42,7 @@ import SwapOfferModal from "@/components/listing/swapOfferModal.jsx";
 import { useProfileDoc } from "@/hooks/useProfileDoc.js";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
+import getListingPrice from "@/utils/getListingPrice";
 import {
   Carousel,
   CarouselContent,
@@ -770,7 +771,7 @@ const ListingDetailPage = () => {
                 <div className="mt-4 flex items-center justify-between">
                   {listing.type === "sell" ? (
                     <div className="text-2xl font-bold text-primary">
-                      {formatCurrency(listing.price || 0, listing.currency)}
+                      {formatCurrency(getListingPrice(listing), listing.currency)}
                     </div>
                   ) : (
                     <ListingTypeBadge type={listing.type} />

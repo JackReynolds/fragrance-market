@@ -3,9 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "../../firebase.config";
 import {
-  addDoc,
   collection,
-  serverTimestamp,
   query,
   where,
   getDocs,
@@ -59,7 +57,6 @@ import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useProfileDoc } from "@/hooks/useProfileDoc";
-import { generateSlug } from "@/utils/generateSlug";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +83,10 @@ const NewListing = () => {
   const [detectedSaleTerms, setDetectedSaleTerms] = useState([]);
 
   const { profileDoc } = useProfileDoc();
+  const canSell =
+    profileDoc?.isPremium === true &&
+    profileDoc?.isIdVerified === true &&
+    profileDoc?.stripeAccountStatus?.statusCode === 1;
 
   // Check listing limit on page load
   useEffect(() => {
@@ -908,15 +909,7 @@ const NewListing = () => {
         return;
       }
 
-      // Auto-generate title from fragrance and brand
-      const generatedTitle = `${formData.fragrance.trim()} - ${formData.brand.trim()}`;
-
-      // Generate SEO-friendly slug for the listing
-      const slug = generateSlug(generatedTitle);
-
       const listingData = {
-        title: generatedTitle,
-        slug,
         type: formData.type,
         description: formData.description.trim(),
         priceCents,
@@ -927,30 +920,30 @@ const NewListing = () => {
         swapPreferences:
           formData.type === "swap" ? formData.swapPreferences.trim() : null,
         imageURLs,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        status: "active",
-        ownerUid: authUser.uid,
-        ownerUsername:
-          (profileDoc && profileDoc.username) ||
-          authUser.displayName ||
-          "Anonymous User",
-        ownerProfilePictureURL:
-          (profileDoc && profileDoc.profilePictureURL) || null,
-        country: (profileDoc && profileDoc.country) || null,
-        countryCode: (profileDoc && profileDoc.countryCode) || null,
+        currency:
+          formData.type === "sell" ? formData.currency.toLowerCase() : null,
       };
 
-      if (formData.type === "sell") {
-        listingData.currency = formData.currency.toLowerCase();
+      const idToken = await authUser.getIdToken();
+      const response = await fetch("/api/firebase/listings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(listingData),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Unable to create listing.");
       }
 
-      const docRef = await addDoc(collection(db, "listings"), listingData);
       toast.success("Listing created successfully!");
-      router.push(`/listings/${slug}`);
+      router.push(`/listings/${result.slug || result.id}`);
     } catch (err) {
       console.error("Error creating listing:", err);
-      toast.error("Failed to create listing. Please try again.");
+      toast.error(err.message || "Failed to create listing. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -1407,32 +1400,16 @@ const NewListing = () => {
                                 <span>Swap</span>
                               </div>
                             </SelectItem>
-                            {/* Check all requirements for selling */}
-                            {profileDoc?.isPremium &&
-                            profileDoc?.isIdVerified &&
-                            profileDoc?.stripeAccountStatus?.statusCode ===
-                              1 ? (
-                              <SelectItem value="sell">
-                                <div className="flex items-center">
-                                  <EuroIcon className="mr-2 h-4 w-4" />
-                                  <span>Sell</span>
-                                </div>
-                              </SelectItem>
-                            ) : !profileDoc?.isPremium ? (
-                              <SelectItem value="sell" disabled>
-                                <div className="flex items-center text-muted-foreground">
-                                  <EuroIcon className="mr-2 h-4 w-4" />
-                                  <span>Sell (Premium Only)</span>
-                                </div>
-                              </SelectItem>
-                            ) : (
-                              <SelectItem value="sell">
-                                <div className="flex items-center text-muted-foreground">
-                                  <EuroIcon className="mr-2 h-4 w-4" />
-                                  <span>Sell (Complete setup to enable)</span>
-                                </div>
-                              </SelectItem>
-                            )}
+                            <SelectItem value="sell" disabled={!canSell}>
+                              <div className="flex items-center">
+                                <EuroIcon className="mr-2 h-4 w-4" />
+                                <span>
+                                  {canSell
+                                    ? "Sell"
+                                    : "Sell (Complete Premium, ID and Stripe setup)"}
+                                </span>
+                              </div>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         {errors.type && (

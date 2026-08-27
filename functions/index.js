@@ -5,6 +5,7 @@ const reduceSwapCountToZero = require("./firebase/reduceSwapCountToZero");
 const removeOldSwapRequests = require("./firebase/removeOldSwapRequests");
 const onUserTierChange = require("./firebase/onUserTierChange");
 const onListingCreate = require("./firebase/onListingCreate");
+const enforceListingEligibility = require("./firebase/enforceListingEligibility");
 
 exports.validateUnreadCounts = validateUnreadCounts;
 exports.onMessageRead = onMessageRead;
@@ -13,3 +14,4 @@ exports.reduceSwapCountToZero = reduceSwapCountToZero;
 exports.removeOldSwapRequests = removeOldSwapRequests;
 exports.onUserTierChange = onUserTierChange;
 exports.onListingCreate = onListingCreate;
+exports.enforceListingEligibility = enforceListingEligibility;

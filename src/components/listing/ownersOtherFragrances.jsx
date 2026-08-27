@@ -24,6 +24,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import formatCurrency from "@/utils/formatCurrency";
 import ListingTypeBadge from "@/components/ui/listingTypeBadge";
+import getListingPrice from "@/utils/getListingPrice";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
@@ -162,9 +163,12 @@ const OwnersOtherFragrances = ({ ownerUid, currentListingId }) => {
                   )}
 
                   {/* Price */}
-                  {listing.price && listing.type === "sell" && (
+                  {getListingPrice(listing) > 0 && listing.type === "sell" && (
                     <p className="text-lg font-bold text-emerald-600">
-                      {formatCurrency(listing.price, listing.currency || "EUR")}
+                      {formatCurrency(
+                        getListingPrice(listing),
+                        listing.currency || "EUR"
+                      )}
                     </p>
                   )}
 

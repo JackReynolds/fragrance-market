@@ -1,15 +1,31 @@
 // create-stripe-login-link.js
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getAuth } from "firebase-admin/auth";
+import { adminApp, db } from "@/lib/firebaseAdmin";
 
 export async function POST(request) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  const { stripeAccountId, linkType } = await request.json();
+  const { linkType } = await request.json();
 
   // Predefined set of valid link types
   const VALID_LINK_TYPES = ["update", "login"];
 
   try {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decodedToken = await getAuth(adminApp).verifyIdToken(
+      authHeader.slice(7)
+    );
+    const profileSnapshot = await db
+      .collection("profiles")
+      .doc(decodedToken.uid)
+      .get();
+    const stripeAccountId = profileSnapshot.data()?.stripeAccountId;
+
     // Retrieve the Stripe secret key from the environment
     if (!process.env.STRIPE_SECRET_KEY) {
       console.error("Stripe secret key not set");

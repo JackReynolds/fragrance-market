@@ -47,14 +47,14 @@ const IdentityVerificationButton = ({ authUser, profileDoc }) => {
     setIsLoading(true);
 
     try {
+      const idToken = await authUser.getIdToken();
       const response = await fetch("/api/identity/start-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
         },
-        body: JSON.stringify({
-          userUid: authUser.uid,
-        }),
+        body: JSON.stringify({}),
       });
 
       if (!response.ok) {

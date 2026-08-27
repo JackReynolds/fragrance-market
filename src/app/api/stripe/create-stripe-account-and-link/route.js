@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebaseAdmin";
+import { getAuth } from "firebase-admin/auth";
+import { adminApp, db } from "@/lib/firebaseAdmin";
 import Stripe from "stripe";
+import {
+  getSellerEligibility,
+  getSellerEligibilityError,
+} from "@/lib/sellerEligibility";
 
 export async function POST(request) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   try {
-    // Retrieve and validate request parameters
-    const { uid, accountType, email } = await request.json();
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decodedToken = await getAuth(adminApp).verifyIdToken(
+      authHeader.slice(7)
+    );
+    const uid = decodedToken.uid;
+    const accountType = "express";
 
     // Check if the user exists in Firestore
     const profileRef = db.collection("profiles").doc(uid);
@@ -17,8 +30,18 @@ export async function POST(request) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    let stripeAccountId = profileDoc.data().stripeAccountId;
-    let username = profileDoc.data().username;
+    const profile = profileDoc.data();
+    const eligibility = await getSellerEligibility(uid);
+    if (!eligibility.subscriptionActive || !eligibility.identityVerified) {
+      return NextResponse.json(
+        { error: getSellerEligibilityError(eligibility.reasons) },
+        { status: 403 }
+      );
+    }
+
+    let stripeAccountId = profile.stripeAccountId;
+    const username = profile.username;
+    const email = profile.email || decodedToken.email;
 
     // If Stripe account ID doesn't exist, create a new account
     if (!stripeAccountId) {

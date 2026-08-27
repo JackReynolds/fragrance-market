@@ -103,6 +103,15 @@ const CheckoutContent = () => {
           return;
         }
 
+        if (
+          !Number.isSafeInteger(Number(listingData.priceCents)) ||
+          Number(listingData.priceCents) <= 0
+        ) {
+          toast.error("This listing is not currently available for checkout");
+          router.push(`/listings/${listingData.slug || listingId}`);
+          return;
+        }
+
         setListing(listingData);
 
         // Set up Stripe Elements options

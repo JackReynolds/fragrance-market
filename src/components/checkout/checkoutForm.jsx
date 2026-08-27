@@ -98,21 +98,18 @@ export default function CheckoutForm({
       const buyerPhone = addressValue.phone;
 
       // Create PaymentIntent on the server with all collected data
+      const idToken = await authUser.getIdToken();
       const response = await fetch("/api/stripe/create-payment-intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
           listingId: listing.id,
-          buyerUid: authUser.uid,
           buyerName: buyerName,
           buyerEmail: contactInfo.email,
           buyerPhone: buyerPhone,
-          title: listing.title,
-          amount: listing.priceCents,
-          currency: listing.currency || "eur",
-          ownerUid: listing.ownerUid,
           shippingAddress: addressValue,
         }),
       });

@@ -1,14 +1,26 @@
-import { db } from "@/lib/firebaseAdmin";
+import { getAuth } from "firebase-admin/auth";
+import { adminApp, db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request) {
   try {
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decodedToken = await getAuth(adminApp).verifyIdToken(
+      authHeader.slice(7)
+    );
+
     // Extract user data from request
-    const { username, email, uid, country, countryCode } = await request.json();
+    const { username, country, countryCode } = await request.json();
+    const uid = decodedToken.uid;
+    const email = decodedToken.email;
 
     // Validate required fields
-    if (!username || !email || !uid) {
+    if (!username || !email) {
       console.error("Missing required fields", { username, email, uid });
       return NextResponse.json(
         {

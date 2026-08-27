@@ -1,26 +1,30 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { db } from "@/lib/firebaseAdmin";
+import { getAuth } from "firebase-admin/auth";
+import { adminApp, db } from "@/lib/firebaseAdmin";
+import {
+  getSellerEligibility,
+  getSellerEligibilityError,
+} from "@/lib/sellerEligibility";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(request) {
   try {
-    const {
-      title,
-      ownerUid,
-      buyerUid,
-      buyerName,
-      buyerEmail,
-      buyerPhone,
-      amount,
-      listingId,
-      currency,
-      shippingAddress, // CRITICAL: Capture full shipping address from checkout
-    } = await request.json();
+    const authHeader = request.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const decodedToken = await getAuth(adminApp).verifyIdToken(
+      authHeader.slice(7)
+    );
+    const buyerUid = decodedToken.uid;
+    const { buyerName, buyerEmail, buyerPhone, listingId, shippingAddress } =
+      await request.json();
 
     // Validate required inputs
-    if (!listingId || !buyerUid || !ownerUid || !amount) {
+    if (!listingId) {
       return NextResponse.json(
         { error: "Missing required parameters" },
         { status: 400 }
@@ -61,6 +65,10 @@ export async function POST(request) {
     }
 
     const listing = listingDoc.data();
+    const ownerUid = listing.ownerUid;
+    const amount = Number(listing.priceCents);
+    const currency = listing.currency?.toLowerCase();
+    const title = listing.title;
 
     // Validate listing is still available
     if (listing.status !== "active") {
@@ -77,6 +85,20 @@ export async function POST(request) {
       );
     }
 
+    if (!Number.isSafeInteger(amount) || amount <= 0) {
+      return NextResponse.json(
+        { error: "This listing does not have a valid sale price" },
+        { status: 400 }
+      );
+    }
+
+    if (!ownerUid || !["eur", "gbp", "usd"].includes(currency)) {
+      return NextResponse.json(
+        { error: "This listing has invalid seller or currency information" },
+        { status: 400 }
+      );
+    }
+
     // Prevent owner from buying own listing
     if (listing.ownerUid === buyerUid) {
       return NextResponse.json(
@@ -85,18 +107,15 @@ export async function POST(request) {
       );
     }
 
-    // Fetch owner stripe account id from user's profile document
-    const ownerProfileRef = db.collection("profiles").doc(ownerUid);
-    const ownerProfileDoc = await ownerProfileRef.get();
-
-    if (!ownerProfileDoc.exists) {
+    const sellerEligibility = await getSellerEligibility(ownerUid);
+    if (!sellerEligibility.eligible) {
       return NextResponse.json(
-        { error: "Seller profile not found" },
-        { status: 404 }
+        { error: getSellerEligibilityError(sellerEligibility.reasons) },
+        { status: 400 }
       );
     }
 
-    const ownerStripeAccountId = ownerProfileDoc.data().stripeAccountId;
+    const ownerStripeAccountId = sellerEligibility.profile.stripeAccountId;
 
     if (!ownerStripeAccountId) {
       return NextResponse.json(
@@ -115,7 +134,7 @@ export async function POST(request) {
     const paymentIntent = await stripe.paymentIntents.create(
       {
         amount: amount,
-        currency: currency?.toLowerCase() || "eur",
+        currency,
         description: title || `${listing.brand} - ${listing.fragrance}`,
         automatic_payment_methods: {
           enabled: true,

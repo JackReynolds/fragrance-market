@@ -159,6 +159,7 @@ For every PR:
 
 Functions are exported from `functions/index.js`:
 - `onListingCreate`: sets owner tier/priority fields on new listings.
+- `enforceListingEligibility`: deactivates active sale listings when the owner lacks an active premium subscription, ID verification, or completed Stripe seller setup.
 - `onMessageWritten`: marks conversations unread for recipients based on message events and refreshes swap activity timestamps.
 - `onMessageRead`: removes conversation unread markers when all messages are read.
 - `onUserTierChange`: syncs premium/verification flags to listings when profile tier changes.

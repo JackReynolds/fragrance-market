@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin()  { return signedIn() && request.auth.token.admin == true; }
+    function isSelf(uid){ return signedIn() && request.auth.uid == uid; }
+
+    function sellerCanActivateSale(uid) {
+      let profile = get(/databases/$(db)/documents/profiles/$(uid)).data;
+      return profile.isPremium == true
+             && profile.isIdVerified == true
+             && profile.subscriptionStatus in ['active', 'trialing']
+             && profile.stripeAccountStatus.statusCode == 1;
+    }
+
+    // Private profiles are read by their owner and written only by trusted server code.
+    match /profiles/{uid} {
+      allow read: if isAdmin() || isSelf(uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Public user data. Self-service updates are limited to editable display fields.
+    match /users/{uid} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                    || (isSelf(uid)
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['username', 'bio', 'profilePictureURL', 'updatedAt']));
+      allow delete: if isAdmin();
+    }
+
+    // Handle registry (server writes only).
+    match /handles/{handle} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders are created and maintained by payment webhooks.
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+                  || (signedIn()
+                      && (request.auth.uid == resource.data.buyerUid
+                          || request.auth.uid == resource.data.sellerUid));
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Listing content is created and edited through authenticated API routes.
+    match /listings/{id} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                    || (signedIn()
+                        && resource.data.ownerUid == request.auth.uid
+                        && request.resource.data.ownerUid == resource.data.ownerUid
+                        && (
+                          (
+                            request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['status'])
+                            && request.resource.data.status in ['active', 'inactive']
+                            && (
+                              request.resource.data.status != 'active'
+                              || resource.data.type != 'sell'
+                              || sellerCanActivateSale(request.auth.uid)
+                            )
+                          )
+                          || request.resource.data.diff(resource.data).affectedKeys()
+                            .hasOnly(['ownerProfilePictureURL', 'profilePictureUpdatedAt'])
+                        ));
+      allow delete: if isAdmin();
+    }
+
+    // Swap requests are private to their participants.
+    match /swap_requests/{swapId} {
+      allow read: if isAdmin()
+                  || (signedIn() && request.auth.uid in resource.data.participants);
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+                    || (signedIn() && request.auth.uid in resource.data.participants);
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || signedIn();
+        allow create: if signedIn()
+                      && request.resource.data.senderUid == request.auth.uid;
+        allow update: if isAdmin() || signedIn();
+        allow delete: if isAdmin();
+      }
+
+      match /presence/{userId} {
+        allow read: if isAdmin() || signedIn();
+        allow create, update: if isAdmin() || isSelf(userId);
+        allow delete: if isAdmin() || isSelf(userId);
+      }
+    }
+
+    // Completed swaps are immutable historical records.
+    match /completed_swaps/{swapId} {
+      allow read: if isAdmin()
+                  || (signedIn() && request.auth.uid in resource.data.participants);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

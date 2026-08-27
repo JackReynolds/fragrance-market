@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { db } from "@/firebase.config";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { isSlug } from "@/utils/generateSlug";
 import { Button } from "@/components/ui/button.jsx";
@@ -34,10 +34,12 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfileDoc } from "@/hooks/useProfileDoc";
 import Image from "next/image";
 
 const EditListing = () => {
   const { authUser, authLoading } = useAuth();
+  const { profileDoc, profileDocLoading } = useProfileDoc();
   const router = useRouter();
   const params = useParams();
   const listingId = params.id;
@@ -49,12 +51,14 @@ const EditListing = () => {
   // const [listingData, setListingData] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [notAuthorized, setNotAuthorized] = useState(false);
+  const [listingDocumentId, setListingDocumentId] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
-    type: "sell",
+    type: "swap",
     description: "",
     price: "",
+    currency: "EUR",
     amount: "100",
     brand: "",
     fragrance: "",
@@ -64,6 +68,10 @@ const EditListing = () => {
 
   // Form validation
   const [errors, setErrors] = useState({});
+  const canSell =
+    profileDoc?.isPremium === true &&
+    profileDoc?.isIdVerified === true &&
+    profileDoc?.stripeAccountStatus?.statusCode === 1;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -122,7 +130,11 @@ const EditListing = () => {
         setFormData({
           type: data.type || "sell",
           description: data.description || "",
-          price: data.price?.toString() || "",
+          price:
+            data.priceCents != null
+              ? (data.priceCents / 100).toString()
+              : data.price?.toString() || "",
+          currency: (data.currency || "EUR").toUpperCase(),
           amount: data.amountLeft?.toString() || "100",
           brand: data.brand || "",
           fragrance: data.fragrance || "",
@@ -132,6 +144,7 @@ const EditListing = () => {
 
         // Set images
         setImageURLs(data.imageURLs || []);
+        setListingDocumentId(actualListingId || listingSnap.id);
       } catch (error) {
         console.error("Error fetching listing:", error);
         toast.error("Failed to load listing details");
@@ -279,6 +292,10 @@ const EditListing = () => {
         "Please specify what you're looking to swap for";
     }
 
+    if (formData.type === "sell" && !formData.currency) {
+      newErrors.currency = "Currency is required for items for sale";
+    }
+
     return newErrors;
   };
 
@@ -302,34 +319,67 @@ const EditListing = () => {
     setIsSaving(true);
 
     try {
-      // Auto-generate title from fragrance and brand
-      const generatedTitle = `${formData.fragrance.trim()} - ${formData.brand.trim()}`;
+      if (!authUser || !listingDocumentId) {
+        throw new Error("Your listing is still loading. Please try again.");
+      }
 
-      // Update the listing object
+      if (formData.type === "sell") {
+        if (!profileDoc?.isPremium) {
+          throw new Error("Premium membership is required to sell fragrances.");
+        }
+        if (!profileDoc?.isIdVerified) {
+          throw new Error("Identity verification is required to sell fragrances.");
+        }
+        if (profileDoc?.stripeAccountStatus?.statusCode !== 1) {
+          throw new Error(
+            "Complete Stripe seller setup before creating a sale listing."
+          );
+        }
+      }
+
+      const priceCents =
+        formData.type === "sell"
+          ? Math.round(
+              Number(String(formData.price).replace(",", ".")) * 100
+            )
+          : null;
+
       const updatedListingData = {
-        title: generatedTitle,
+        listingId: listingDocumentId,
         type: formData.type,
         description: formData.description.trim(),
-        price: formData.type === "sell" ? parseFloat(formData.price) : null,
-        amountLeft: formData.amount,
+        priceCents,
+        currency:
+          formData.type === "sell" ? formData.currency.toLowerCase() : null,
+        amountLeft: Number(formData.amount),
         brand: formData.brand.trim(),
         fragrance: formData.fragrance.trim(),
         sizeInMl: Number(formData.size),
         swapPreferences:
           formData.type === "swap" ? formData.swapPreferences.trim() : null,
-        imageURLs: imageURLs,
-        updatedAt: serverTimestamp(),
+        imageURLs,
       };
 
-      // Update in Firestore
-      const listingRef = doc(db, "listings", listingId);
-      await updateDoc(listingRef, updatedListingData);
+      const idToken = await authUser.getIdToken();
+      const response = await fetch("/api/firebase/listings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(updatedListingData),
+      });
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Unable to update listing.");
+      }
 
       toast.success("Listing updated successfully!");
-      router.push(`/listings/${listingId}`);
+      router.push(`/listings/${result.slug || listingDocumentId}`);
     } catch (error) {
       console.error("Error updating listing:", error);
-      toast.error("Failed to update listing. Please try again.");
+      toast.error(error.message || "Failed to update listing. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -376,7 +426,7 @@ const EditListing = () => {
   }
 
   // Loading state
-  if (isLoading || authLoading) {
+  if (isLoading || authLoading || profileDocLoading) {
     return (
       <div className="flex min-h-screen flex-col">
         {/* <Navigation /> */}
@@ -510,10 +560,14 @@ const EditListing = () => {
                             <SelectValue placeholder="Select listing type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="sell">
+                            <SelectItem value="sell" disabled={!canSell}>
                               <div className="flex items-center">
                                 <EuroIcon className="mr-2 h-4 w-4" />
-                                <span>Sell</span>
+                                <span>
+                                  {canSell
+                                    ? "Sell"
+                                    : "Sell (Premium, ID and Stripe required)"}
+                                </span>
                               </div>
                             </SelectItem>
                             <SelectItem value="swap">
@@ -579,12 +633,9 @@ const EditListing = () => {
                     </div>
 
                     {formData.type === "sell" && (
-                      <div className="space-y-2">
-                        <Label htmlFor="price">Price (EUR)</Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                            €
-                          </span>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="price">Price</Label>
                           <Input
                             id="price"
                             name="price"
@@ -594,16 +645,40 @@ const EditListing = () => {
                             placeholder="0.00"
                             value={formData.price}
                             onChange={handleChange}
-                            className={`pl-8 ${
+                            className={
                               errors.price ? "border-destructive" : ""
-                            }`}
+                            }
                           />
+                          {errors.price && (
+                            <p className="text-sm text-destructive">
+                              {errors.price}
+                            </p>
+                          )}
                         </div>
-                        {errors.price && (
-                          <p className="text-sm text-destructive">
-                            {errors.price}
-                          </p>
-                        )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="currency">Currency</Label>
+                          <Select
+                            value={formData.currency}
+                            onValueChange={(value) =>
+                              handleSelectChange("currency", value)
+                            }
+                          >
+                            <SelectTrigger id="currency">
+                              <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="EUR">EUR</SelectItem>
+                              <SelectItem value="USD">USD</SelectItem>
+                              <SelectItem value="GBP">GBP</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {errors.currency && (
+                            <p className="text-sm text-destructive">
+                              {errors.currency}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     )}
 
