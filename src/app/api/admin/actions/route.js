@@ -1,9 +1,27 @@
 import { db } from "@/lib/firebaseAdmin";
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
+import { FieldValue } from "firebase-admin/firestore";
 import { syncPremiumDiscordAccess } from "@/lib/premiumDiscord";
+import {
+  getSellerEligibility,
+  getSellerEligibilityError,
+} from "@/lib/sellerEligibility";
 
 const ADMIN_UID = "LLnA54zGzgTGnGtkQSIQy9svcTJ2";
+const TOGGLEABLE_LISTING_STATUSES = new Set(["active", "inactive"]);
+
+function actionError(message, code, status = 409) {
+  const error = new Error(message);
+  error.code = code;
+  error.httpStatus = status;
+  return error;
+}
+
+function hasActiveCheckoutReservation(listing) {
+  const expiresAt = listing.checkoutReservation?.expiresAt?.toMillis?.();
+  return Number.isFinite(expiresAt) && expiresAt > Date.now();
+}
 
 export async function POST(request) {
   try {
@@ -33,32 +51,128 @@ export async function POST(request) {
 
     switch (action) {
       case "disable": {
-        // Disable a listing
         if (collection !== "listings") {
           return NextResponse.json(
             { error: "Disable action only supported for listings" },
             { status: 400 }
           );
         }
-        await docRef.update({ disabled: true, disabledAt: new Date() });
+
+        await db.runTransaction(async (transaction) => {
+          const listingSnapshot = await transaction.get(docRef);
+          if (!listingSnapshot.exists) {
+            throw actionError("Listing not found", "listing_not_found", 404);
+          }
+
+          const listing = listingSnapshot.data();
+          if (!TOGGLEABLE_LISTING_STATUSES.has(listing.status)) {
+            throw actionError(
+              "Sold or swapped listings cannot be deactivated.",
+              "listing_not_toggleable"
+            );
+          }
+
+          if (listing.status === "inactive") return;
+
+          transaction.update(docRef, {
+            status: "inactive",
+            disabled: FieldValue.delete(),
+            disabledAt: FieldValue.delete(),
+            restrictionReason: "admin_deactivated",
+            restrictedAt: FieldValue.serverTimestamp(),
+            lastAdminActionBy: decoded.uid,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        });
+
         return NextResponse.json({
           success: true,
-          message: "Listing disabled successfully",
+          message: "Listing deactivated successfully",
         });
       }
 
       case "enable": {
-        // Re-enable a listing
         if (collection !== "listings") {
           return NextResponse.json(
             { error: "Enable action only supported for listings" },
             { status: 400 }
           );
         }
-        await docRef.update({ disabled: false, disabledAt: null });
+
+        const listingSnapshot = await docRef.get();
+        if (!listingSnapshot.exists) {
+          throw actionError("Listing not found", "listing_not_found", 404);
+        }
+
+        const listing = listingSnapshot.data();
+        if (!TOGGLEABLE_LISTING_STATUSES.has(listing.status)) {
+          throw actionError(
+            "Sold or swapped listings cannot be reactivated.",
+            "listing_not_toggleable"
+          );
+        }
+        if (hasActiveCheckoutReservation(listing)) {
+          throw actionError(
+            "This listing still has an active checkout reservation.",
+            "listing_reserved"
+          );
+        }
+
+        if (listing.type === "sell") {
+          const eligibility = await getSellerEligibility(listing.ownerUid);
+          if (!eligibility.eligible) {
+            throw actionError(
+              getSellerEligibilityError(eligibility.reasons),
+              eligibility.reasons[0] || "seller_ineligible",
+              403
+            );
+          }
+        }
+
+        await db.runTransaction(async (transaction) => {
+          const latestSnapshot = await transaction.get(docRef);
+          if (!latestSnapshot.exists) {
+            throw actionError("Listing not found", "listing_not_found", 404);
+          }
+
+          const latestListing = latestSnapshot.data();
+          if (!TOGGLEABLE_LISTING_STATUSES.has(latestListing.status)) {
+            throw actionError(
+              "Sold or swapped listings cannot be reactivated.",
+              "listing_not_toggleable"
+            );
+          }
+          if (hasActiveCheckoutReservation(latestListing)) {
+            throw actionError(
+              "This listing still has an active checkout reservation.",
+              "listing_reserved"
+            );
+          }
+          if (
+            latestListing.type !== listing.type ||
+            latestListing.ownerUid !== listing.ownerUid
+          ) {
+            throw actionError(
+              "The listing changed while its eligibility was being checked.",
+              "listing_changed"
+            );
+          }
+
+          transaction.update(docRef, {
+            status: "active",
+            checkoutReservation: FieldValue.delete(),
+            disabled: FieldValue.delete(),
+            disabledAt: FieldValue.delete(),
+            restrictionReason: FieldValue.delete(),
+            restrictedAt: FieldValue.delete(),
+            lastAdminActionBy: decoded.uid,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        });
+
         return NextResponse.json({
           success: true,
-          message: "Listing enabled successfully",
+          message: "Listing reactivated successfully",
         });
       }
 
@@ -190,8 +304,11 @@ export async function POST(request) {
   } catch (error) {
     console.error("Error performing admin action:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
+      {
+        error: error.message || "Internal server error",
+        code: error.code || "admin_action_failed",
+      },
+      { status: error.httpStatus || 500 }
     );
   }
 }

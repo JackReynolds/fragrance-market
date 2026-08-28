@@ -98,9 +98,10 @@ export default function AdminListingsPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    if (!price) return "—";
-    return `£${parseFloat(price).toFixed(2)}`;
+  const formatListingPrice = (listing) => {
+    const priceCents = Number(listing.priceCents);
+    if (!Number.isSafeInteger(priceCents) || priceCents <= 0) return "—";
+    return formatCurrency(priceCents / 100, listing.currency);
   };
 
   const getListingTypeBadge = (type) => {
@@ -110,7 +111,7 @@ export default function AdminListingsPage() {
         color: "text-blue-500",
         bg: "bg-blue-500/10",
       },
-      sale: {
+      sell: {
         icon: DollarSign,
         color: "text-emerald-500",
         bg: "bg-emerald-500/10",
@@ -124,6 +125,51 @@ export default function AdminListingsPage() {
       >
         <Icon className="h-3 w-3" />
         {type?.charAt(0).toUpperCase() + type?.slice(1) || "Unknown"}
+      </span>
+    );
+  };
+
+  const getListingStatusBadge = (status) => {
+    const config = {
+      active: {
+        icon: CheckCircle,
+        label: "Active",
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/10",
+      },
+      inactive: {
+        icon: Ban,
+        label: "Inactive",
+        color: "text-red-500",
+        bg: "bg-red-500/10",
+      },
+      sold: {
+        icon: DollarSign,
+        label: "Sold",
+        color: "text-purple-500",
+        bg: "bg-purple-500/10",
+      },
+      swapped: {
+        icon: ArrowLeftRight,
+        label: "Swapped",
+        color: "text-blue-500",
+        bg: "bg-blue-500/10",
+      },
+    };
+    const statusConfig = config[status] || {
+      icon: Tag,
+      label: status || "Unknown",
+      color: "text-muted-foreground",
+      bg: "bg-muted",
+    };
+    const StatusIcon = statusConfig.icon;
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.color}`}
+      >
+        <StatusIcon className="h-3 w-3" />
+        {statusConfig.label}
       </span>
     );
   };
@@ -166,12 +212,12 @@ export default function AdminListingsPage() {
       render: (row) => getListingTypeBadge(row.type),
     },
     {
-      key: "price",
+      key: "priceCents",
       label: "Price",
       sortable: true,
       render: (row) => (
         <span className="font-mono text-sm">
-          {row.type === "swap" ? "Swap only" : formatPrice(row.price)}
+          {row.type === "swap" ? "Swap only" : formatListingPrice(row)}
         </span>
       ),
     },
@@ -196,28 +242,10 @@ export default function AdminListingsPage() {
       ),
     },
     {
-      key: "disabled",
+      key: "status",
       label: "Status",
       sortable: true,
-      render: (row) => (
-        <span
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-            row.disabled
-              ? "bg-red-500/10 text-red-500"
-              : "bg-emerald-500/10 text-emerald-500"
-          }`}
-        >
-          {row.disabled ? (
-            <>
-              <Ban className="h-3 w-3" /> Disabled
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-3 w-3" /> Active
-            </>
-          )}
-        </span>
-      ),
+      render: (row) => getListingStatusBadge(row.status),
     },
   ];
 
@@ -238,16 +266,24 @@ export default function AdminListingsPage() {
         variant="ghost"
         size="icon"
         className="h-8 w-8"
+        disabled={!["active", "inactive"].includes(row.status)}
+        title={
+          row.status === "active"
+            ? "Deactivate listing"
+            : row.status === "inactive"
+              ? "Reactivate listing"
+              : "Completed listings cannot be reactivated"
+        }
         onClick={() => {
           setListingToToggle(row);
           setDisableDialogOpen(true);
         }}
       >
-        <Ban
-          className={`h-4 w-4 ${
-            row.disabled ? "text-emerald-500" : "text-amber-500"
-          }`}
-        />
+        {row.status === "inactive" ? (
+          <CheckCircle className="h-4 w-4 text-emerald-500" />
+        ) : (
+          <Ban className="h-4 w-4 text-amber-500" />
+        )}
       </Button>
       <Button
         variant="ghost"
@@ -353,15 +389,7 @@ export default function AdminListingsPage() {
                   </p>
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {getListingTypeBadge(selectedListing.type)}
-                    {selectedListing.disabled ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500">
-                        <Ban className="h-3 w-3" /> Disabled
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500">
-                        <CheckCircle className="h-3 w-3" /> Active
-                      </span>
-                    )}
+                    {getListingStatusBadge(selectedListing.status)}
                   </div>
                   {selectedListing.type !== "swap" &&
                     selectedListing.priceCents && (
@@ -588,17 +616,19 @@ export default function AdminListingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Disable/Enable Confirmation Dialog */}
+      {/* Deactivate/Reactivate Confirmation Dialog */}
       <Dialog open={disableDialogOpen} onOpenChange={setDisableDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {listingToToggle?.disabled ? "Enable Listing" : "Disable Listing"}
+              {listingToToggle?.status === "inactive"
+                ? "Reactivate Listing"
+                : "Deactivate Listing"}
             </DialogTitle>
             <DialogDescription>
-              {listingToToggle?.disabled
-                ? "This will make the listing visible again on the marketplace."
-                : "This will hide the listing from the marketplace. The owner will still be able to see it in their profile."}
+              {listingToToggle?.status === "inactive"
+                ? "This will make the listing available on the marketplace again. Sale listings must still meet every seller eligibility requirement."
+                : "This will remove the listing from the active marketplace. The owner will still be able to see it in their profile."}
             </DialogDescription>
           </DialogHeader>
           {listingToToggle && (
@@ -616,7 +646,9 @@ export default function AdminListingsPage() {
               <p className="text-sm">
                 <span className="text-muted-foreground">Current Status:</span>{" "}
                 <span className="font-medium">
-                  {listingToToggle.disabled ? "Disabled" : "Active"}
+                  {listingToToggle.status === "inactive"
+                    ? "Inactive"
+                    : "Active"}
                 </span>
               </p>
             </div>
@@ -632,10 +664,16 @@ export default function AdminListingsPage() {
               Cancel
             </Button>
             <Button
-              variant={listingToToggle?.disabled ? "default" : "destructive"}
+              variant={
+                listingToToggle?.status === "inactive"
+                  ? "default"
+                  : "destructive"
+              }
               onClick={() =>
                 handleAction(
-                  listingToToggle?.disabled ? "enable" : "disable",
+                  listingToToggle?.status === "inactive"
+                    ? "enable"
+                    : "disable",
                   listingToToggle?.id
                 )
               }
@@ -643,9 +681,9 @@ export default function AdminListingsPage() {
             >
               {actionLoading
                 ? "Processing..."
-                : listingToToggle?.disabled
-                ? "Enable Listing"
-                : "Disable Listing"}
+                : listingToToggle?.status === "inactive"
+                  ? "Reactivate Listing"
+                  : "Deactivate Listing"}
             </Button>
           </DialogFooter>
         </DialogContent>

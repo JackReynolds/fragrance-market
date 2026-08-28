@@ -61,8 +61,9 @@ export default function AdminDashboard() {
           return createdAt && createdAt > oneWeekAgo;
         }).length;
 
-        // Active listings (not disabled)
-        const activeListings = listings.filter((l) => !l.disabled).length;
+        const activeListings = listings.filter(
+          (listing) => listing.status === "active"
+        ).length;
 
         // Pending swaps (swap_request or swap_accepted status)
         const pendingSwaps = swaps.filter(
