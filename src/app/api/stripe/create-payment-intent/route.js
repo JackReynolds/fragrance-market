@@ -263,7 +263,9 @@ export async function POST(request) {
         attemptSnapshot = await transaction.get(attemptRef);
       }
 
-      const expiresAt = Timestamp.fromMillis(now + CHECKOUT_RESERVATION_MS);
+      const expiresAt = currentReservationActive
+        ? currentReservation.expiresAt
+        : Timestamp.fromMillis(now + CHECKOUT_RESERVATION_MS);
       const reservation = {
         id: reservationId,
         createdAt: currentReservationActive
@@ -272,10 +274,12 @@ export async function POST(request) {
         expiresAt,
       };
 
-      transaction.update(listingRef, {
-        checkoutReservation: reservation,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      if (!currentReservationActive || currentReservation.id !== reservationId) {
+        transaction.update(listingRef, {
+          checkoutReservation: reservation,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
 
       const attemptData = {
         reservationId,
