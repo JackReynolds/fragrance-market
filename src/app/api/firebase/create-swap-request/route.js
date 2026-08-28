@@ -83,9 +83,12 @@ export async function POST(request) {
       );
     }
 
-    if (requestedListing.status !== "active") {
+    if (
+      requestedListing.type !== "swap" ||
+      requestedListing.status !== "active"
+    ) {
       return NextResponse.json(
-        { error: "Requested listing is no longer active" },
+        { error: "Requested listing is not available for swap" },
         { status: 400 }
       );
     }

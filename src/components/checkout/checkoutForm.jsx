@@ -91,8 +91,6 @@ export default function CheckoutForm({
         return;
       }
 
-      console.log("Address collected:", addressValue);
-
       // Extract name and phone from address element
       const buyerName = addressValue.name;
       const buyerPhone = addressValue.phone;
@@ -107,6 +105,8 @@ export default function CheckoutForm({
         },
         body: JSON.stringify({
           listingId: listing.id,
+          expectedPriceCents: listing.priceCents,
+          expectedCurrency: listing.currency,
           buyerName: buyerName,
           buyerEmail: contactInfo.email,
           buyerPhone: buyerPhone,

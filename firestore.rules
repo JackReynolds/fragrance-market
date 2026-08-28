@@ -13,6 +13,12 @@ service cloud.firestore {
              && profile.stripeAccountStatus.statusCode == 1;
     }
 
+    function hasActiveCheckoutReservation(data) {
+      return 'checkoutReservation' in data
+             && 'expiresAt' in data.checkoutReservation
+             && data.checkoutReservation.expiresAt > request.time;
+    }
+
     // Private profiles are read by their owner and written only by trusted server code.
     match /profiles/{uid} {
       allow read: if isAdmin() || isSelf(uid);
@@ -58,6 +64,7 @@ service cloud.firestore {
                             request.resource.data.diff(resource.data).affectedKeys()
                               .hasOnly(['status'])
                             && request.resource.data.status in ['active', 'inactive']
+                            && !hasActiveCheckoutReservation(resource.data)
                             && (
                               request.resource.data.status != 'active'
                               || resource.data.type != 'sell'

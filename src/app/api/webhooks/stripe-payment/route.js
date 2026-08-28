@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { db } from "@/lib/firebaseAdmin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import { db } from "@/lib/firebaseAdmin";
+import { getSellerEligibility } from "@/lib/sellerEligibility";
+import { calculatePlatformFee } from "@/lib/listingSalePolicy";
 import { sendPurchaseConfirmationEmails } from "@/app/api/email/fragrance-purchase-emails/route";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_PAYMENT_WEBHOOK_SECRET;
 
 function getCountryName(code, locale = "en") {
-  try {
-    // Create an instance of Intl.DisplayNames
-    const regionNames = new Intl.DisplayNames([locale], { type: "region" });
+  if (!code) return undefined;
 
-    // Use the .of() method to get the name
+  try {
+    const regionNames = new Intl.DisplayNames([locale], { type: "region" });
     return regionNames.of(code.toUpperCase());
   } catch (error) {
     console.error("Error converting country code:", error);
@@ -20,414 +21,469 @@ function getCountryName(code, locale = "en") {
   }
 }
 
-export async function POST(request) {
-  console.log("PAYMENT WEBHOOK HIT! Timestamp:", new Date().toISOString());
+function getShippingInfo(attempt) {
+  const shipping = attempt.shippingAddress;
+  const address = shipping?.address;
+  if (
+    !shipping ||
+    !address?.line1 ||
+    !address?.city ||
+    !address?.postalCode ||
+    !address?.countryCode
+  ) {
+    return null;
+  }
+
+  const country =
+    getCountryName(address.countryCode, "en") || address.countryCode;
+
+  return {
+    name: shipping.name || attempt.buyerName,
+    email: attempt.buyerEmail,
+    phone: shipping.phone || attempt.buyerPhone || null,
+    addressLine1: address.line1,
+    addressLine2: address.line2 || null,
+    city: address.city,
+    state: address.state || null,
+    postalCode: address.postalCode,
+    country,
+    countryCode: address.countryCode,
+    formattedAddress: [
+      address.line1,
+      address.line2,
+      address.city,
+      address.state,
+      address.postalCode,
+      country,
+    ]
+      .filter(Boolean)
+      .join(", "),
+  };
+}
+
+function getValidationFailure({
+  paymentIntent,
+  metadata,
+  listing,
+  attempt,
+  sellerEligibility,
+}) {
+  if (!listing) return "listing_not_found";
+  if (!attempt) return "payment_attempt_not_found";
+  if (listing.status !== "active") return "listing_not_active";
+  if (listing.type !== "sell") return "listing_not_for_sale";
+  if (listing.ownerUid !== metadata.ownerUid) return "seller_mismatch";
+  if (attempt.listingId !== metadata.listingId) return "attempt_listing_mismatch";
+  if (attempt.buyerUid !== metadata.buyerUid) return "attempt_buyer_mismatch";
+  if (attempt.sellerUid !== metadata.ownerUid) return "attempt_seller_mismatch";
+  if (attempt.paymentIntentId !== paymentIntent.id) {
+    return "payment_intent_mismatch";
+  }
+  if (
+    attempt.sellerStripeAccountId !==
+    paymentIntent.transfer_data?.destination
+  ) {
+    return "payment_destination_mismatch";
+  }
+  if (
+    sellerEligibility.profile?.stripeAccountId !==
+    attempt.sellerStripeAccountId
+  ) {
+    return "seller_account_changed";
+  }
+  if (listing.checkoutReservation?.id !== metadata.reservationId) {
+    return "reservation_mismatch";
+  }
+
+  const listingAmount = Number(listing.priceCents);
+  const metadataAmount = Number(metadata.expectedAmount);
+  if (
+    !Number.isSafeInteger(listingAmount) ||
+    listingAmount <= 0 ||
+    paymentIntent.amount !== listingAmount ||
+    paymentIntent.amount !== attempt.amount ||
+    paymentIntent.amount !== metadataAmount
+  ) {
+    return "amount_mismatch";
+  }
+  if (
+    paymentIntent.application_fee_amount !==
+    calculatePlatformFee(listingAmount)
+  ) {
+    return "platform_fee_mismatch";
+  }
+
+  const currency = listing.currency?.toLowerCase();
+  if (
+    paymentIntent.currency !== currency ||
+    paymentIntent.currency !== attempt.currency ||
+    paymentIntent.currency !== metadata.expectedCurrency
+  ) {
+    return "currency_mismatch";
+  }
+  if (!getShippingInfo(attempt)) return "shipping_address_missing";
+  if (!sellerEligibility.eligible) return "seller_no_longer_eligible";
+
+  return null;
+}
+
+async function findExistingLegacyOrder(paymentIntentId) {
+  const snapshot = await db
+    .collection("orders")
+    .where("payment.stripePaymentIntentId", "==", paymentIntentId)
+    .limit(1)
+    .get();
+
+  return snapshot.empty ? null : snapshot.docs[0].data();
+}
+
+async function refundInvalidPayment(paymentIntent, reservationId, reason) {
+  const refund = await stripe.refunds.create(
+    {
+      payment_intent: paymentIntent.id,
+      reverse_transfer: true,
+      refund_application_fee: true,
+      metadata: {
+        reason: reason.slice(0, 500),
+        reservationId: reservationId || "missing",
+      },
+    },
+    { idempotencyKey: `listing-collision-refund-${paymentIntent.id}` }
+  );
+
+  if (reservationId) {
+    await db.collection("payment_attempts").doc(reservationId).set(
+      {
+        status: "refunded",
+        refundReason: reason,
+        stripeRefundId: refund.id,
+        buyerName: FieldValue.delete(),
+        buyerEmail: FieldValue.delete(),
+        buyerPhone: FieldValue.delete(),
+        shippingAddress: FieldValue.delete(),
+        refundedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  console.warn(
+    `Refunded PaymentIntent ${paymentIntent.id} after validation failure: ${reason}`
+  );
+}
+
+async function processSuccessfulPayment(paymentIntent, sellerEligibility) {
+  const metadata = paymentIntent.metadata || {};
+  const { listingId, reservationId, buyerUid, ownerUid } = metadata;
+  const listingRef = db.collection("listings").doc(listingId);
+  const attemptRef = db.collection("payment_attempts").doc(reservationId);
+  const orderRef = db.collection("orders").doc(paymentIntent.id);
+  const buyerRef = db.collection("profiles").doc(buyerUid);
+  const sellerRef = db.collection("profiles").doc(ownerUid);
+
+  return db.runTransaction(async (transaction) => {
+    const [
+      orderSnapshot,
+      listingSnapshot,
+      attemptSnapshot,
+      buyerSnapshot,
+      sellerSnapshot,
+    ] = await Promise.all([
+      transaction.get(orderRef),
+      transaction.get(listingRef),
+      transaction.get(attemptRef),
+      transaction.get(buyerRef),
+      transaction.get(sellerRef),
+    ]);
+
+    if (orderSnapshot.exists) {
+      return { status: "already_processed", order: orderSnapshot.data() };
+    }
+
+    const listing = listingSnapshot.exists ? listingSnapshot.data() : null;
+    const attempt = attemptSnapshot.exists ? attemptSnapshot.data() : null;
+    let failureReason = getValidationFailure({
+      paymentIntent,
+      metadata,
+      listing,
+      attempt,
+      sellerEligibility,
+    });
+
+    if (!buyerSnapshot.exists || !sellerSnapshot.exists) {
+      failureReason ||= "buyer_or_seller_profile_missing";
+    }
+
+    if (failureReason) {
+      if (
+        listingSnapshot.exists &&
+        listing?.checkoutReservation?.id === reservationId
+      ) {
+        transaction.update(listingRef, {
+          checkoutReservation: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+      if (attemptSnapshot.exists) {
+        transaction.set(
+          attemptRef,
+          {
+            status: "refund_pending",
+            refundReason: failureReason,
+            updatedAt: FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      return { status: "refund_required", reason: failureReason };
+    }
+
+    const buyer = buyerSnapshot.data();
+    const seller = sellerSnapshot.data();
+    const shippingInfo = getShippingInfo(attempt);
+    const totalAmount = paymentIntent.amount;
+    const currency = paymentIntent.currency;
+    const platformFee = paymentIntent.application_fee_amount || 0;
+    const sellerAmount = totalAmount - platformFee;
+    const orderData = {
+      orderId: orderRef.id,
+      orderNumber: `ORD-${paymentIntent.created}-${paymentIntent.id
+        .slice(-8)
+        .toUpperCase()}`,
+      status: "payment_completed",
+      participants: [buyerUid, ownerUid],
+      buyerUid,
+      sellerUid: ownerUid,
+      listingId,
+      item: {
+        title: listing.title,
+        brand: listing.brand,
+        fragrance: listing.fragrance,
+        amountLeft: listing.amountLeft,
+        imageURL: listing.imageURLs?.[0] || null,
+        sizeInMl: listing.sizeInMl || null,
+        price: totalAmount / 100,
+        priceCents: totalAmount,
+      },
+      shippingTo: shippingInfo,
+      buyer: {
+        uid: buyerUid,
+        username: buyer.username || "Unknown",
+        displayName: buyer.displayName || buyer.username || "Unknown",
+        profilePictureURL: buyer.profilePictureURL || null,
+      },
+      seller: {
+        uid: ownerUid,
+        username: seller.username || "Unknown",
+        email: seller.email,
+        profilePictureURL: seller.profilePictureURL || null,
+      },
+      payment: {
+        totalAmount,
+        currency,
+        platformFee,
+        sellerAmount,
+        stripePaymentIntentId: paymentIntent.id,
+        paymentStatus: paymentIntent.status,
+        paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
+        paidAt: FieldValue.serverTimestamp(),
+      },
+      shipment: {
+        trackingNumber: null,
+        carrier: null,
+        shippedAt: null,
+        estimatedDelivery: null,
+        deliveredAt: null,
+      },
+      orderHistory: [
+        {
+          status: "payment_completed",
+          timestamp: Timestamp.now(),
+          note: "Payment successfully processed",
+        },
+      ],
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    transaction.set(orderRef, orderData);
+    transaction.update(listingRef, {
+      status: "sold",
+      checkoutReservation: FieldValue.delete(),
+      soldAt: FieldValue.serverTimestamp(),
+      soldTo: buyerUid,
+      orderId: orderRef.id,
+      salePrice: totalAmount,
+      saleCurrency: currency,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    transaction.delete(attemptRef);
+    transaction.update(buyerRef, {
+      purchaseCount: FieldValue.increment(1),
+      totalSpent: FieldValue.increment(totalAmount),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    transaction.update(sellerRef, {
+      saleCount: FieldValue.increment(1),
+      totalEarnings: FieldValue.increment(sellerAmount),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    return { status: "processed", order: orderData };
+  });
+}
+
+async function handlePaymentSucceeded(paymentIntent) {
+  const metadata = paymentIntent.metadata || {};
+  if (metadata.type !== "fragrance_purchase") return;
+
+  const { listingId, reservationId, buyerUid, ownerUid } = metadata;
+  if (!listingId || !reservationId || !buyerUid || !ownerUid) {
+    const legacyOrder = await findExistingLegacyOrder(paymentIntent.id);
+    if (legacyOrder) return;
+
+    await refundInvalidPayment(
+      paymentIntent,
+      reservationId,
+      "missing_payment_metadata"
+    );
+    return;
+  }
+
+  const legacyOrder = await findExistingLegacyOrder(paymentIntent.id);
+  if (legacyOrder) return;
+
+  const deterministicOrder = await db
+    .collection("orders")
+    .doc(paymentIntent.id)
+    .get();
+  if (deterministicOrder.exists) return;
+
+  const sellerEligibility = await getSellerEligibility(ownerUid);
+  const outcome = await processSuccessfulPayment(paymentIntent, sellerEligibility);
+
+  if (outcome.status === "refund_required") {
+    await refundInvalidPayment(
+      paymentIntent,
+      reservationId,
+      outcome.reason
+    );
+    return;
+  }
+  if (outcome.status === "already_processed") return;
 
   try {
-    const body = await request.text();
-    const signature = request.headers.get("stripe-signature");
+    await sendPurchaseConfirmationEmails(outcome.order);
+  } catch (emailError) {
+    console.error("Failed to send purchase emails:", emailError);
+  }
+}
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
-    } catch (err) {
-      console.error("Webhook signature verification failed:", err.message);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+async function markAttempt(paymentIntent, status, { release = false } = {}) {
+  const metadata = paymentIntent.metadata || {};
+  const { listingId, reservationId } = metadata;
+  if (metadata.type !== "fragrance_purchase" || !reservationId) return;
+
+  const attemptRef = db.collection("payment_attempts").doc(reservationId);
+  const listingRef = listingId
+    ? db.collection("listings").doc(listingId)
+    : null;
+
+  await db.runTransaction(async (transaction) => {
+    const attemptSnapshot = await transaction.get(attemptRef);
+    const listingSnapshot = listingRef
+      ? await transaction.get(listingRef)
+      : null;
+
+    transaction.set(
+      attemptRef,
+      {
+        status,
+        failureReason:
+          paymentIntent.last_payment_error?.message ||
+          (status === "canceled" ? "Payment canceled" : null),
+        failureCode: paymentIntent.last_payment_error?.code || null,
+        ...(status === "canceled"
+          ? {
+              buyerName: FieldValue.delete(),
+              buyerEmail: FieldValue.delete(),
+              buyerPhone: FieldValue.delete(),
+              shippingAddress: FieldValue.delete(),
+            }
+          : {}),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    if (
+      release &&
+      listingSnapshot?.exists &&
+      listingSnapshot.data()?.checkoutReservation?.id === reservationId
+    ) {
+      transaction.update(listingRef, {
+        checkoutReservation: FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     }
 
-    console.log(`Event type: ${event.type}`);
-
-    // Handle the event
-    switch (event.type) {
-      case "payment_intent.succeeded":
-        console.log("Handling payment_intent.succeeded");
-        await handlePaymentSucceeded(event.data.object);
-        break;
-
-      case "payment_intent.payment_failed":
-        console.log("Handling payment_intent.payment_failed");
-        await handlePaymentFailed(event.data.object);
-        break;
-
-      case "payment_intent.canceled":
-        console.log("Handling payment_intent.canceled");
-        await handlePaymentCanceled(event.data.object);
-        break;
-
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    if (!attemptSnapshot.exists) {
+      console.warn(`Payment attempt ${reservationId} was not found`);
     }
+  });
 
-    return NextResponse.json({ received: true, eventType: event.type });
-  } catch (error) {
-    console.error("Webhook error:", error);
-    console.error("Stack:", error.stack);
-    return NextResponse.json(
-      { error: "Webhook handler failed", details: error.message },
-      { status: 500 }
+  if (status === "payment_failed") {
+    await db.collection("failed_payments").doc(paymentIntent.id).set(
+      {
+        paymentIntentId: paymentIntent.id,
+        listingId: listingId || null,
+        buyerUid: metadata.buyerUid || null,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        failureReason: paymentIntent.last_payment_error?.message || "Unknown",
+        failureCode: paymentIntent.last_payment_error?.code || null,
+        updatedAt: FieldValue.serverTimestamp(),
+        createdAt: Timestamp.fromMillis(paymentIntent.created * 1000),
+      },
+      { merge: true }
     );
   }
 }
 
-/**
- * Handle successful payment
- * This is the main function that processes completed purchases
- */
-async function handlePaymentSucceeded(paymentIntent) {
-  console.log("Processing successful payment:", paymentIntent.id);
-
-  const metadata = paymentIntent.metadata || {};
-  const { listingId, buyerUid, buyerName, buyerEmail, ownerUid, type } =
-    metadata;
-
-  // Validate this is a fragrance purchase
-  if (type !== "fragrance_purchase") {
-    console.log("Not a fragrance purchase, skipping");
-    return;
-  }
-
-  // Validate required metadata
-  if (!listingId || !buyerUid || !ownerUid) {
-    console.error("Missing required metadata:", metadata);
-    throw new Error("Invalid payment metadata");
-  }
-
+export async function POST(request) {
   try {
-    // Use Firestore transaction for atomicity
-    await db.runTransaction(async (transaction) => {
-      // 1. Get the listing
-      const listingRef = db.collection("listings").doc(listingId);
-      const listingDoc = await transaction.get(listingRef);
+    const body = await request.text();
+    const signature = request.headers.get("stripe-signature");
+    let event;
 
-      if (!listingDoc.exists) {
-        throw new Error(`Listing ${listingId} not found`);
-      }
-
-      const listing = listingDoc.data();
-
-      // Verify listing is still available (race condition check)
-      if (listing.status === "sold") {
-        console.warn(`Listing ${listingId} already marked as sold`);
-        // Don't throw - payment already succeeded, just log
-        return;
-      }
-
-      // 2. Get buyer and seller profiles
-      const buyerRef = db.collection("profiles").doc(buyerUid);
-      const sellerRef = db.collection("profiles").doc(ownerUid);
-
-      const [buyerDoc, sellerDoc] = await Promise.all([
-        transaction.get(buyerRef),
-        transaction.get(sellerRef),
-      ]);
-
-      if (!buyerDoc.exists || !sellerDoc.exists) {
-        throw new Error("Buyer or seller profile not found");
-      }
-
-      const buyer = buyerDoc.data();
-      const seller = sellerDoc.data();
-
-      // 3. Extract shipping information from metadata (as entered during checkout)
-      let shippingInfo = null;
-      try {
-        if (metadata.shippingAddress) {
-          const addressData = JSON.parse(metadata.shippingAddress);
-
-          // Process the Stripe AddressElement format
-          shippingInfo = {
-            // Customer details (as entered in checkout - CRITICAL for shipping label)
-            recipientName: addressData.name || metadata.buyerName,
-            email: metadata.buyerEmail,
-            phone: addressData.phone || metadata.buyerPhone || null,
-
-            // Address details
-            addressLine1: addressData.address?.line1 || "",
-            addressLine2: addressData.address?.line2 || null,
-            city: addressData.address?.city || "",
-            state: addressData.address?.state || null,
-            postalCode: addressData.address?.postal_code || "",
-            country:
-              getCountryName(addressData.address?.country, "en") ||
-              addressData.address?.country,
-            countryCode: addressData.address?.country,
-
-            // Formatted for display
-            formattedAddress: [
-              addressData.address?.line1,
-              addressData.address?.line2,
-              addressData.address?.city,
-              addressData.address?.state,
-              addressData.address?.postal_code,
-              getCountryName(addressData.address?.country, "en") ||
-                addressData.address?.country,
-            ]
-              .filter(Boolean)
-              .join(", "),
-          };
-        }
-      } catch (e) {
-        console.error("Failed to parse shipping address from metadata:", e);
-        throw new Error("Invalid shipping address data");
-      }
-
-      if (!shippingInfo) {
-        throw new Error("Shipping address is required for order fulfillment");
-      }
-
-      // 4. Calculate amounts
-      const totalAmount = paymentIntent.amount; // in cents
-      const currency = paymentIntent.currency;
-      const platformFee = paymentIntent.application_fee_amount || 0;
-      const sellerAmount = totalAmount - platformFee;
-
-      // 5. Create order record with clean, organized structure
-      const orderRef = db.collection("orders").doc();
-      const orderData = {
-        // ============================================
-        // ORDER BASICS
-        // ============================================
-        orderId: orderRef.id,
-        orderNumber: `ORD-${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)
-          .toUpperCase()}`,
-        status: "payment_completed", // Next: awaiting_shipment -> shipped -> delivered
-
-        // ============================================
-        // PARTICIPANTS (for querying)
-        // ============================================
-        participants: [buyerUid, ownerUid],
-        buyerUid: buyerUid,
-        sellerUid: ownerUid,
-
-        // ============================================
-        // ITEM/LISTING DETAILS
-        // ============================================
-        listingId: listingId,
-        item: {
-          title: listing.title,
-          brand: listing.brand,
-          fragrance: listing.fragrance,
-          amountLeft: listing.amountLeft,
-          imageURL: listing.imageURLs?.[0] || null,
-          sizeInMl: listing.sizeInMl || null,
-          price: listing.price || 0,
-        },
-
-        // ============================================
-        // SHIPPING INFORMATION (CRITICAL - as entered during checkout)
-        // This is what the seller needs to create the shipping label
-        // ============================================
-        shippingTo: {
-          // Recipient details
-          name: shippingInfo.recipientName,
-          email: shippingInfo.email,
-          phone: shippingInfo.phone,
-
-          // Address
-          addressLine1: shippingInfo.addressLine1,
-          addressLine2: shippingInfo.addressLine2,
-          city: shippingInfo.city,
-          state: shippingInfo.state,
-          postalCode: shippingInfo.postalCode,
-          country: shippingInfo.country,
-          countryCode: shippingInfo.countryCode,
-
-          // Formatted for display
-          formattedAddress: shippingInfo.formattedAddress,
-        },
-
-        // ============================================
-        // BUYER REFERENCE (for display/communication in app)
-        // Include displayName for seller to use on shipping label
-        // ============================================
-        buyer: {
-          uid: buyerUid,
-          username: buyer.username || "Unknown",
-          displayName: buyer.displayName || buyer.username || "Unknown",
-          profilePictureURL: buyer.profilePictureURL || null,
-        },
-
-        // ============================================
-        // SELLER REFERENCE (for display/communication in app)
-        // Only username - buyer doesn't need seller's full name
-        // ============================================
-        seller: {
-          uid: ownerUid,
-          username: seller.username || "Unknown",
-          email: seller.email,
-          profilePictureURL: seller.profilePictureURL || null,
-        },
-
-        // ============================================
-        // PAYMENT DETAILS
-        // ============================================
-        payment: {
-          totalAmount: totalAmount,
-          currency: currency,
-          platformFee: platformFee,
-          sellerAmount: sellerAmount,
-          stripePaymentIntentId: paymentIntent.id,
-          paymentStatus: paymentIntent.status,
-          paymentMethod: paymentIntent.payment_method_types?.[0] || "card",
-          paidAt: FieldValue.serverTimestamp(),
-        },
-
-        // ============================================
-        // SHIPPING TRACKING (updated when seller ships item)
-        // ============================================
-        shipment: {
-          trackingNumber: null,
-          carrier: null,
-          shippedAt: null,
-          estimatedDelivery: null,
-          deliveredAt: null,
-        },
-
-        // ============================================
-        // ORDER HISTORY & TIMESTAMPS
-        // ============================================
-        orderHistory: [
-          {
-            status: "payment_completed",
-            timestamp: Timestamp.now(),
-            note: "Payment successfully processed",
-          },
-        ],
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      };
-
-      transaction.set(orderRef, orderData);
-
-      // 6. Update listing status to sold
-      transaction.update(listingRef, {
-        status: "sold",
-        soldAt: FieldValue.serverTimestamp(),
-        soldTo: buyerUid,
-        orderId: orderRef.id,
-        salePrice: totalAmount,
-        saleCurrency: currency,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-
-      // 7. Update user stats
-      transaction.update(buyerRef, {
-        purchaseCount: FieldValue.increment(1),
-        totalSpent: FieldValue.increment(totalAmount),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-
-      transaction.update(sellerRef, {
-        saleCount: FieldValue.increment(1),
-        totalEarnings: FieldValue.increment(sellerAmount),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-
-      console.log(`Order ${orderRef.id} created successfully`);
-
-      return { orderRef, orderData, buyer, seller };
-    });
-
-    // After transaction completes, send emails (non-critical, don't fail webhook)
     try {
-      await sendOrderConfirmationEmails(listingId, buyerUid, paymentIntent.id);
-    } catch (emailError) {
-      console.error("Failed to send emails:", emailError);
-      // Don't throw - email failure shouldn't fail the webhook
+      event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
+    } catch (error) {
+      console.error("Webhook signature verification failed:", error.message);
+      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
 
-    console.log(`Payment processing complete for ${paymentIntent.id}`);
-  } catch (error) {
-    console.error("Error processing payment:", error);
-    throw error; // Re-throw to trigger webhook retry
-  }
-}
-
-/**
- * Handle failed payment
- */
-async function handlePaymentFailed(paymentIntent) {
-  console.log("Payment failed:", paymentIntent.id);
-
-  const metadata = paymentIntent.metadata || {};
-  const { listingId, buyerUid, buyerEmail } = metadata;
-
-  if (!buyerUid) {
-    console.log("No buyer UID, skipping");
-    return;
-  }
-
-  try {
-    // Create failed payment record for tracking
-    const failedPaymentRef = db.collection("failed_payments").doc();
-    await failedPaymentRef.set({
-      paymentIntentId: paymentIntent.id,
-      listingId: listingId || null,
-      buyerUid: buyerUid,
-      buyerEmail: buyerEmail || null,
-      amount: paymentIntent.amount,
-      currency: paymentIntent.currency,
-      failureReason: paymentIntent.last_payment_error?.message || "Unknown",
-      failureCode: paymentIntent.last_payment_error?.code || null,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    console.log(`Failed payment recorded: ${failedPaymentRef.id}`);
-
-    // TODO: Send failure notification email to buyer
-    // await sendPaymentFailedEmail(buyerEmail, failureReason);
-  } catch (error) {
-    console.error("Error handling failed payment:", error);
-    // Don't throw - this is not critical
-  }
-}
-
-/**
- * Handle canceled payment
- */
-async function handlePaymentCanceled(paymentIntent) {
-  console.log("Payment canceled:", paymentIntent.id);
-
-  const metadata = paymentIntent.metadata || {};
-  const { listingId, buyerUid } = metadata;
-
-  // Just log for now - cancellations are usually intentional
-  console.log(`Payment canceled for listing ${listingId} by buyer ${buyerUid}`);
-}
-
-/**
- * Send order confirmation emails to buyer and seller
- */
-async function sendOrderConfirmationEmails(
-  listingId,
-  buyerUid,
-  paymentIntentId
-) {
-  console.log("Preparing to send order confirmation emails...");
-
-  try {
-    // Get order details
-    const orderQuery = await db
-      .collection("orders")
-      .where("listingId", "==", listingId)
-      .where("buyer.uid", "==", buyerUid)
-      .where("payment.stripePaymentIntentId", "==", paymentIntentId)
-      .limit(1)
-      .get();
-
-    if (orderQuery.empty) {
-      console.error("Order not found for email");
-      return;
+    switch (event.type) {
+      case "payment_intent.succeeded":
+        await handlePaymentSucceeded(event.data.object);
+        break;
+      case "payment_intent.payment_failed":
+        await markAttempt(event.data.object, "payment_failed");
+        break;
+      case "payment_intent.canceled":
+        await markAttempt(event.data.object, "canceled", { release: true });
+        break;
+      default:
+        break;
     }
 
-    const order = orderQuery.docs[0].data();
-
-    // Directly call the email function (no HTTP request needed)
-    await sendPurchaseConfirmationEmails(order);
+    return NextResponse.json({ received: true, eventType: event.type });
   } catch (error) {
-    console.error("Failed to send confirmation emails:", error);
-    throw error;
+    console.error("Payment webhook error:", error);
+    return NextResponse.json(
+      { error: "Webhook handler failed", details: error.message },
+      { status: 500 }
+    );
   }
 }

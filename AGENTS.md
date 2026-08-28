@@ -79,7 +79,7 @@ For every PR:
 
 - Auth state is provided via `AuthContext` (`authUser`, `authLoading`) in `src/context/authContext.js`.
 - Extended profile state is provided via `ProfileDocContext` in `src/context/profileDocContext.js`.
-- Firestore collections in active use include `users`, `profiles`, `listings`, `swap_requests`, and nested `messages` subcollections (plus operational collections like `orders` and webhook/system stats collections).
+- Firestore collections in active use include `users`, `profiles`, `listings`, `swap_requests`, and nested `messages` subcollections (plus operational collections like `orders`, private checkout `payment_attempts`, and webhook/system stats collections).
 - Admin SDK for server routes is initialized in `src/lib/firebaseAdmin.js`.
 - Admin credentials are read from:
   - `FIREBASE_PROJECT_ID`

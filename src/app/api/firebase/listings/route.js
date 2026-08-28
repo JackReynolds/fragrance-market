@@ -7,11 +7,23 @@ import {
   getSellerEligibility,
   getSellerEligibilityError,
 } from "@/lib/sellerEligibility";
+import { isSupportedSaleCurrency } from "@/lib/listingSalePolicy";
 
-const ALLOWED_CURRENCIES = new Set(["eur", "gbp", "usd"]);
 const EDITABLE_STATUSES = new Set(["active", "inactive"]);
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
 const STANDARD_ACTIVE_LISTING_LIMIT = 3;
+
+function routeError(message, code, status = 409) {
+  const error = new Error(message);
+  error.code = code;
+  error.httpStatus = status;
+  return error;
+}
+
+function isCheckoutReservationActive(reservation) {
+  const expiresAt = reservation?.expiresAt?.toMillis?.();
+  return Number.isFinite(expiresAt) && expiresAt > Date.now();
+}
 
 function errorResponse(error, status = 400, code = "invalid_request") {
   return NextResponse.json({ error, code }, { status });
@@ -68,7 +80,7 @@ function normalizeListingInput(input = {}) {
   ) {
     throw new Error("Enter a valid sale price.");
   }
-  if (type === "sell" && !ALLOWED_CURRENCIES.has(currency)) {
+  if (type === "sell" && !isSupportedSaleCurrency(currency)) {
     throw new Error("Choose a supported currency.");
   }
 
@@ -82,7 +94,6 @@ function normalizeListingInput(input = {}) {
     imageURLs,
     swapPreferences: type === "swap" ? swapPreferences : null,
     priceCents,
-    price: type === "sell" ? priceCents / 100 : null,
     currency,
   };
 }
@@ -204,15 +215,57 @@ export async function PATCH(request) {
     if (!EDITABLE_STATUSES.has(existingListing.status)) {
       return errorResponse("Completed listings cannot be edited.", 409, "listing_not_editable");
     }
+    if (input.type !== existingListing.type) {
+      return errorResponse(
+        "Listing type cannot be changed after creation. Deactivate this listing and create a new one instead.",
+        409,
+        "listing_type_immutable"
+      );
+    }
 
     const saleEligibility = await requireSaleEligibility(decodedToken.uid, input);
     if (saleEligibility instanceof NextResponse) return saleEligibility;
 
     const title = `${input.fragrance} - ${input.brand}`;
-    await listingRef.update({
-      ...input,
-      title,
-      updatedAt: FieldValue.serverTimestamp(),
+    await db.runTransaction(async (transaction) => {
+      const latestSnapshot = await transaction.get(listingRef);
+      if (!latestSnapshot.exists) {
+        throw routeError("Listing not found.", "not_found", 404);
+      }
+
+      const latestListing = latestSnapshot.data();
+      if (latestListing.ownerUid !== decodedToken.uid) {
+        throw routeError(
+          "You do not have permission to edit this listing.",
+          "forbidden",
+          403
+        );
+      }
+      if (!EDITABLE_STATUSES.has(latestListing.status)) {
+        throw routeError(
+          "Completed listings cannot be edited.",
+          "listing_not_editable"
+        );
+      }
+      if (input.type !== latestListing.type) {
+        throw routeError(
+          "Listing type cannot be changed after creation. Deactivate this listing and create a new one instead.",
+          "listing_type_immutable"
+        );
+      }
+      if (isCheckoutReservationActive(latestListing.checkoutReservation)) {
+        throw routeError(
+          "This listing is reserved by a buyer and cannot be edited until checkout finishes or expires.",
+          "listing_reserved"
+        );
+      }
+
+      transaction.update(listingRef, {
+        ...input,
+        price: FieldValue.delete(),
+        title,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     });
 
     return NextResponse.json({
@@ -222,6 +275,10 @@ export async function PATCH(request) {
     });
   } catch (error) {
     console.error("Error updating listing:", error);
-    return errorResponse(error.message || "Unable to update listing.", 400, error.code || "update_failed");
+    return errorResponse(
+      error.message || "Unable to update listing.",
+      error.httpStatus || 400,
+      error.code || "update_failed"
+    );
   }
 }

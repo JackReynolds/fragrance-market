@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import firestoreTimestampToDate from "@/utils/firestoreTimestampToDate";
+import formatCurrency from "@/utils/formatCurrency";
 
 export default function AdminListingsPage() {
   const { authUser } = useAuth();
@@ -365,7 +366,10 @@ export default function AdminListingsPage() {
                   {selectedListing.type !== "swap" &&
                     selectedListing.priceCents && (
                       <p className="text-2xl font-bold mt-2">
-                        £{(selectedListing.priceCents / 100).toFixed(2)}
+                        {formatCurrency(
+                          selectedListing.priceCents / 100,
+                          selectedListing.currency
+                        )}
                       </p>
                     )}
                 </div>

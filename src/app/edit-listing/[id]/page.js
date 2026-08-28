@@ -68,11 +68,6 @@ const EditListing = () => {
 
   // Form validation
   const [errors, setErrors] = useState({});
-  const canSell =
-    profileDoc?.isPremium === true &&
-    profileDoc?.isIdVerified === true &&
-    profileDoc?.stripeAccountStatus?.statusCode === 1;
-
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!authLoading && !authUser) {
@@ -547,12 +542,7 @@ const EditListing = () => {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="type">Listing Type</Label>
-                        <Select
-                          value={formData.type}
-                          onValueChange={(value) =>
-                            handleSelectChange("type", value)
-                          }
-                        >
+                        <Select value={formData.type} disabled>
                           <SelectTrigger
                             id="type"
                             className={errors.type ? "border-destructive" : ""}
@@ -560,14 +550,10 @@ const EditListing = () => {
                             <SelectValue placeholder="Select listing type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="sell" disabled={!canSell}>
+                            <SelectItem value="sell">
                               <div className="flex items-center">
                                 <EuroIcon className="mr-2 h-4 w-4" />
-                                <span>
-                                  {canSell
-                                    ? "Sell"
-                                    : "Sell (Premium, ID and Stripe required)"}
-                                </span>
+                                <span>Sell</span>
                               </div>
                             </SelectItem>
                             <SelectItem value="swap">
@@ -578,6 +564,11 @@ const EditListing = () => {
                             </SelectItem>
                           </SelectContent>
                         </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Listing type cannot be changed after creation.
+                          Deactivate this listing and create a new one to use a
+                          different type.
+                        </p>
                         {errors.type && (
                           <p className="text-sm text-destructive">
                             {errors.type}

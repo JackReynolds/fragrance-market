@@ -17,6 +17,17 @@ function getStripeClient() {
   return stripeClient;
 }
 
+async function retrieveStripeResource(retrieve) {
+  try {
+    return await retrieve();
+  } catch (error) {
+    if (error.code === "resource_missing" || error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 export async function getSellerEligibility(userUid, { verifyStripe = true } = {}) {
   const [userSnapshot, profileSnapshot] = await Promise.all([
     db.collection("users").doc(userUid).get(),
@@ -40,10 +51,12 @@ export async function getSellerEligibility(userUid, { verifyStripe = true } = {}
     Boolean(profile.stripeAccountId);
 
   if (verifyStripe && subscriptionActive) {
-    const subscription = await getStripeClient().subscriptions.retrieve(
-      profile.stripeSubscriptionId
+    const subscription = await retrieveStripeResource(() =>
+      getStripeClient().subscriptions.retrieve(profile.stripeSubscriptionId)
     );
-    subscriptionActive = ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status);
+    subscriptionActive =
+      subscription !== null &&
+      ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status);
   }
 
   if (
@@ -54,19 +67,22 @@ export async function getSellerEligibility(userUid, { verifyStripe = true } = {}
     if (!identity.lastSessionId) {
       identityVerified = false;
     } else {
-      const verificationSession =
-        await getStripeClient().identity.verificationSessions.retrieve(
+      const verificationSession = await retrieveStripeResource(() =>
+        getStripeClient().identity.verificationSessions.retrieve(
           identity.lastSessionId
-        );
-      identityVerified = verificationSession.status === "verified";
+        )
+      );
+      identityVerified = verificationSession?.status === "verified";
     }
   }
 
   if (verifyStripe && stripeAccountReady) {
-    const account = await getStripeClient().accounts.retrieve(
-      profile.stripeAccountId
+    const account = await retrieveStripeResource(() =>
+      getStripeClient().accounts.retrieve(profile.stripeAccountId)
     );
     stripeAccountReady =
+      account !== null &&
+      account.deleted !== true &&
       account.charges_enabled === true &&
       account.payouts_enabled === true &&
       account.capabilities?.transfers === "active" &&
